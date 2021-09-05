@@ -1,0 +1,22 @@
+#ifndef FLV_PUB_HPP
+#define FLV_PUB_HPP
+
+#define FLV_TAG_AUDIO 0x08
+#define FLV_TAG_VIDEO 0x09
+
+#define FLV_VIDEO_KEY_FLAG   0x10
+#define FLV_VIDEO_INTER_FLAG 0x20
+
+#define FLV_VIDEO_AVC_SEQHDR 0x00
+#define FLV_VIDEO_AVC_NALU   0x01
+
+#define FLV_VIDEO_H264_CODEC 0x07
+#define FLV_VIDEO_H265_CODEC 0x0c
+#define FLV_VIDEO_AV1_CODEC  0x0d
+#define FLV_VIDEO_VP8_CODEC  0x0e
+#define FLV_VIDEO_VP9_CODEC  0x0f
+
+#define FLV_AUDIO_OPUS_CODEC  0x90
+#define FLV_AUDIO_AAC_CODEC   0xa0
+
+#endif
