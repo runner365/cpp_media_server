@@ -1,5 +1,5 @@
 [submodule "3rdparty/boost"]
-	path = 3rdparty/boost
-	url = https://github.com/boostorg/boost.git
-    branch = develop
+path = 3rdparty/boost
+url = https://github.com/boostorg/boost.git
+branch = develop
 
