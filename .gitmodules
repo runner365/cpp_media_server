@@ -1,0 +1,5 @@
+[submodule "boostlibs"]
+    path = boostlibs
+    url = https://github.com/boostorg/boost.git
+    tag = boost-1.74.0
+
