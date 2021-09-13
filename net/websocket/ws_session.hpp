@@ -1,9 +1,7 @@
 #ifndef WEBSOCKET_SESSION_HPP
 #define WEBSOCKET_SESSION_HPP
 #include "tcp_server.hpp"
-#include "av_outputer.hpp"
-#include "flv_demux.hpp"
-
+#include "ws_session_pub.hpp"
 #include <boost/beast/core.hpp>
 #include <boost/beast/websocket.hpp>
 #include <boost/asio/dispatch.hpp>
@@ -18,26 +16,32 @@ public:
 class websocket_session : public std::enable_shared_from_this<websocket_session>
 {
 public:
-    websocket_session(boost::asio::ip::tcp::socket socket, websocket_server_callbackI* cb, std::string stream_id);
+    websocket_session(boost::asio::io_context& io_ctx, boost::asio::ip::tcp::socket&& socket, websocket_server_callbackI* cb, std::string stream_id);
     ~websocket_session();
 
-public:
+    void set_websocket_callback(ws_session_callback* cb);
     void run();
+    void async_write(const char* data, int len);
+
+private:
     void on_accept(boost::beast::error_code ec);
     void do_read();
+    void do_write();
     void on_read(boost::beast::error_code ec, size_t bytes_transferred);
+    void on_write(boost::beast::error_code ec, size_t bytes_transferred);
     void close_session(boost::beast::error_code& ec);
 
 private:
+    boost::asio::io_context& io_ctx_;
     boost::beast::websocket::stream<boost::beast::tcp_stream> ws_;
     websocket_server_callbackI* server_cb_ = nullptr;
+    ws_session_callback* ws_cb_            = nullptr;
     std::string stream_id_;
-    boost::beast::flat_buffer buffer_;
-    std::string uri_;
+    bool closed_flag_ = false;
 
 private:
-   flv_demuxer demuxer_;
-   av_outputer outputer_;
+    boost::beast::flat_buffer recv_buffer_;
+    boost::beast::flat_buffer send_buffer_;
 };
 
 #endif //WEBSOCKET_SESSION_HPP

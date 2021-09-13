@@ -8,11 +8,12 @@
 #include <stdint.h>
 #include <boost/asio.hpp>
 
+#define WEBSOCKET_IMPLEMENT_FLV_TYPE 1
 
 class websocket_server : public tcp_server_callbackI, public websocket_server_callbackI
 {
 public:
-    websocket_server(boost::asio::io_context& io_context, uint16_t port);
+    websocket_server(boost::asio::io_context& io_context, uint16_t port, int imp_type);
     virtual ~websocket_server();
 
 public://implement tcp_server_callbackI
@@ -23,6 +24,8 @@ public://implement websocket_server_callbackI
 
 private:
     std::shared_ptr<tcp_server> server_;
+    boost::asio::io_context& io_ctx_;
+    int imp_type_ = 0;
     std::unordered_map< std::string, std::shared_ptr<websocket_session> > sessions_;
 };
 

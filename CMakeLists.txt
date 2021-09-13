@@ -20,6 +20,7 @@ include_directories(./
                     ./net/http
                     ./net/rtmp
                     ./net/websocket
+                    ./net/websocket/wsimple
                     ./net/tcp
                     ./net/httpflv
                     ./format
@@ -129,7 +130,7 @@ add_executable(media_server
             net/rtmp/rtmp_writer.cpp
             net/websocket/ws_server.cpp
             net/websocket/ws_session.cpp
-            net/websocket/av_outputer.cpp
+            net/websocket/wsimple/flv_websocket.cpp
             net/httpflv/httpflv_server.cpp
             net/httpflv/httpflv_writer.cpp
             utils/logger.cpp

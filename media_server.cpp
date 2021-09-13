@@ -17,7 +17,7 @@ int main(int argn, char** argv) {
 
     try {
         rtmp_server server(io_context, rtmp_def_port);
-        websocket_server ws(io_context, ws_def_port);
+        websocket_server ws(io_context, ws_def_port, WEBSOCKET_IMPLEMENT_FLV_TYPE);
         httpflv_server httpflv_serv(io_context, httpflv_port);
         log_infof("rtmp server start:%d", rtmp_def_port);
         log_infof("websocket server start:%d", ws_def_port);
