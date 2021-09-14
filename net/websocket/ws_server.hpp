@@ -8,12 +8,14 @@
 #include <stdint.h>
 #include <boost/asio.hpp>
 
-#define WEBSOCKET_IMPLEMENT_FLV_TYPE 1
+#define WEBSOCKET_IMPLEMENT_FLV_TYPE    1
+#define WEBSOCKET_IMPLEMENT_PROTOO_TYPE 2
 
 class websocket_server : public tcp_server_callbackI, public websocket_server_callbackI
 {
 public:
     websocket_server(boost::asio::io_context& io_context, uint16_t port, int imp_type);
+    websocket_server(boost::asio::io_context& io_context, uint16_t port, int imp_type, const std::string& cert_file, const std::string& key_file);
     virtual ~websocket_server();
 
 public://implement tcp_server_callbackI
@@ -26,7 +28,9 @@ private:
     std::shared_ptr<tcp_server> server_;
     boost::asio::io_context& io_ctx_;
     int imp_type_ = 0;
+    boost::asio::ssl::context ssl_ctx_;
     std::unordered_map< std::string, std::shared_ptr<websocket_session> > sessions_;
+    bool ssl_enable_ = false;
 };
 
 #endif

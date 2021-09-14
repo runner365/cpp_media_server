@@ -1,5 +1,6 @@
 #ifndef WS_SESSION_PUB_HPP
 #define WS_SESSION_PUB_HPP
+#include <stddef.h>
 
 class ws_session_callback
 {

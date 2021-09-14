@@ -8,10 +8,20 @@ websocket_session::websocket_session(boost::asio::io_context& io_ctx,
     boost::asio::ip::tcp::socket&& socket,
     websocket_server_callbackI* cb,
     std::string id):io_ctx_(io_ctx)
-    , ws_(std::move(socket))
     , server_cb_(cb)
     , stream_id_(id)
 {
+    ws_  = new boost::beast::websocket::stream<boost::beast::tcp_stream>(std::move(socket));
+    wss_ = nullptr;
+}
+
+websocket_session::websocket_session(boost::asio::io_context& io_ctx, boost::asio::ip::tcp::socket&& socket, boost::asio::ssl::context& ctx,
+            websocket_server_callbackI* cb, std::string id):io_ctx_(io_ctx)
+    , server_cb_(cb)
+    , stream_id_(id)
+{
+    ws_  = nullptr;
+    wss_ = new boost::beast::websocket::stream<boost::beast::ssl_stream<boost::beast::tcp_stream>>(std::move(socket), ctx);
 }
 
 websocket_session::~websocket_session() {
@@ -19,18 +29,70 @@ websocket_session::~websocket_session() {
         delete ws_cb_;
         ws_cb_ = nullptr;
     }
+    if (ws_) {
+        delete ws_;
+    }
+    if (wss_) {
+        delete wss_;
+    }
 }
 
 void websocket_session::run() {
     // Accept the websocket handshake
-    ws_.async_accept(
-        boost::beast::bind_front_handler(
-            &websocket_session::on_accept,
-            shared_from_this()));
+    if (ws_) {
+        log_infof("websocket accept....");
+        ws_->async_accept(
+            boost::beast::bind_front_handler(
+                &websocket_session::on_accept,
+                shared_from_this()));
+    } else {
+        // Set the timeout.
+        log_infof("websocket ssl accept....");
+        boost::beast::get_lowest_layer(*wss_).expires_after(std::chrono::seconds(10));
+
+         // Perform the SSL handshake
+        wss_->next_layer().async_handshake(
+            boost::asio::ssl::stream_base::server,
+            boost::beast::bind_front_handler(
+                &websocket_session::on_handshake,
+                shared_from_this()));
+    }
 }
 
 void websocket_session::set_websocket_callback(ws_session_callback* cb) {
     ws_cb_ = cb;
+}
+
+void websocket_session::on_handshake(boost::beast::error_code ec) {
+    if(ec) {
+        log_errorf("websocket ssl handshake error:%s", ec.message().c_str());
+        ws_cb_->on_close(ec.value());
+        return;
+    }
+
+    // Turn off the timeout on the tcp_stream, because
+    // the websocket stream has its own timeout system.
+    boost::beast::get_lowest_layer(*wss_).expires_never();
+
+    // Set suggested timeout settings for the websocket
+    wss_->set_option(
+        boost::beast::websocket::stream_base::timeout::suggested(
+            boost::beast::role_type::server));
+
+    // Set a decorator to change the Server of the handshake
+    wss_->set_option(boost::beast::websocket::stream_base::decorator(
+        [](boost::beast::websocket::response_type& res)
+        {
+            res.set(boost::beast::http::field::server,
+                std::string(BOOST_BEAST_VERSION_STRING) +
+                    " websocket-server-async-ssl");
+        }));
+
+    // Accept the websocket handshake
+    wss_->async_accept(
+        boost::beast::bind_front_handler(
+            &websocket_session::on_accept,
+            shared_from_this()));
 }
 
 void websocket_session::on_accept(boost::beast::error_code ec) {
@@ -57,17 +119,20 @@ void websocket_session::async_write(const char* data, int len) {
 }
 
 void websocket_session::do_write() {
-    ws_.async_write(send_buffer_.data(),
-        boost::beast::bind_front_handler(&websocket_session::on_write, this));
+    if (ws_) {
+        ws_->async_write(send_buffer_.data(),
+            boost::beast::bind_front_handler(&websocket_session::on_write, this));
+    }
     return;
 }
 
 void websocket_session::do_read() {
-    // Read a message into our buffer
-    ws_.async_read(recv_buffer_,
-        boost::beast::bind_front_handler(
-            &websocket_session::on_read,
-            shared_from_this()));
+    if (ws_) {
+        ws_->async_read(recv_buffer_,
+            boost::beast::bind_front_handler(
+                &websocket_session::on_read,
+                shared_from_this()));
+    }
 }
 
 void websocket_session::close_session(boost::beast::error_code& ec) {
@@ -75,7 +140,11 @@ void websocket_session::close_session(boost::beast::error_code& ec) {
         return;
     }
     closed_flag_ = true;
-    ws_.close(ws_.reason(), ec);
+
+    if (ws_) {
+        ws_->close(ws_->reason(), ec);
+    }
+    
     server_cb_->on_close(stream_id_);
     if (ws_cb_) {
         ws_cb_->on_close(ec.value());

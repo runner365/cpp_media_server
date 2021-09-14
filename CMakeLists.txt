@@ -31,7 +31,8 @@ include_directories(./
                     /usr/local/include)
 
 # set lib path
-link_directories(${CMAKE_BINARY_DIR}/output/lib /usr/local/lib64 /usr/local/lib)
+#link_directories(${CMAKE_BINARY_DIR}/output/lib /usr/local/lib64 /usr/local/lib)
+link_directories(/usr/local/lib64 /usr/local/lib)
 
 add_executable(echo_demo net/tcp/echo_demo.cpp
             utils/logger.cpp
@@ -114,6 +115,25 @@ ELSEIF (UNIX)
 target_link_libraries(rtmp_publish_demo pthread rt dl z m ssl crypto boost_thread boost_system)
 ENDIF ()
 
+add_executable(ws_server_demo
+            net/websocket/ws_server_demo.cpp
+            net/websocket/ws_session.cpp
+            net/websocket/ws_server.cpp
+            net/websocket/wsimple/flv_websocket.cpp
+            net/websocket/wsimple/protoo_server.cpp
+            format/flv/flv_demux.cpp
+            format/flv/flv_mux.cpp
+            utils/av/media_stream_manager.cpp
+            utils/av/gop_cache.cpp
+            utils/logger.cpp
+            utils/data_buffer.cpp
+            utils/byte_stream.cpp)
+IF (APPLE)
+target_link_libraries(ws_server_demo pthread dl z m ssl crypto boost_thread boost_system)
+ELSEIF (UNIX)
+target_link_libraries(ws_server_demo pthread rt dl z m ssl crypto boost_thread boost_system)
+ENDIF ()
+
 add_executable(media_server
             media_server.cpp
             format/flv/flv_demux.cpp
@@ -131,6 +151,7 @@ add_executable(media_server
             net/websocket/ws_server.cpp
             net/websocket/ws_session.cpp
             net/websocket/wsimple/flv_websocket.cpp
+            net/websocket/wsimple/protoo_server.cpp
             net/httpflv/httpflv_server.cpp
             net/httpflv/httpflv_writer.cpp
             utils/logger.cpp
