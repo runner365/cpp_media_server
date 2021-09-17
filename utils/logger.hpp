@@ -3,6 +3,8 @@
 #include <string>
 #include <stdint.h>
 #include <stdarg.h>
+#include <cstdio> // std::snprintf()
+#include <stdexcept>
 
 #define LOGGER_BUFFER_SIZE (8*1024)
 
@@ -98,4 +100,20 @@ inline void log_info_data(const uint8_t* data, int len, const char* dscr) {
     return;
 }
 
+class MediaServerError : public std::runtime_error
+{
+public:
+    explicit MediaServerError(const char* description) : std::runtime_error(description)
+    {
+    }
+};
+
+#define MS_THROW_ERROR(desc, ...) \
+    do \
+    { \
+        static char buffer[256]; \
+        std::snprintf(buffer, sizeof(buffer), desc, ##__VA_ARGS__); \
+        log_errorf("media server exception:%s", buffer); \
+        throw MediaServerError(buffer); \
+    } while (false)
 #endif

@@ -2,14 +2,12 @@
 #define WS_SERVER_HPP
 #include "ws_session.hpp"
 #include "tcp_server.hpp"
+#include "ws_service_imp.hpp"
 #include <unordered_map>
 #include <memory>
 #include <string>
 #include <stdint.h>
 #include <boost/asio.hpp>
-
-#define WEBSOCKET_IMPLEMENT_FLV_TYPE    1
-#define WEBSOCKET_IMPLEMENT_PROTOO_TYPE 2
 
 class websocket_server : public tcp_server_callbackI, public websocket_server_callbackI
 {

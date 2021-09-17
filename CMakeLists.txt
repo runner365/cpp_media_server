@@ -27,6 +27,8 @@ include_directories(./
                     ./format/flv
                     ./utils
                     ./utils/av
+                    ./utils/json/include
+                    ./utils/json/include/nlohmann
                     ${CMAKE_BINARY_DIR}/output/include
                     /usr/local/include)
 
@@ -119,8 +121,10 @@ add_executable(ws_server_demo
             net/websocket/ws_server_demo.cpp
             net/websocket/ws_session.cpp
             net/websocket/ws_server.cpp
+            net/websocket/ws_service_imp.cpp
             net/websocket/wsimple/flv_websocket.cpp
             net/websocket/wsimple/protoo_server.cpp
+            net/webrtc/room_service.cpp
             format/flv/flv_demux.cpp
             format/flv/flv_mux.cpp
             utils/av/media_stream_manager.cpp
@@ -150,8 +154,10 @@ add_executable(media_server
             net/rtmp/rtmp_writer.cpp
             net/websocket/ws_server.cpp
             net/websocket/ws_session.cpp
+            net/websocket/ws_service_imp.cpp
             net/websocket/wsimple/flv_websocket.cpp
             net/websocket/wsimple/protoo_server.cpp
+            net/webrtc/room_service.cpp
             net/httpflv/httpflv_server.cpp
             net/httpflv/httpflv_writer.cpp
             utils/logger.cpp
