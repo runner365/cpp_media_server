@@ -1,0 +1,3 @@
+[submodule "3rdparty/libsdptransform"]
+	path = 3rdparty/libsdptransform
+	url = https://github.com/ibc/libsdptransform.git

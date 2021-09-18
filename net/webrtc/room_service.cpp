@@ -54,7 +54,6 @@ void room_service::on_close() {
 
 void room_service::on_request(const std::string& id, const std::string& method, const std::string& data,
             protoo_request_interface* feedback_p) {
-    log_infof("room request id:%s, method:%s, data:%s", id.c_str(), method.c_str(), data.c_str());
     if (method == "join") {
         handle_join(id, method, data, feedback_p);
     } else if (method == "publish") {
@@ -139,14 +138,10 @@ void room_service::handle_publish(const std::string& id, const std::string& meth
     }
 
     std::string sdp = sdp_json->get<std::string>();
-
-    log_infof("receive publish sdp:%s", sdp.c_str());
-
     auto resp_json = json::object();
     resp_json["sdp"] = sdp;
     
     std::string resp_data = resp_json.dump();
-
     //log_infof("publish response data:%s", resp_data.c_str());
     feedback_p->accept(id, resp_data);
     return;

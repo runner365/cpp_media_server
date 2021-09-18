@@ -6,7 +6,7 @@
 #include <cstdio> // std::snprintf()
 #include <stdexcept>
 
-#define LOGGER_BUFFER_SIZE (8*1024)
+#define LOGGER_BUFFER_SIZE (20*1024)
 
 enum LOGGER_LEVEL {
     LOGGER_DEBUG_LEVEL,
