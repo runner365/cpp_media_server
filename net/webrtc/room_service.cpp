@@ -57,6 +57,11 @@ void room_service::on_request(const std::string& id, const std::string& method, 
     log_infof("room request id:%s, method:%s, data:%s", id.c_str(), method.c_str(), data.c_str());
     if (method == "join") {
         handle_join(id, method, data, feedback_p);
+    } else if (method == "publish") {
+        handle_publish(id, method, data, feedback_p);
+    } else {
+        log_infof("receive unkown method:%s", method.c_str());
+        feedback_p->reject(id, METHOD_ERROR, "unkown method");
     }
 }
 
@@ -82,23 +87,84 @@ void room_service::on_notification(const std::string& method, const std::string&
     }
 }
 
-void room_service::handle_join(const std::string& id, const std::string& method, const std::string& data,
-                protoo_request_interface* feedback_p) {
-    json data_json = json::parse(data);
+std::shared_ptr<user_info> room_service::get_user_info(const std::string& uid) {
+    std::shared_ptr<user_info> ret_ptr;
+    auto iter = users_.find(uid);
+    if (iter != users_.end()) {
+        ret_ptr = iter->second; 
+    }
+    return ret_ptr;
+}
+
+std::string room_service::get_uid_by_json(json& data_json) {
+    std::string uid;
+
     auto uid_json = data_json.find("uid");
     if (uid_json == data_json.end()) {
+        return uid;
+    }
+    if (!uid_json->is_string()) {
+        return uid;
+    }
+
+    uid = uid_json->get<std::string>();
+    return uid;
+}
+
+void room_service::handle_publish(const std::string& id, const std::string& method,
+                const std::string& data, protoo_request_interface* feedback_p) {
+    std::shared_ptr<user_info> user_ptr;
+    json data_json = json::parse(data);
+
+    std::string uid = get_uid_by_json(data_json);
+    if (uid.empty()) {
         feedback_p->reject(id, UID_ERROR, "uid field does not exist");
         return;
     }
-    if (!uid_json->is_string()) {
-        feedback_p->reject(id, UID_ERROR, "uid field is not string");
+
+    user_ptr = get_user_info(uid);
+    if (!user_ptr) {
+        feedback_p->reject(id, UID_ERROR, "uid doesn't exist");
         return;
     }
 
-    std::string uid = uid_json->get<std::string>();
+    auto sdp_json = data_json.find("sdp");
+    if (sdp_json == data_json.end()) {
+        feedback_p->reject(id, SDP_ERROR, "roomId does not exist");
+        return;
+    }
+    if (!sdp_json->is_string()) {
+        feedback_p->reject(id, SDP_ERROR, "roomId is not string");
+        return;
+    }
 
-    auto iter = users_.find(uid);
-    if (iter != users_.end()) {
+    std::string sdp = sdp_json->get<std::string>();
+
+    log_infof("receive publish sdp:%s", sdp.c_str());
+
+    auto resp_json = json::object();
+    resp_json["sdp"] = sdp;
+    
+    std::string resp_data = resp_json.dump();
+
+    //log_infof("publish response data:%s", resp_data.c_str());
+    feedback_p->accept(id, resp_data);
+    return;
+}
+
+void room_service::handle_join(const std::string& id, const std::string& method, const std::string& data,
+                protoo_request_interface* feedback_p) {
+    std::shared_ptr<user_info> user_ptr;
+    json data_json = json::parse(data);
+
+    std::string uid = get_uid_by_json(data_json);
+    if (uid.empty()) {
+        feedback_p->reject(id, UID_ERROR, "uid field does not exist");
+        return;
+    }
+
+    user_ptr = get_user_info(uid);
+    if (user_ptr.get() != nullptr) {
         feedback_p->reject(id, UID_ERROR, "uid has existed");
         return;
     }
@@ -119,7 +185,7 @@ void room_service::handle_join(const std::string& id, const std::string& method,
         return;
     }
 
-    std::shared_ptr<user_info> user_ptr = std::make_shared<user_info>(uid, roomId, feedback_p);
+    user_ptr = std::make_shared<user_info>(uid, roomId, feedback_p);
 
     users_.insert(std::make_pair(uid, user_ptr));
 

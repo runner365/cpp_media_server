@@ -10,6 +10,8 @@
 #define NOTIFICATION_HANDLE_ERROR 1005
 #define UID_ERROR                 1006
 #define ROOMID_ERROR              1007
+#define SDP_ERROR                 1008
+#define METHOD_ERROR              1009
 
 class protoo_request_interface
 {

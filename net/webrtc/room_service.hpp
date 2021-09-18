@@ -1,9 +1,12 @@
 #ifndef ROOM_SERVICE_HPP
 #define ROOM_SERVICE_HPP
 #include "net/websocket/wsimple/protoo_pub.hpp"
+#include "json.hpp"
 #include <string>
 #include <memory>
 #include <unordered_map>
+
+using json = nlohmann::json;
 
 class user_info
 {
@@ -42,8 +45,14 @@ public:
     virtual void on_notification(const std::string& method, const std::string& data) override;
 
 private:
-    void handle_join(const std::string& id, const std::string& method, const std::string& data,
-                protoo_request_interface* feedback_p);
+    void handle_join(const std::string& id, const std::string& method,
+                const std::string& data, protoo_request_interface* feedback_p);
+    void handle_publish(const std::string& id, const std::string& method,
+                const std::string& data, protoo_request_interface* feedback_p);
+
+private:
+    std::shared_ptr<user_info> get_user_info(const std::string& uid);
+    std::string get_uid_by_json(json& json_obj);
 
 private:
     std::string roomId_;
