@@ -1,5 +1,6 @@
 ./__cmake
 ./__cmake/*
+3rdparty
 ./3rdparty
 ./3rdparty/*
 
