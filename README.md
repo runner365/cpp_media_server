@@ -17,7 +17,9 @@ step 2nd: ./b2 install -j 4 --with-system --with-thread --with-date_time --with-
 network protocol feature:
 * rtmp
 * httpflv
-* websocket(webcodec encode media in flv(h264+opus) over websocket)
+* websocket
+
+webcodec encode media in flv(h264+opus) over websocket, we suggest webclient demo: [webcodecpush](https://github.com/runner365/webcodecpush)
 
 media format support:
 * flv(h264/vp8/vp9, aac/opus)
