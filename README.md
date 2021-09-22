@@ -1,6 +1,6 @@
 # cpp_media_server
 
-A media server is writen by C++11, and the network io is write by Boost.Asio.
+A media server is writen by C++11, and the network io is writen by Boost.Asio.
 
 ## preinstall
 How to install boost.asio
