@@ -42,4 +42,7 @@ void write_2bytes(uint8_t* data, uint16_t value);
 
 bool bytes_is_equal(const char* p1, const char* p2, size_t len);
 
+uint16_t pad_to_4bytes(uint16_t size);
+uint32_t pad_to_4bytes(uint32_t size);
+
 #endif //BYTE_STREAM_HPP

@@ -138,8 +138,47 @@ void room_service::handle_publish(const std::string& id, const std::string& meth
     }
 
     std::string sdp = sdp_json->get<std::string>();
+
+    json info_json = user_ptr->parse_remote_sdp(sdp);
+    //log_infof("publish sdp json:%s", info_json.dump().c_str());
+
+    rtc_media_info& info = user_ptr->parse_remote_media_info(info_json);
+    //log_infof("get input sdp dump:\r\n%s", info.dump().c_str());
+    rtc_media_info support_info;
+
+    user_ptr->get_support_media_info(info, support_info);
+
+    std::shared_ptr<webrtc_session> session_ptr = std::make_shared<webrtc_session>(RTC_DIRECTION_RECV);
+    session_ptr->get_candidates_ip();
+
+    support_info.ice.ice_pwd = session_ptr->get_user_pwd();
+    support_info.ice.ice_ufrag = session_ptr->get_username_fragment();
+
+    support_info.finger_print.type = info.finger_print.type;
+    finger_print_info fingerprint = session_ptr->get_local_finger_print(info.finger_print.type);
+    support_info.finger_print.hash = fingerprint.value;
+
+    CANDIDATE_INFO candidate_data = {
+        .foundation = "0",
+        .component  = 1,
+        .priority   = 2113667327,
+        .transport  = "udp",
+        .ip         = session_ptr->get_candidates_ip(),
+        .port       = session_ptr->get_candidates_port(),
+        .type       = "host"
+    };
+
+    support_info.candidates.push_back(candidate_data);
+
+    //log_infof("support media info:\r\n%s", support_info.dump().c_str());
+    std::string resp_sdp_str = user_ptr->rtc_media_info_2_sdp(support_info);
+
+    user_ptr->publish_session_ptr_ = session_ptr;
+
+    //log_infof("support response sdp:\r\n%s", resp_sdp_str.c_str());
+
     auto resp_json = json::object();
-    resp_json["sdp"] = sdp;
+    resp_json["sdp"] = resp_sdp_str;
     
     std::string resp_data = resp_json.dump();
     //log_infof("publish response data:%s", resp_data.c_str());

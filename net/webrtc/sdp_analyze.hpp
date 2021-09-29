@@ -12,7 +12,7 @@ public:
 
 public:
     json parse(const std::string& sdp_str);
-    int encode(std::stringstream& sdp_io);
+    std::string encode(json& sdp_json);
 
     json get_sdpjson() {return sdp_json_;}
     std::string get_sdp_string() {return sdp_;}

@@ -2,8 +2,11 @@
 #define USER_INFO_HPP
 #include "net/websocket/wsimple/protoo_pub.hpp"
 #include "sdp_analyze.hpp"
+#include "rtc_media_info.hpp"
+#include "webrtc_session.hpp"
 #include "udp/udp_server.hpp"
 #include <string>
+#include <memory>
 
 class user_info
 {
@@ -16,14 +19,27 @@ public:
     std::string roomId() {return roomId_;}
     protoo_request_interface* feedback() {return feedback_;}
 
+public:
+    json parse_remote_sdp(const std::string& sdp);
+    rtc_media_info& parse_remote_media_info(json& sdp_json);
+
+public:
+    void get_support_media_info(rtc_media_info& input_info, rtc_media_info& support_info);
+    std::string rtc_media_info_2_sdp(const rtc_media_info& input);
+
+public:
+    std::shared_ptr<webrtc_session> publish_session_ptr_;
+
 private:
     std::string uid_;
     std::string roomId_;
     protoo_request_interface* feedback_ = nullptr;
 
 private:
-    sdp_analyze remove_sdp_analyze_;
-    sdp_analyze local_sdp_analyze_;
+    sdp_analyze remote_sdp_analyze_;
+
+private:
+    rtc_media_info remote_media_info_;
 };
 
 #endif

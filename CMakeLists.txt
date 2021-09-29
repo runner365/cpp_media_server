@@ -22,7 +22,9 @@ include_directories(./
                     ./net/websocket
                     ./net/websocket/wsimple
                     ./net/tcp
+                    ./net/stun
                     ./net/httpflv
+                    ./net/rtprtcp
                     ./format
                     ./format/flv
                     ./utils
@@ -136,14 +138,20 @@ add_executable(media_server
             net/websocket/ws_service_imp.cpp
             net/websocket/wsimple/flv_websocket.cpp
             net/websocket/wsimple/protoo_server.cpp
+            net/stun/stun_packet.cpp
             net/webrtc/room_service.cpp
             net/webrtc/sdp_analyze.cpp
             net/webrtc/user_info.cpp
+            net/webrtc/rtc_media_info.cpp
+            net/webrtc/rtc_base_session.cpp
+            net/webrtc/webrtc_session.cpp
+            net/webrtc/support_rtc_info.cpp
             net/httpflv/httpflv_server.cpp
             net/httpflv/httpflv_writer.cpp
             utils/logger.cpp
             utils/data_buffer.cpp
             utils/byte_stream.cpp
+            utils/byte_crypto.cpp
             utils/av/media_stream_manager.cpp
             utils/av/gop_cache.cpp)
 

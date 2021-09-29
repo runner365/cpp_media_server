@@ -1,6 +1,8 @@
 #include "rtmp_server.hpp"
 #include "ws_server.hpp"
 #include "httpflv_server.hpp"
+#include "net/webrtc/webrtc_pub.hpp"
+#include "utils/byte_crypto.hpp"
 #include "logger.hpp"
 #include <stdint.h>
 #include <stddef.h>
@@ -8,9 +10,11 @@
 websocket_server* wss_p = nullptr;
 websocket_server* ws_p  = nullptr;
 
+const std::string ssl_pem_file = "../certs/server.key";
+const std::string cert_file = "../certs/server.crt";
+
 void create_wss_server(boost::asio::io_context& io_context, uint16_t ws_port) {
-    const std::string ssl_pem_file = "../certs/server.pem";
-    const std::string cert_file = "../certs/server.pem";
+
 
     log_infof("websocket https server is starting, port:%d", ws_port);
     wss_p = new websocket_server(io_context, ws_port, WEBSOCKET_IMPLEMENT_PROTOO_TYPE, cert_file, ssl_pem_file);
@@ -26,13 +30,19 @@ int main(int argn, char** argv) {
     const uint16_t ws_def_port = 1900;
     const uint16_t ws_webrtc_port = 9110;
     const uint16_t httpflv_port = 8080;
+    const uint16_t webrtc_media_port = 7000;
+    const std::string host_ip = "172.17.154.11";
 
     boost::asio::io_context io_context;
     boost::asio::io_service::work work(io_context);
 
-    //Logger::get_instance()->set_filename("server.log");
+    Logger::get_instance()->set_filename("server.log");
 
     try {
+        byte_crypto::init();
+        dtls_init(ssl_pem_file, cert_file);
+        init_single_udp_server(io_context, host_ip, webrtc_media_port);
+
         rtmp_server server(io_context, rtmp_def_port);
         websocket_server ws(io_context, ws_def_port, WEBSOCKET_IMPLEMENT_FLV_TYPE);
         httpflv_server httpflv_serv(io_context, httpflv_port);

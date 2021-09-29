@@ -1,31 +1,13 @@
 #ifndef ROOM_SERVICE_HPP
 #define ROOM_SERVICE_HPP
 #include "net/websocket/wsimple/protoo_pub.hpp"
+#include "user_info.hpp"
 #include "json.hpp"
 #include <string>
 #include <memory>
 #include <unordered_map>
 
 using json = nlohmann::json;
-
-class user_info
-{
-public:
-    user_info(const std::string& uid, const std::string& roomId, protoo_request_interface* fb):uid_(uid)
-        , roomId_(roomId)
-        , feedback_(fb)
-    {
-    }
-    ~user_info()
-    {
-    }
-
-    
-public:
-    std::string uid_;
-    std::string roomId_;
-    protoo_request_interface* feedback_ = nullptr;
-};
 
 class room_service : public protoo_event_callback
 {

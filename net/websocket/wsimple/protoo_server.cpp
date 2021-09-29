@@ -28,7 +28,7 @@ void protoo_server::accept(const std::string& id, const std::string& data) {
     ss << data;
     ss << "}";
 
-    log_infof("response accept:%s, data:%lu", ss.str().c_str(), (int)ss.str().length());
+    //log_infof("response accept:%s, data:%lu", ss.str().c_str(), (int)ss.str().length());
     ws_session_->async_write(ss.str().c_str(), (int)ss.str().length());
 }
 
@@ -231,7 +231,7 @@ void protoo_server::on_accept() {
 
 void protoo_server::on_read(const char* data, size_t len) {
     std::string body(data, len);
-    log_infof("protoo server read body:%s, len:%lu", body.c_str(), len);
+    //log_infof("protoo server read body:%s, len:%lu", body.c_str(), len);
 
     json protooBodyJson = json::parse(body);
 
@@ -311,7 +311,7 @@ void protoo_server::on_read(const char* data, size_t len) {
 }
 
 void protoo_server::on_writen(int len) {
-    log_infof("protoo server writen len:%d", len);
+    //log_infof("protoo server writen len:%d", len);
 }
 
 void protoo_server::on_close(int err_code) {

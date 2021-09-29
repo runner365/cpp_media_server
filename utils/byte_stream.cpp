@@ -124,3 +124,17 @@ bool bytes_is_equal(const char* p1, const char* p2, size_t len) {
     }
     return true;
 }
+
+uint16_t pad_to_4bytes(uint16_t size) {
+    if (size & 0x03)
+        return (size & 0xFFFC) + 4;
+    else
+        return size;
+}
+
+uint32_t pad_to_4bytes(uint32_t size) {
+    if (size & 0x03)
+        return (size & 0xFFFFFFFC) + 4;
+    else
+        return size;
+}

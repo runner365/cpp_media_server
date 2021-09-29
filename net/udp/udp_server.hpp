@@ -18,6 +18,14 @@ public:
     ~udp_tuple(){
     }
 
+    std::string to_string() const {
+        std::string ret = ip_address;
+
+        ret += ":";
+        ret += std::to_string(port);
+        return ret;
+    }
+
 public:
     std::string ip_address;
     uint16_t    port;
