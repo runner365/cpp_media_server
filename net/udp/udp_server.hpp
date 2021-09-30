@@ -11,6 +11,8 @@
 class udp_tuple
 {
 public:
+    udp_tuple() {
+    }
     udp_tuple(const std::string& ip, uint16_t udp_port): ip_address(ip)
         , port(udp_port)
     {
@@ -28,7 +30,7 @@ public:
 
 public:
     std::string ip_address;
-    uint16_t    port;
+    uint16_t    port = 0;
 };
 
 class udp_session_callbackI
@@ -41,7 +43,8 @@ public:
 class udp_server
 {
 public:
-    udp_server(boost::asio::io_context& io_context, uint16_t port, udp_session_callbackI* cb):cb_(cb)
+    udp_server(boost::asio::io_context& io_context, uint16_t port, udp_session_callbackI* cb):io_ctx_(io_context)
+        , cb_(cb)
         , socket_(io_context, boost::asio::ip::udp::endpoint(boost::asio::ip::udp::v4(), port)) {
         try_read();
     }
@@ -49,6 +52,8 @@ public:
     }
 
 public:
+    boost::asio::io_context& get_io_context() {return io_ctx_;}
+
     void try_read() {
         socket_.async_receive_from(
             boost::asio::buffer(buffer_, UDP_DATA_BUFFER_MAX), remote_ep_,
@@ -81,7 +86,8 @@ public:
             });
     }
 private:
-    udp_session_callbackI* cb_ = nullptr;
+    boost::asio::io_context& io_ctx_;
+    udp_session_callbackI* cb_       = nullptr;
     boost::asio::ip::udp::socket socket_;
     boost::asio::ip::udp::endpoint remote_ep_;
     char buffer_[UDP_DATA_BUFFER_MAX];

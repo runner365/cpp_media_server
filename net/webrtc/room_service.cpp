@@ -149,7 +149,7 @@ void room_service::handle_publish(const std::string& id, const std::string& meth
     user_ptr->get_support_media_info(info, support_info);
 
     std::shared_ptr<webrtc_session> session_ptr = std::make_shared<webrtc_session>(RTC_DIRECTION_RECV);
-    session_ptr->get_candidates_ip();
+    session_ptr->set_remote_finger_print(info.finger_print);
 
     support_info.ice.ice_pwd = session_ptr->get_user_pwd();
     support_info.ice.ice_ufrag = session_ptr->get_username_fragment();

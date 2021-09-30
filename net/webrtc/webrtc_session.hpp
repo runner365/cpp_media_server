@@ -2,6 +2,8 @@
 #define WEBRTC_SESSION_HPP
 #include "rtc_base_session.hpp"
 #include "rtc_session_pub.hpp"
+#include "rtc_dtls.hpp"
+#include "rtc_media_info.hpp"
 #include "net/udp/udp_server.hpp"
 #include <openssl/asn1.h>
 #include <openssl/bn.h>
@@ -14,6 +16,7 @@
 
 class webrtc_session;
 class stun_packet;
+class rtc_dtls;
 
 void insert_webrtc_session(std::string key, webrtc_session* session);
 webrtc_session* get_webrtc_session(const std::string& key);
@@ -37,14 +40,20 @@ public:
     std::string get_candidates_ip();
     uint16_t get_candidates_port();
     finger_print_info get_local_finger_print(const std::string& algorithm_str);
-    void set_remote_finger_print(const finger_print_info& fingerprint) {remote_finger_print_ = fingerprint;}
+    void set_remote_finger_print(const FINGER_PRINT& fingerprint);
 
 public:
     void on_recv_packet(const uint8_t* data, size_t data_size, const udp_tuple& address);
     void on_handle_stun_packet(stun_packet* pkt, const udp_tuple& address);
+    void on_handle_dtls_data(const uint8_t* data, size_t data_len, const udp_tuple& address);
+
+    void send_data(uint8_t* data, size_t data_len);
 
 public:
-    static bool is_dtls(const uint8_t* data, size_t len);
+    void on_dtls_connected(CRYPTO_SUITE_ENUM srtpCryptoSuite,
+                        uint8_t* srtpLocalKey, size_t srtpLocalKeyLen,
+                        uint8_t* srtpRemoteKey, size_t srtpRemoteKeyLen,
+                        std::string& remoteCert);
 
 private:
     void write_udp_data(uint8_t* data, size_t data_size, const udp_tuple& address);
@@ -55,10 +64,10 @@ private://for ice
     std::string user_pwd_;
 
 private://for dtls
-    SSL* ssl_ = nullptr;
-    BIO* ssl_bio_read_  = nullptr; // The BIO from which ssl reads.
-    BIO* ssl_bio_write_ = nullptr; // The BIO in which ssl writes.
-    finger_print_info remote_finger_print_;
+    rtc_dtls* dtls_trans_ = nullptr;
+
+private:
+    udp_tuple remote_address_;
 };
 
 #endif

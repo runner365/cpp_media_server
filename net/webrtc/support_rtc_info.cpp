@@ -376,8 +376,8 @@ void rtc_media_info_to_json(const rtc_media_info& input, json& sdp_json) {
         if (!media_info.rtcp_rsize.empty()) {
             media_json["rtcpRsize"] = media_info.rtcp_rsize;
         }
-        
-        media_json["setup"] = "passive";//media_info.setup;
+        //ice-lite: the server must be passive.
+        media_json["setup"] = "passive";
 
         if (!media_info.ssrc_groups.empty()) {
             media_json["ssrcGroups"] = json::array();

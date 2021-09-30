@@ -2,6 +2,7 @@
 #include "ws_server.hpp"
 #include "httpflv_server.hpp"
 #include "net/webrtc/webrtc_pub.hpp"
+#include "net/webrtc/rtc_dtls.hpp"
 #include "utils/byte_crypto.hpp"
 #include "logger.hpp"
 #include <stdint.h>
@@ -31,7 +32,7 @@ int main(int argn, char** argv) {
     const uint16_t ws_webrtc_port = 9110;
     const uint16_t httpflv_port = 8080;
     const uint16_t webrtc_media_port = 7000;
-    const std::string host_ip = "172.17.154.11";
+    const std::string host_ip = "172.17.152.101";
 
     boost::asio::io_context io_context;
     boost::asio::io_service::work work(io_context);
@@ -40,7 +41,7 @@ int main(int argn, char** argv) {
 
     try {
         byte_crypto::init();
-        dtls_init(ssl_pem_file, cert_file);
+        rtc_dtls::dtls_init(ssl_pem_file, cert_file);
         init_single_udp_server(io_context, host_ip, webrtc_media_port);
 
         rtmp_server server(io_context, rtmp_def_port);

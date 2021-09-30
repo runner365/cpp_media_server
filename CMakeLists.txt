@@ -145,6 +145,7 @@ add_executable(media_server
             net/webrtc/rtc_media_info.cpp
             net/webrtc/rtc_base_session.cpp
             net/webrtc/webrtc_session.cpp
+            net/webrtc/rtc_dtls.cpp
             net/webrtc/support_rtc_info.cpp
             net/httpflv/httpflv_server.cpp
             net/httpflv/httpflv_writer.cpp

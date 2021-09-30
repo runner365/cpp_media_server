@@ -5,6 +5,7 @@
 #include "net/udp/udp_server.hpp"
 #include "net/stun/stun_packet.hpp"
 #include "net/rtprtcp/rtprtcp_pub.hpp"
+#include "rtc_dtls.hpp"
 #include "utils/ipaddress.hpp"
 #include <unordered_map>
 #include <map>
@@ -24,42 +25,6 @@ static single_udp_session_callback single_udp_cb;
 static std::unordered_map<std::string, webrtc_session*> single_webrtc_map;
 static std::string single_candidate_ip;
 static uint16_t single_candidate_port = 0;
-
-static std::vector<finger_print_info> s_local_fingerprint_vec;
-
-X509* s_certificate    = nullptr;
-EVP_PKEY* s_privatekey = nullptr;
-SSL_CTX* s_ssl_ctx     = nullptr;
-
-std::vector<srtp_crypto_suite_map> srtp_crypto_suite_vec =
-{
-    { AEAD_AES_256_GCM, "SRTP_AEAD_AES_256_GCM" },
-    { AEAD_AES_128_GCM, "SRTP_AEAD_AES_128_GCM" },
-    { AES_CM_128_HMAC_SHA1_80, "SRTP_AES128_CM_SHA1_80" },
-    { AES_CM_128_HMAC_SHA1_32, "SRTP_AES128_CM_SHA1_32" }
-};
-
-std::unordered_map<std::string, finger_print_algorithm_enum> string2finger_print_algorithm =
-{
-    { "sha-1",   FINGER_SHA1   },
-    { "sha-224", FINGER_SHA224 },
-    { "sha-256", FINGER_SHA256 },
-    { "sha-384", FINGER_SHA384 },
-    { "sha-512", FINGER_SHA512 }
-};
-
-std::map<finger_print_algorithm_enum, std::string> finger_print_algorithm2String =
-{
-    { FINGER_SHA1,   std::string("sha-1")   },
-    { FINGER_SHA224, std::string("sha-224") },
-    { FINGER_SHA256, std::string("sha-256") },
-    { FINGER_SHA384, std::string("sha-384") },
-    { FINGER_SHA512, std::string("sha-512") }
-};
-
-
-static int on_ssl_certificate_verify(int, X509_STORE_CTX*);
-static void on_ssl_info(const SSL* ssl, int type, int value);
 
 void init_single_udp_server(boost::asio::io_context& io_context,
         const std::string& candidate_ip, uint16_t port) {
@@ -101,164 +66,6 @@ void remove_webrtc_session(std::string key)
     }
     log_infof("remove webrtc session by key:%s", key.c_str());
     single_webrtc_map.erase(iter);
-}
-
-void dtls_init(const std::string& key_file, const std::string& cert_file) {
-    FILE* fh = fopen(cert_file.c_str(), "r");
-    if (!fh) {
-        MS_THROW_ERROR("open cert file(%s) error", cert_file.c_str());
-    }
-
-    s_certificate = PEM_read_X509(fh, nullptr, nullptr, nullptr);
-    if (!s_certificate) {
-        MS_THROW_ERROR("read certificate file error");
-    }
-
-    fclose(fh);
-
-    fh = fopen(key_file.c_str(), "r");
-    if (!fh) {
-        MS_THROW_ERROR("open key file(%s) error", key_file.c_str());
-    }
-
-    s_privatekey = PEM_read_PrivateKey(fh, nullptr, nullptr, nullptr);
-    if (!s_privatekey) {
-        MS_THROW_ERROR("read key file error");
-    }
-
-    fclose(fh);
-
-    s_ssl_ctx = SSL_CTX_new(DTLS_method());
-    if (!s_ssl_ctx) {
-        MS_THROW_ERROR("create ssl context error");
-    }
-
-    int ret = SSL_CTX_use_certificate(s_ssl_ctx, s_certificate);
-    if (!ret) {
-        MS_THROW_ERROR("use certificate error");
-    }
-
-    ret = SSL_CTX_use_PrivateKey(s_ssl_ctx, s_privatekey);
-    if (!ret) {
-        MS_THROW_ERROR("use privatekey error");
-    }
-
-    ret = SSL_CTX_check_private_key(s_ssl_ctx);
-    if (!ret) {
-        MS_THROW_ERROR("check privatekey error");
-    }
-
-    // Set options.
-    SSL_CTX_set_options(s_ssl_ctx,
-                    SSL_OP_CIPHER_SERVER_PREFERENCE | SSL_OP_NO_TICKET |
-                    SSL_OP_SINGLE_ECDH_USE | SSL_OP_NO_QUERY_MTU);
-    
-    SSL_CTX_set_session_cache_mode(s_ssl_ctx, SSL_SESS_CACHE_OFF);
-
-    SSL_CTX_set_read_ahead(s_ssl_ctx, 1);
-
-    SSL_CTX_set_verify_depth(s_ssl_ctx, 4);
-
-    SSL_CTX_set_verify(s_ssl_ctx, SSL_VERIFY_PEER | SSL_VERIFY_FAIL_IF_NO_PEER_CERT,
-                    on_ssl_certificate_verify);
-
-    SSL_CTX_set_info_callback(s_ssl_ctx, on_ssl_info);
-
-    ret = SSL_CTX_set_cipher_list(s_ssl_ctx, "DEFAULT:!NULL:!aNULL:!SHA256:!SHA384:!aECDH:!AESGCM+AES256:!aPSK");
-    if (!ret) {
-        MS_THROW_ERROR("set cipher list error");
-    }
-
-    SSL_CTX_set_ecdh_auto(s_ssl_ctx, 1);
-
-    int index = 0;
-    std::string dtls_srtp_crypto;
-    for (auto item : srtp_crypto_suite_vec) {
-        if (index != 0) {
-            dtls_srtp_crypto += ":";
-        }
-
-        dtls_srtp_crypto += item.name;
-        index++;
-    }
-
-    log_infof("dtls srtp crypto: %s", dtls_srtp_crypto.c_str());
-
-    ret = SSL_CTX_set_tlsext_use_srtp(s_ssl_ctx, dtls_srtp_crypto.c_str());
-    if (ret != 0) {
-        MS_THROW_ERROR("init srtp tlsext error");
-    }
-
-    for (auto& item : string2finger_print_algorithm) {
-        const std::string& algorithm_str      = item.first;
-        finger_print_algorithm_enum algorithm = item.second;
-        uint8_t bin_finger_print[EVP_MAX_MD_SIZE];
-        char finger_print_sz[(EVP_MAX_MD_SIZE * 3) + 1];
-        unsigned int size = 0;
-
-        const EVP_MD* hash_function;
-
-        switch(algorithm)
-        {
-            case FINGER_SHA1:
-            {
-                hash_function = EVP_sha1();
-                break;
-            }
-            case FINGER_SHA224:
-            {
-                hash_function = EVP_sha224();
-                break;
-            }
-            case FINGER_SHA256:
-            {
-                hash_function = EVP_sha256();
-                break;
-            }
-            case FINGER_SHA384:
-            {
-                hash_function = EVP_sha384();
-                break;
-            }
-            case FINGER_SHA512:
-            {
-                hash_function = EVP_sha512();
-                break;
-            }
-            default:
-            {
-                MS_THROW_ERROR("unkown finger print type:%d", (int)algorithm);
-            }
-        }
-        int ret = X509_digest(s_certificate, hash_function, bin_finger_print, &size);
-        if (!ret) {
-            MS_THROW_ERROR("X509_digest error");
-        }
-        for (unsigned int index = 0; index < size; index++)
-        {
-            std::sprintf(finger_print_sz + (index * 3), "%.2X:", bin_finger_print[index]);
-        }
-        finger_print_sz[(size * 3) - 1] = '\0';
-        log_infof("dtls %s fingerprint: %s", algorithm_str.c_str(), finger_print_sz);
-
-        finger_print_info info;
-
-        info.algorithm = string2finger_print_algorithm[algorithm_str];
-        info.value     = finger_print_sz;
-
-        s_local_fingerprint_vec.push_back(info);
-    }
-
-    return;
-}
-
-static int on_ssl_certificate_verify(int, X509_STORE_CTX*) {
-    log_infof("ssl certificate verify callback: enable");
-    return 1;
-}
-
-static void on_ssl_info(const SSL* ssl, int type, int value) {
-    log_infof("ssl info callback type:%d, value:%d", type, value);
 }
 
 
@@ -331,38 +138,10 @@ webrtc_session::webrtc_session(int session_direction):rtc_base_session(session_d
 
     insert_webrtc_session(username_fragment_, this);
 
+    dtls_trans_ = new rtc_dtls(this, single_udp_server_ptr->get_io_context());
+
     log_infof("webrtc_session construct username fragement:%s, user password:%s",
         username_fragment_.c_str(), user_pwd_.c_str());
-    
-    //for dtls
-    ssl_ = SSL_new(s_ssl_ctx);
-    if (!ssl_) {
-        MS_THROW_ERROR("ssl new error");
-    }
-
-    SSL_set_ex_data(ssl_, 0, static_cast<void*>(this));
-
-    ssl_bio_read_ = BIO_new(BIO_s_mem());
-
-    if (!ssl_bio_read_) {
-        SSL_free(ssl_);
-        MS_THROW_ERROR("init ssl bio read error");
-    }
-
-    ssl_bio_write_ = BIO_new(BIO_s_mem());
-    if (!ssl_bio_write_) {
-        BIO_free(ssl_bio_read_);
-        SSL_free(ssl_);
-        MS_THROW_ERROR("init ssl bio write error");
-    }
-
-    SSL_set_bio(ssl_, ssl_bio_read_, ssl_bio_write_);
-
-    const int dtls_mtu = 1350;
-    SSL_set_mtu(ssl_, dtls_mtu);
-    DTLS_set_link_mtu(ssl_, dtls_mtu);
-
-    //DTLS_set_timer_cb(ssl_, on_ssl_dtls_timer);
 }
 
 webrtc_session::~webrtc_session() {
@@ -374,6 +153,18 @@ void webrtc_session::write_udp_data(uint8_t* data, size_t data_size, const udp_t
         MS_THROW_ERROR("single udp server is not inited");
     }
     single_udp_server_ptr->write((char*)data, data_size, address);
+}
+
+void webrtc_session::send_data(uint8_t* data, size_t data_len) {
+    if (!single_udp_server_ptr) {
+        MS_THROW_ERROR("single udp server is not inited");
+    }
+
+    if (remote_address_.ip_address.empty() || remote_address_.port == 0) {
+        MS_THROW_ERROR("remote address is not inited");
+    }
+
+    single_udp_server_ptr->write((char*)data, data_len, remote_address_);
 }
 
 void webrtc_session::on_recv_packet(const uint8_t* data, size_t data_size,
@@ -394,9 +185,10 @@ void webrtc_session::on_recv_packet(const uint8_t* data, size_t data_size,
     } else if (is_rtp(data, data_size)) {
         log_infof("receive rtp packet len:%lu, remote:%s",
                 data_size, address.to_string().c_str());
-    } else if (webrtc_session::is_dtls(data, data_size)) {
+    } else if (rtc_dtls::is_dtls(data, data_size)) {
         log_infof("receive dtls packet len:%lu, remote:%s",
                 data_size, address.to_string().c_str());
+        on_handle_dtls_data(data, data_size, address);
     } else {
         log_errorf("receive unkown packet len:%lu, remote:%s",
                 data_size, address.to_string().c_str());
@@ -414,6 +206,31 @@ void webrtc_session::write_error_stun_packet(stun_packet* pkt, int err, const ud
    write_udp_data(resp_pkt->data, resp_pkt->data_len, address);
    delete resp_pkt;
    return;
+}
+
+void webrtc_session::on_dtls_connected(CRYPTO_SUITE_ENUM srtpCryptoSuite,
+                uint8_t* srtpLocalKey, size_t srtpLocalKeyLen,
+                uint8_t* srtpRemoteKey, size_t srtpRemoteKeyLen,
+                std::string& remoteCert) {
+
+    return;
+}
+
+void webrtc_session::on_handle_dtls_data(const uint8_t* data, size_t data_len, const udp_tuple& address) {
+    if ((remote_address_.ip_address != address.ip_address) && (remote_address_.port != address.port)) {
+        log_warnf("remote address(%s) is not equal to the address(%s)",
+            remote_address_.to_string().c_str(), address.to_string().c_str());
+    }
+
+    //update remote address
+    remote_address_ = address;
+
+    if ((dtls_trans_->state != DTLS_CONNECTING) && (dtls_trans_->state != DTLS_CONNECTED)) {
+        log_errorf("dtls state(%d) is not ready.", dtls_trans_->state);
+        return;
+    }
+    dtls_trans_->handle_dtls_data(data, data_len);
+    return;
 }
 
 void webrtc_session::on_handle_stun_packet(stun_packet* pkt, const udp_tuple& address) {
@@ -466,8 +283,11 @@ void webrtc_session::on_handle_stun_packet(stun_packet* pkt, const udp_tuple& ad
         resp_pkt->serialize();
 
         log_infof("stun packet response:\r\n %s", resp_pkt->dump().c_str());
+        remote_address_ = address;
         write_udp_data(resp_pkt->data, resp_pkt->data_len, address);
         delete resp_pkt;
+
+        dtls_trans_->start(ROLE_SERVER);
     } else {
         log_warnf("the server doesn't handle stun class:%d", (int)pkt->stun_class);
     }
@@ -487,7 +307,7 @@ finger_print_info webrtc_session::get_local_finger_print(const std::string& algo
     finger_print_algorithm_enum algorithm = string2finger_print_algorithm[algorithm_str];
     
     std::string value;
-    for (auto item : s_local_fingerprint_vec) {
+    for (auto item : rtc_dtls::s_local_fingerprint_vec) {
         if (item.algorithm == algorithm) {
             value = item.value;
             break;
@@ -503,7 +323,11 @@ finger_print_info webrtc_session::get_local_finger_print(const std::string& algo
     return info;
 }
 
-bool webrtc_session::is_dtls(const uint8_t* data, size_t len) {
-    //https://tools.ietf.org/html/draft-ietf-avtcore-rfc5764-mux-fixes
-    return ((len >= 13) && (data[0] > 19 && data[0] < 64));
+void webrtc_session::set_remote_finger_print(const FINGER_PRINT& fingerprint) {
+    dtls_trans_->remote_finger_print.value = fingerprint.hash;
+    dtls_trans_->remote_finger_print.algorithm = string2finger_print_algorithm[fingerprint.type];
+
+    log_infof("set remote fingerprint algorithm:%d, value:%s",
+        (int)dtls_trans_->remote_finger_print.algorithm,
+        dtls_trans_->remote_finger_print.value.c_str());
 }

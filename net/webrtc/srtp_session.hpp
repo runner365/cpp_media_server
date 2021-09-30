@@ -1,0 +1,18 @@
+#ifndef SRTP_SESSION_HPP
+#define SRTP_SESSION_HPP
+
+typedef enum
+{
+    CRYPTO_SUITE_NONE                    = 0,
+    CRYPTO_SUITE_AES_CM_128_HMAC_SHA1_80 = 1,
+    CRYPTO_SUITE_AES_CM_128_HMAC_SHA1_32,
+    CRYPTO_SUITE_AEAD_AES_256_GCM,
+    CRYPTO_SUITE_AEAD_AES_128_GCM
+} CRYPTO_SUITE_ENUM;
+
+typedef struct SRTP_CRYPTO_SUITE_ENTRY_S
+{
+    CRYPTO_SUITE_ENUM crypto_suite;
+    const char* name;
+} SRTP_CRYPTO_SUITE_ENTRY;
+#endif
