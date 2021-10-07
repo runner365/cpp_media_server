@@ -2,8 +2,6 @@
 ./__cmake/*
 ./build
 ./build/*
-
-3rdparty
 ./3rdparty
 ./3rdparty/*
 
