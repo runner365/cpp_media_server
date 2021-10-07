@@ -146,6 +146,7 @@ add_executable(media_server
             net/webrtc/rtc_base_session.cpp
             net/webrtc/webrtc_session.cpp
             net/webrtc/rtc_dtls.cpp
+            net/webrtc/srtp_session.cpp
             net/webrtc/support_rtc_info.cpp
             net/httpflv/httpflv_server.cpp
             net/httpflv/httpflv_writer.cpp
@@ -156,10 +157,10 @@ add_executable(media_server
             utils/av/media_stream_manager.cpp
             utils/av/gop_cache.cpp)
 
-add_dependencies(media_server sdptransform)
+add_dependencies(media_server sdptransform libsrtp2)
 
 IF (APPLE)
-target_link_libraries(media_server pthread dl z m ssl crypto boost_thread boost_system sdptransform)
+target_link_libraries(media_server pthread dl z m ssl crypto boost_thread boost_system sdptransform srtp2)
 ELSEIF (UNIX)
-target_link_libraries(media_server pthread rt dl z m ssl crypto boost_thread boost_system sdptransform)
+target_link_libraries(media_server pthread rt dl z m ssl crypto boost_thread boost_system sdptransform srtp2)
 ENDIF ()
