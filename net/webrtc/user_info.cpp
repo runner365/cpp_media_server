@@ -1,5 +1,6 @@
 #include "user_info.hpp"
 #include "support_rtc_info.hpp"
+#include "utils/logger.hpp"
 
 user_info::user_info(const std::string& uid, const std::string& roomId, protoo_request_interface* fb):uid_(uid)
     , roomId_(roomId)
@@ -7,8 +8,9 @@ user_info::user_info(const std::string& uid, const std::string& roomId, protoo_r
 {
 }
 
-user_info::~user_info()
-{
+user_info::~user_info() {
+    log_infof("user destruct, uid:%s, roomid:%s", uid_.c_str(), roomId_.c_str());
+    publish_session_ptr_->close_session();
 }
 
 json user_info::parse_remote_sdp(const std::string& sdp) {

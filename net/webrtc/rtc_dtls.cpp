@@ -224,16 +224,61 @@ int rtc_dtls::on_ssl_certificate_verify(int, X509_STORE_CTX*) {
 }
 
 void rtc_dtls::on_ssl_info(int type, int value) {
-    log_infof("ssl info callback type:%d, value:%d", type, value);
+    std::string role;
 
-    if ((type & SSL_CB_HANDSHAKE_DONE) != 0) {
+    if ((type & SSL_ST_CONNECT) != 0)
+        role = "client";
+    else if ((type & SSL_ST_ACCEPT) != 0)
+        role = "server";
+    else
+        role = "undefined";
+
+    if ((type & SSL_CB_LOOP) != 0) {
+        log_infof("[role:%s, action:'%s']", role.c_str(), SSL_state_string_long(ssl_));
+    }
+    else if ((type & SSL_CB_ALERT) != 0) {
+        std::string alert_type;
+
+        switch (*SSL_alert_type_string(value))
+        {
+            case 'W':
+                alert_type = "warning";
+                break;
+
+            case 'F':
+                alert_type = "fatal";
+                break;
+
+            default:
+                alert_type = "undefined";
+        }
+
+        if ((type & SSL_CB_READ) != 0) {
+            log_infof("received DTLS %s alert: %s", alert_type.c_str(), SSL_alert_desc_string_long(value));
+        }
+        else if ((type & SSL_CB_WRITE) != 0) {
+            log_infof("sending DTLS %s alert: %s", alert_type.c_str(), SSL_alert_desc_string_long(value));
+        }
+        else {
+            log_infof("DTLS %s alert: %s", alert_type.c_str(), SSL_alert_desc_string_long(value));
+        }
+    } else if ((type & SSL_CB_EXIT) != 0) {
+        if (value == 0) {
+            log_infof("[role:%s, failed:'%s']", role.c_str(), SSL_state_string_long(ssl_));
+        }
+        else if (value < 0) {
+            log_infof("role: %s, waiting:'%s']", role.c_str(), SSL_state_string_long(ssl_));
+        }
+    } else if ((type & SSL_CB_HANDSHAKE_START) != 0) {
+        log_infof("DTLS handshake start");
+    } else if ((type & SSL_CB_HANDSHAKE_DONE) != 0) {
         log_infof("open ssl handshake done.");
         handshake_done_ = true;
     }
 
 }
 
-rtc_dtls::rtc_dtls(webrtc_session* session, boost::asio::io_context& io_ctx): timer_interface(io_ctx, 1000)
+rtc_dtls::rtc_dtls(webrtc_session* session, boost::asio::io_context& io_ctx): timer_interface(io_ctx, 5*1000)
     , session_(session) {
     state = DTLS_NEW;
     role  = ROLE_SERVER;//role must be "server" in ice-lite mode.
@@ -292,6 +337,9 @@ void rtc_dtls::start(DTLS_ROLE role_mode) {
     SSL_set_accept_state(ssl_);
     SSL_do_handshake(ssl_);
 
+    //only for dtls client role mode
+    //send_pending_dtls_data();
+
     return;
 }
 
@@ -301,6 +349,7 @@ void rtc_dtls::on_timer() {
         return;
     }
 
+    log_infof("------------ rtc dtls on timer --------------");
     DTLSv1_handle_timeout(ssl_);
 
     send_pending_dtls_data();
@@ -312,9 +361,13 @@ void rtc_dtls::handle_dtls_data(const uint8_t* data, size_t data_len) {
     int written = BIO_write(this->ssl_bio_read_, (void*)data, (int)data_len);
     if (written != (int)data_len) {
         log_warnf("bio write len(%d) is not equal to input data len(%lu)", written, data_len);
+    } else {
+        log_infof("bio write len:%d ok", written);
     }
 
     int read = SSL_read(ssl_, (void*)ssl_read_buffer_, SSL_READ_BUFFER_SIZE);
+
+    log_infof("ssl read buffer len:%d", read);
 
     send_pending_dtls_data();
 
@@ -322,7 +375,7 @@ void rtc_dtls::handle_dtls_data(const uint8_t* data, size_t data_len) {
         return;
     }
 
-    start_timer();
+    //start_timer();
 }
 
 void rtc_dtls::send_pending_dtls_data() {
@@ -361,7 +414,7 @@ bool rtc_dtls::check_status(int ret_code) {
             break;
 
         case SSL_ERROR_WANT_READ:
-            log_errorf("SSL status: SSL_ERROR_WANT_READ");
+            //log_errorf("SSL status: SSL_ERROR_WANT_READ");
             break;
 
         case SSL_ERROR_WANT_WRITE:
@@ -394,6 +447,7 @@ bool rtc_dtls::check_status(int ret_code) {
 
     if (handshake_done_) {
         if (this->remote_finger_print.algorithm != FINGER_NONE) {
+            log_infof("start processing handshake...");
             return process_handshake();
         }
     }
@@ -414,6 +468,8 @@ bool rtc_dtls::process_handshake() {
         log_errorf("get_srtp_crypto_suite fail");
         return false;
     }
+
+    log_infof("get srtp crypto suite:%d", (int)srtp_suite);
 
     extract_srtp_keys(srtp_suite);
 
@@ -470,7 +526,7 @@ void rtc_dtls::extract_srtp_keys(CRYPTO_SUITE_ENUM srtp_suite) {
     int ret = SSL_export_keying_material(ssl_, srtp_material, srtp_masterlength * 2,
                             "EXTRACTOR-dtls_srtp", 19, nullptr, 0, 0);
 
-    if (ret != 0) {
+    if (ret != 1) {
         log_errorf("SSL_export_keying_material error:%d", ret);
         delete[] srtp_material;
         delete[] srtp_local_masterkey;
@@ -494,6 +550,8 @@ void rtc_dtls::extract_srtp_keys(CRYPTO_SUITE_ENUM srtp_suite) {
 
 
     this->state = DTLS_CONNECTED;
+
+    log_infof("srtp call dtls connected....");
 
     //set srtp parameters
     this->session_->on_dtls_connected(srtp_suite,
@@ -528,7 +586,8 @@ CRYPTO_SUITE_ENUM rtc_dtls::get_srtp_crypto_suite() {
 }
 
 bool rtc_dtls::check_remote_fingerprint() {
-    if (this->remote_finger_print.algorithm != FINGER_NONE) {
+    if (this->remote_finger_print.algorithm == FINGER_NONE) {
+        log_errorf("remote fingerprint algorithm(%d) error", this->remote_finger_print.algorithm);
         return false;
     }
 
@@ -617,7 +676,7 @@ bool rtc_dtls::check_remote_fingerprint() {
     }
 
     this->remote_cert = std::string(mem->data, mem->length);
-    log_infof("udpate remote cert:%s", this->remote_cert.c_str());
+    log_infof("udpate remote cert:\r\n%s", this->remote_cert.c_str());
 
     X509_free(certificate);
     BIO_free(bio);

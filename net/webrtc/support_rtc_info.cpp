@@ -89,11 +89,8 @@ void get_support_fmtp(const std::vector<FMTP>& input_fmtps,
     }
 
     std::vector<int> payload_vec;
-    log_infof("support_input_fmtps size:%lu", support_input_fmtps.size());
     for (auto fmtp : support_input_fmtps) {
-        log_infof("support payload:%d, config:%s", fmtp.payload, fmtp.config.c_str());
         if (fmtp.config.find("apt=") != 0) {
-            log_infof("business payload:%d, config:%s", fmtp.payload, fmtp.config.c_str());
             payload_vec.push_back(fmtp.payload);
         }
     }

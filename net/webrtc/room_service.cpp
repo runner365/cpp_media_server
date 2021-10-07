@@ -181,7 +181,7 @@ void room_service::handle_publish(const std::string& id, const std::string& meth
     resp_json["sdp"] = resp_sdp_str;
     
     std::string resp_data = resp_json.dump();
-    //log_infof("publish response data:%s", resp_data.c_str());
+    log_infof("publish response sdp:%s", resp_sdp_str.c_str());
     feedback_p->accept(id, resp_data);
     return;
 }

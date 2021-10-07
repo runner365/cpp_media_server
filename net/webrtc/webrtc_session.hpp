@@ -42,6 +42,8 @@ public:
     finger_print_info get_local_finger_print(const std::string& algorithm_str);
     void set_remote_finger_print(const FINGER_PRINT& fingerprint);
 
+    void close_session();
+
 public:
     void on_recv_packet(const uint8_t* data, size_t data_size, const udp_tuple& address);
     void on_handle_stun_packet(stun_packet* pkt, const udp_tuple& address);

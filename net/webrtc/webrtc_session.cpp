@@ -7,6 +7,7 @@
 #include "net/rtprtcp/rtprtcp_pub.hpp"
 #include "rtc_dtls.hpp"
 #include "utils/ipaddress.hpp"
+#include "utils/byte_crypto.hpp"
 #include <unordered_map>
 #include <map>
 #include <vector>
@@ -44,30 +45,42 @@ void insert_webrtc_session(std::string key, webrtc_session* session) {
     single_webrtc_map.insert(std::make_pair(key, session));
 }
 
-webrtc_session* get_webrtc_session(const std::string& key)
-{
+webrtc_session* get_webrtc_session(const std::string& key) {
     webrtc_session* session = nullptr;
     
     auto iter = single_webrtc_map.find(key);
-    if (iter == single_webrtc_map.end())
-    {
+    if (iter == single_webrtc_map.end()) {
         return session;
     }
     session = (webrtc_session*)iter->second;
     return session;
 }
 
-void remove_webrtc_session(std::string key)
-{
+int32_t remove_webrtc_session(std::string key) {
     auto iter = single_webrtc_map.find(key);
-    if (iter == single_webrtc_map.end())
-    {
-        return;
+    if (iter == single_webrtc_map.end()) {
+        return 0;
     }
     log_infof("remove webrtc session by key:%s", key.c_str());
     single_webrtc_map.erase(iter);
+    return 1;
 }
 
+int remove_webrtc_session(webrtc_session* session) {
+    int count = 0;
+    auto iter = single_webrtc_map.begin();
+
+    while(iter != single_webrtc_map.end()) {
+        webrtc_session* item_session = iter->second;
+        if (session == item_session) {
+            iter = single_webrtc_map.erase(iter);
+            count++;
+        } else {
+            iter++;
+        }
+    }
+    return count;
+}
 
 //static unsigned int on_ssl_dtls_timer(SSL* /*ssl*/, unsigned int timer_us)
 //{
@@ -88,6 +101,9 @@ void single_udp_session_callback::on_read(const char* data, size_t data_size, ud
     webrtc_session* session = nullptr;
     
     std::string peerid = address.to_string();
+
+    log_infof("udp receive len:%lu, remote:%s", data_size, peerid.c_str());
+    
     session = get_webrtc_session(peerid);
     if (session) {
         session->on_recv_packet((uint8_t*)data, data_size, address);
@@ -133,8 +149,8 @@ void single_udp_session_callback::on_read(const char* data, size_t data_size, ud
 }
 
 webrtc_session::webrtc_session(int session_direction):rtc_base_session(session_direction) {
-    username_fragment_ = get_random_string(16);
-    user_pwd_          = get_random_string(32);
+    username_fragment_ = byte_crypto::get_random_string(16);
+    user_pwd_          = byte_crypto::get_random_string(32);
 
     insert_webrtc_session(username_fragment_, this);
 
@@ -146,6 +162,13 @@ webrtc_session::webrtc_session(int session_direction):rtc_base_session(session_d
 
 webrtc_session::~webrtc_session() {
 
+}
+
+void webrtc_session::close_session() {
+    int ret = remove_webrtc_session(this);
+    if (ret > 0) {
+        log_infof("close webrtc session remove %d item from the global map", ret);
+    }
 }
 
 void webrtc_session::write_udp_data(uint8_t* data, size_t data_size, const udp_tuple& address) {
@@ -212,7 +235,11 @@ void webrtc_session::on_dtls_connected(CRYPTO_SUITE_ENUM srtpCryptoSuite,
                 uint8_t* srtpLocalKey, size_t srtpLocalKeyLen,
                 uint8_t* srtpRemoteKey, size_t srtpRemoteKeyLen,
                 std::string& remoteCert) {
+    log_info_data(srtpLocalKey, srtpLocalKeyLen, "on dtls connected srtp local key");
 
+    log_info_data(srtpRemoteKey, srtpRemoteKeyLen, "on dtls connected srtp remote key");
+
+    log_infof("on dtls connected remote cert:%s", remoteCert.c_str());
     return;
 }
 

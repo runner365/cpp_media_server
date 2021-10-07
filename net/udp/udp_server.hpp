@@ -65,6 +65,7 @@ public:
                 }
                 udp_tuple recv_address(remote_ep_.address().to_string(), remote_ep_.port());
                 cb_->on_read(buffer_, bytes_recvd, recv_address);
+                this->try_read();
             });
     }
 

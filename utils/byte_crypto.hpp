@@ -17,6 +17,7 @@ public:
     static uint32_t get_random_uint(uint32_t min, uint32_t max);
     static uint32_t get_crc32(const uint8_t* data, size_t size);
     static uint8_t* get_hmac_sha1(const std::string& key, const uint8_t* data, size_t len);
+    static std::string get_random_string(size_t len);
 
 public:
     static std::default_random_engine random;

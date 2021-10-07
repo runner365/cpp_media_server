@@ -1,5 +1,8 @@
 ./__cmake
 ./__cmake/*
+./build
+./build/*
+
 3rdparty
 ./3rdparty
 ./3rdparty/*
