@@ -76,28 +76,33 @@ srtp_session::srtp_session(SRTP_SESSION_TYPE session_type, CRYPTO_SUITE_ENUM sui
 
     std::memset((void*)&policy, 0, sizeof(srtp_policy_t));
 
+    std::string suite_desc;
     switch (suite)
     {
         case CRYPTO_SUITE_AES_CM_128_HMAC_SHA1_80:
         {
+            suite_desc = "CRYPTO_SUITE_AES_CM_128_HMAC_SHA1_80";
             srtp_crypto_policy_set_aes_cm_128_hmac_sha1_80(&policy.rtp);
             srtp_crypto_policy_set_aes_cm_128_hmac_sha1_80(&policy.rtcp);
             break;
         }
         case CRYPTO_SUITE_AES_CM_128_HMAC_SHA1_32:
         {
+            suite_desc = "CRYPTO_SUITE_AES_CM_128_HMAC_SHA1_32";
             srtp_crypto_policy_set_aes_cm_128_hmac_sha1_32(&policy.rtp);
-            srtp_crypto_policy_set_aes_cm_128_hmac_sha1_80(&policy.rtcp);
+            srtp_crypto_policy_set_aes_cm_128_hmac_sha1_32(&policy.rtcp);
             break;
         }
         case CRYPTO_SUITE_AEAD_AES_256_GCM:
         {
+            suite_desc = "CRYPTO_SUITE_AEAD_AES_256_GCM";
             srtp_crypto_policy_set_aes_gcm_256_16_auth(&policy.rtp);
             srtp_crypto_policy_set_aes_gcm_256_16_auth(&policy.rtcp);
             break;
         }
         case CRYPTO_SUITE_AEAD_AES_128_GCM:
         {
+            suite_desc = "CRYPTO_SUITE_AEAD_AES_128_GCM";
             srtp_crypto_policy_set_aes_gcm_128_16_auth(&policy.rtp);
             srtp_crypto_policy_set_aes_gcm_128_16_auth(&policy.rtcp);
             break;
@@ -137,14 +142,15 @@ srtp_session::srtp_session(SRTP_SESSION_TYPE session_type, CRYPTO_SUITE_ENUM sui
     policy.ssrc.value      = 0;
     policy.key             = key;
     policy.allow_repeat_tx = 1;
-    policy.window_size     = 1024;
+    policy.window_size     = 8192;
     policy.next            = nullptr;
 
     srtp_err_status_t err = srtp_create(&session_, &policy);
 
     if (err != srtp_err_status_ok)
         MS_THROW_ERROR("srtp_create error: %s", srtp_session::errors.at(err));
-    log_infof("srtp session construct, type: %s", session_desc.c_str());
+    log_infof("srtp session construct, type:<%s>, suite:%s",
+        session_desc.c_str(), suite_desc.c_str());
 }
 
 srtp_session::~srtp_session() {
@@ -180,7 +186,7 @@ bool srtp_session::encrypt_rtp(const uint8_t** data, size_t* len) {
 bool srtp_session::decrypt_srtp(uint8_t* data, size_t* len) {
     srtp_err_status_t err = srtp_unprotect(session_, (void*)(data), (int*)(len));
     if (err != srtp_err_status_ok) {
-        log_errorf("srtp_unprotect error: %s", srtp_session::errors.at(err));
+        log_errorf("srtp_unprotect error: <%s>, data len:%lu", srtp_session::errors.at(err), *len);
         return false;
     }
     return true;

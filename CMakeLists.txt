@@ -7,6 +7,7 @@ set(CMAKE_CXX_STANDARD 11)
 set(CMAKE_OUTPUT_BASE ${CMAKE_BINARY_DIR}/output)
 set(BUILD_OUTPUT_BASE ${CMAKE_BINARY_DIR}/output)
 set(PREFIX_DIR "${BUILD_OUTPUT_BASE}")
+set(INSTALL_RPATH "${PREFIX_DIR}/lib")
 
 # set output static libary
 SET(LIBRARY_OUTPUT_PATH ${CMAKE_BINARY_DIR}/output/lib)
@@ -31,11 +32,12 @@ include_directories(./
                     ./utils/av
                     ./3rdparty/libsdptransform/include
                     ${CMAKE_BINARY_DIR}/output/include
+                    ${CMAKE_BINARY_DIR}/output/include/srtp2
                     /usr/local/include)
 
 # set lib path
 #link_directories(${CMAKE_BINARY_DIR}/output/lib /usr/local/lib64 /usr/local/lib)
-link_directories(/usr/local/lib64 /usr/local/lib)
+link_directories(${CMAKE_BINARY_DIR}/output/lib /usr/local/lib64 /usr/local/lib)
 add_subdirectory(3rdparty)
 
 add_executable(echo_demo net/tcp/echo_demo.cpp
@@ -95,6 +97,8 @@ add_executable(rtmp_play_demo
             utils/logger.cpp
             utils/data_buffer.cpp
             utils/byte_stream.cpp)
+add_dependencies(rtmp_play_demo openssl)
+
 IF (APPLE)
 target_link_libraries(rtmp_play_demo pthread dl z m ssl crypto boost_thread boost_system)
 ELSEIF (UNIX)
@@ -113,6 +117,8 @@ add_executable(rtmp_publish_demo
             utils/logger.cpp
             utils/data_buffer.cpp
             utils/byte_stream.cpp)
+add_dependencies(rtmp_publish_demo openssl)
+
 IF (APPLE)
 target_link_libraries(rtmp_publish_demo pthread dl z m ssl crypto boost_thread boost_system)
 ELSEIF (UNIX)
@@ -157,7 +163,7 @@ add_executable(media_server
             utils/av/media_stream_manager.cpp
             utils/av/gop_cache.cpp)
 
-add_dependencies(media_server sdptransform libsrtp2)
+add_dependencies(media_server openssl sdptransform libsrtp)
 
 IF (APPLE)
 target_link_libraries(media_server pthread dl z m ssl crypto boost_thread boost_system sdptransform srtp2)

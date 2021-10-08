@@ -26,7 +26,7 @@ typedef enum
     SRTP_SESSION_OUT_TYPE = 1
 } SRTP_SESSION_TYPE;
 
-#define SRTP_ENCRYPT_BUFFER_SIZE 4096
+#define SRTP_ENCRYPT_BUFFER_SIZE (10*1024)
 
 class srtp_session
 {

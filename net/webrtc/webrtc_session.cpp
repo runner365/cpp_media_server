@@ -94,8 +94,8 @@ int remove_webrtc_session(webrtc_session* session) {
 //}
 
 void single_udp_session_callback::on_write(size_t sent_size, udp_tuple address) {
-    log_infof("udp write callback len:%lu, remote:%s",
-        sent_size, address.to_string().c_str());
+    //log_infof("udp write callback len:%lu, remote:%s",
+    //    sent_size, address.to_string().c_str());
 }
 
 void single_udp_session_callback::on_read(const char* data, size_t data_size, udp_tuple address) {
@@ -202,33 +202,30 @@ void webrtc_session::send_data(uint8_t* data, size_t data_len) {
     single_udp_server_ptr->write((char*)data, data_len, remote_address_);
 }
 
-void webrtc_session::on_recv_packet(const uint8_t* data, size_t data_size,
+void webrtc_session::on_recv_packet(const uint8_t* udp_data, size_t udp_data_len,
                             const udp_tuple& address) {
-    if (stun_packet::is_stun(data, data_size)) {
-        log_infof("receive stun packet len:%lu, remote:%s",
-                data_size, address.to_string().c_str());
+    memcpy(pkt_data_, udp_data, udp_data_len);
+    if (stun_packet::is_stun(pkt_data_, udp_data_len)) {
         try {
-            stun_packet* packet = stun_packet::parse((uint8_t*)data, data_size);
+            stun_packet* packet = stun_packet::parse((uint8_t*)pkt_data_, udp_data_len);
             on_handle_stun_packet(packet, address);
         }
         catch(const std::exception& e) {
             log_errorf("handle stun packet exception:%s", e.what());
         }
-    } else if (is_rtcp(data, data_size)) {
+    } else if (is_rtcp(pkt_data_, udp_data_len)) {
         log_infof("receive rtcp packet len:%lu, remote:%s",
-                data_size, address.to_string().c_str());
-        on_handle_rtcp_data(data, data_size, address);
-    } else if (is_rtp(data, data_size)) {
-        log_infof("receive rtp packet len:%lu, remote:%s",
-                data_size, address.to_string().c_str());
-        on_handle_rtp_data(data, data_size, address);
-    } else if (rtc_dtls::is_dtls(data, data_size)) {
+                udp_data_len, address.to_string().c_str());
+        on_handle_rtcp_data(pkt_data_, udp_data_len, address);
+    } else if (is_rtp(pkt_data_, udp_data_len)) {
+        on_handle_rtp_data(pkt_data_, udp_data_len, address);
+    } else if (rtc_dtls::is_dtls(pkt_data_, udp_data_len)) {
         log_infof("receive dtls packet len:%lu, remote:%s",
-                data_size, address.to_string().c_str());
-        on_handle_dtls_data(data, data_size, address);
+                udp_data_len, address.to_string().c_str());
+        on_handle_dtls_data(pkt_data_, udp_data_len, address);
     } else {
         log_errorf("receive unkown packet len:%lu, remote:%s",
-                data_size, address.to_string().c_str());
+                udp_data_len, address.to_string().c_str());
     }
     return;
 }
@@ -253,7 +250,7 @@ void webrtc_session::on_dtls_connected(CRYPTO_SUITE_ENUM suite,
 
     log_info_data(remote_key, remote_key_len, "on dtls connected srtp remote key");
 
-    log_infof("on dtls connected remote cert:%s", remote_cert.c_str());
+    log_infof("on dtls connected remote cert:\r\n%s", remote_cert.c_str());
 
     try {
         if (write_srtp_) {
@@ -276,7 +273,7 @@ void webrtc_session::on_dtls_connected(CRYPTO_SUITE_ENUM suite,
 
 void webrtc_session::on_handle_rtp_data(const uint8_t* data, size_t data_len, const udp_tuple& address) {
     if (dtls_trans_->state != DTLS_CONNECTED) {
-        log_errorf("dtls is not connected and discard rtp packet");
+        log_errorf("dtls is not connected and discard rtp packet, stat:%d", (int)dtls_trans_->state);
         return;
     }
 
@@ -290,7 +287,6 @@ void webrtc_session::on_handle_rtp_data(const uint8_t* data, size_t data_len, co
         return;
     }
 
-    log_infof("+++++ rtp decrypt ok, data len:%lu", data_len);
     //handle rtp packet
 
     return;
@@ -312,7 +308,6 @@ void webrtc_session::on_handle_rtcp_data(const uint8_t* data, size_t data_len, c
         return;
     }
 
-    log_infof("----- rtcp decrypt ok, data len:%lu", data_len);
     //handle rtcp packet
 
     return;
@@ -357,7 +352,7 @@ void webrtc_session::on_handle_stun_packet(stun_packet* pkt, const udp_tuple& ad
 
         STUN_AUTHENTICATION ret_auth = pkt->check_auth(this->username_fragment_, this->user_pwd_);
         if (ret_auth == STUN_AUTHENTICATION::OK) {
-            log_infof("stun packet is authentication ok, remote:%s", address.to_string().c_str());
+            //log_infof("stun packet is authentication ok, remote:%s", address.to_string().c_str());
         } else if (ret_auth == STUN_AUTHENTICATION::UNAUTHORIZED) {
             log_errorf("stun packet is unauthorized, remote:%s", address.to_string().c_str());
             write_error_stun_packet(pkt, 401, address);
@@ -384,7 +379,7 @@ void webrtc_session::on_handle_stun_packet(stun_packet* pkt, const udp_tuple& ad
         resp_pkt->password    = this->user_pwd_;
         resp_pkt->serialize();
 
-        log_infof("stun packet response:\r\n %s", resp_pkt->dump().c_str());
+        //log_infof("stun packet response:\r\n %s", resp_pkt->dump().c_str());
         remote_address_ = address;
         write_udp_data(resp_pkt->data, resp_pkt->data_len, address);
         delete resp_pkt;

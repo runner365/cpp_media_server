@@ -140,7 +140,7 @@ void room_service::handle_publish(const std::string& id, const std::string& meth
     std::string sdp = sdp_json->get<std::string>();
 
     json info_json = user_ptr->parse_remote_sdp(sdp);
-    //log_infof("publish sdp json:%s", info_json.dump().c_str());
+    log_infof("publish sdp json:%s", info_json.dump().c_str());
 
     rtc_media_info& info = user_ptr->parse_remote_media_info(info_json);
     //log_infof("get input sdp dump:\r\n%s", info.dump().c_str());

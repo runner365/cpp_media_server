@@ -311,6 +311,8 @@ rtc_dtls::rtc_dtls(webrtc_session* session, boost::asio::io_context& io_ctx): ti
     DTLS_set_link_mtu(ssl_, dtls_mtu);
 
     ssl_read_buffer_ = new uint8_t[SSL_READ_BUFFER_SIZE];
+
+    log_infof("rtc_dtls construct ok...");
     //DTLS_set_timer_cb(ssl_, on_ssl_dtls_timer);
 }
 
@@ -331,8 +333,13 @@ rtc_dtls::~rtc_dtls() {
 void rtc_dtls::start(DTLS_ROLE role_mode) {
     assert(role_mode == ROLE_SERVER);
 
+    if (this->state != DTLS_NEW) {
+        return;
+    }
     this->role  = role_mode;
     this->state = DTLS_CONNECTING;
+
+    log_infof("rtc dtls start, role mode:%d", (int)role_mode);
 
     SSL_set_accept_state(ssl_);
     SSL_do_handshake(ssl_);

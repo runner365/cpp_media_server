@@ -1,6 +1,0 @@
-[submodule "3rdparty/libsdptransform"]
-	path = 3rdparty/libsdptransform
-	url = https://github.com/ibc/libsdptransform.git
-[submodule "3rdparty/libsrtp"]
-	path = 3rdparty/libsrtp
-	url = https://github.com/cisco/libsrtp.git

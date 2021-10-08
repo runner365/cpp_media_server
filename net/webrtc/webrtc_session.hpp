@@ -72,6 +72,7 @@ private://for dtls
     rtc_dtls* dtls_trans_     = nullptr;
     srtp_session* write_srtp_ = nullptr;
     srtp_session* read_srtp_  = nullptr;
+    uint8_t pkt_data_[2048];
 
 private:
     udp_tuple remote_address_;
