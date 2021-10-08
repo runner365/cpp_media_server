@@ -17,6 +17,7 @@
 class webrtc_session;
 class stun_packet;
 class rtc_dtls;
+class srtp_session;
 
 void insert_webrtc_session(std::string key, webrtc_session* session);
 webrtc_session* get_webrtc_session(const std::string& key);
@@ -48,6 +49,8 @@ public:
     void on_recv_packet(const uint8_t* data, size_t data_size, const udp_tuple& address);
     void on_handle_stun_packet(stun_packet* pkt, const udp_tuple& address);
     void on_handle_dtls_data(const uint8_t* data, size_t data_len, const udp_tuple& address);
+    void on_handle_rtp_data(const uint8_t* data, size_t data_len, const udp_tuple& address);
+    void on_handle_rtcp_data(const uint8_t* data, size_t data_len, const udp_tuple& address);
 
     void send_data(uint8_t* data, size_t data_len);
 
@@ -66,7 +69,9 @@ private://for ice
     std::string user_pwd_;
 
 private://for dtls
-    rtc_dtls* dtls_trans_ = nullptr;
+    rtc_dtls* dtls_trans_     = nullptr;
+    srtp_session* write_srtp_ = nullptr;
+    srtp_session* read_srtp_  = nullptr;
 
 private:
     udp_tuple remote_address_;

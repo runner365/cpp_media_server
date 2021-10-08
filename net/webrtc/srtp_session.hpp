@@ -26,6 +26,8 @@ typedef enum
     SRTP_SESSION_OUT_TYPE = 1
 } SRTP_SESSION_TYPE;
 
+#define SRTP_ENCRYPT_BUFFER_SIZE 4096
+
 class srtp_session
 {
 public:
@@ -46,6 +48,9 @@ public:
 private:
     static std::vector<const char*> errors;
     srtp_t session_ = nullptr;
+
+private:
+    uint8_t encrypt_buffer_[SRTP_ENCRYPT_BUFFER_SIZE];
 };
 
 #endif

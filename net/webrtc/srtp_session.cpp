@@ -33,12 +33,18 @@ std::vector<const char*> srtp_session::errors =
 };
 
 void srtp_session::init() {
-    srtp_err_status_t err = srtp_install_event_handler(static_cast<srtp_event_handler_func_t*>(srtp_session::on_srtp_event));
+    log_infof("libsrtp version: <%s>", srtp_get_version_string());
 
-    if ((err != srtp_err_status_ok))
-    {
+    srtp_err_status_t err = srtp_init();
+    if ((err != srtp_err_status_ok)) {
+        MS_THROW_ERROR("set srtp_init error: %s", srtp_session::errors.at(err));
+    }
+
+    err = srtp_install_event_handler(static_cast<srtp_event_handler_func_t*>(srtp_session::on_srtp_event));
+    if ((err != srtp_err_status_ok)) {
         MS_THROW_ERROR("set srtp_install_event_handler error: %s", srtp_session::errors.at(err));
     }
+    log_infof("srtp session init ok...");
 }
 
 void srtp_session::on_srtp_event(srtp_event_data_t* data) {
@@ -64,32 +70,149 @@ void srtp_session::on_srtp_event(srtp_event_data_t* data) {
     }
 }
 
-srtp_session::srtp_session(SRTP_SESSION_TYPE session_type, CRYPTO_SUITE_ENUM suite, uint8_t* key, size_t keyLen)
+srtp_session::srtp_session(SRTP_SESSION_TYPE session_type, CRYPTO_SUITE_ENUM suite, uint8_t* key, size_t key_len)
 {
+    srtp_policy_t policy;
 
+    std::memset((void*)&policy, 0, sizeof(srtp_policy_t));
+
+    switch (suite)
+    {
+        case CRYPTO_SUITE_AES_CM_128_HMAC_SHA1_80:
+        {
+            srtp_crypto_policy_set_aes_cm_128_hmac_sha1_80(&policy.rtp);
+            srtp_crypto_policy_set_aes_cm_128_hmac_sha1_80(&policy.rtcp);
+            break;
+        }
+        case CRYPTO_SUITE_AES_CM_128_HMAC_SHA1_32:
+        {
+            srtp_crypto_policy_set_aes_cm_128_hmac_sha1_32(&policy.rtp);
+            srtp_crypto_policy_set_aes_cm_128_hmac_sha1_80(&policy.rtcp);
+            break;
+        }
+        case CRYPTO_SUITE_AEAD_AES_256_GCM:
+        {
+            srtp_crypto_policy_set_aes_gcm_256_16_auth(&policy.rtp);
+            srtp_crypto_policy_set_aes_gcm_256_16_auth(&policy.rtcp);
+            break;
+        }
+        case CRYPTO_SUITE_AEAD_AES_128_GCM:
+        {
+            srtp_crypto_policy_set_aes_gcm_128_16_auth(&policy.rtp);
+            srtp_crypto_policy_set_aes_gcm_128_16_auth(&policy.rtcp);
+            break;
+        }
+        default:
+        {
+            MS_THROW_ERROR("unknown srtp crypto suite:%d", (int)suite);
+        }
+    }
+
+    if ((int)key_len != policy.rtp.cipher_key_len) {
+        MS_THROW_ERROR("key length(%d) error, configure key length(%d)",
+                (int)key_len, policy.rtp.cipher_key_len);
+    }
+
+    std::string session_desc;
+    switch (session_type)
+    {
+        case SRTP_SESSION_IN_TYPE:
+        {
+            session_desc = "srtp read";
+            policy.ssrc.type = ssrc_any_inbound;
+            break;
+        }
+        case SRTP_SESSION_OUT_TYPE:
+        {
+            session_desc = "srtp write";
+            policy.ssrc.type = ssrc_any_outbound;
+            break;
+        }
+        default:
+        {
+            MS_THROW_ERROR("unknown srtp session type:%d", (int)session_type);
+        }
+    }
+
+    policy.ssrc.value      = 0;
+    policy.key             = key;
+    policy.allow_repeat_tx = 1;
+    policy.window_size     = 1024;
+    policy.next            = nullptr;
+
+    srtp_err_status_t err = srtp_create(&session_, &policy);
+
+    if (err != srtp_err_status_ok)
+        MS_THROW_ERROR("srtp_create error: %s", srtp_session::errors.at(err));
+    log_infof("srtp session construct, type: %s", session_desc.c_str());
 }
 
 srtp_session::~srtp_session() {
+    if (session_ != nullptr) {
+        srtp_err_status_t err = srtp_dealloc(session_);
 
+        if (err != srtp_err_status_ok)
+            log_errorf("srtp_dealloc error: %s", srtp_session::errors.at(err));
+    }
 }
 
 bool srtp_session::encrypt_rtp(const uint8_t** data, size_t* len) {
+    //#define SRTP_MAX_TRAILER_LEN (SRTP_MAX_TAG_LEN + SRTP_MAX_MKI_LEN)
+    //SRTP_MAX_TRAILER_LEN=-16+128
+    if (*len + SRTP_MAX_TRAILER_LEN > SRTP_ENCRYPT_BUFFER_SIZE) {
+        log_errorf("fail to encrypt RTP packet, size too big (%lu bytes)", *len);
+        return false;
+    }
 
+    std::memcpy(encrypt_buffer_, *data, *len);
+
+    srtp_err_status_t err = srtp_protect(session_, (void*)(encrypt_buffer_), (int*)(len));
+
+    if (err != srtp_err_status_ok) {
+        log_errorf("srtp_protect error: %s", srtp_session::errors.at(err));
+        return false;
+    }
+
+    *data = encrypt_buffer_;
     return true;
 }
 
 bool srtp_session::decrypt_srtp(uint8_t* data, size_t* len) {
-
+    srtp_err_status_t err = srtp_unprotect(session_, (void*)(data), (int*)(len));
+    if (err != srtp_err_status_ok) {
+        log_errorf("srtp_unprotect error: %s", srtp_session::errors.at(err));
+        return false;
+    }
     return true;
 }
 
 bool srtp_session::encrypt_rtcp(const uint8_t** data, size_t* len) {
+    //#define SRTP_MAX_TRAILER_LEN (SRTP_MAX_TAG_LEN + SRTP_MAX_MKI_LEN)
+    //SRTP_MAX_TRAILER_LEN=-16+128
+    if (*len + SRTP_MAX_TRAILER_LEN > SRTP_ENCRYPT_BUFFER_SIZE) {
+        log_errorf("fail to encrypt RTP packet, size too big (%lu bytes)", *len);
+        return false;
+    }
 
+    std::memcpy(encrypt_buffer_, *data, *len);
+
+    srtp_err_status_t err = srtp_protect_rtcp(session_, (void*)(encrypt_buffer_), (int*)(len));
+
+    if (err != srtp_err_status_ok) {
+        log_errorf("srtp_protect_rtcp error: %s", srtp_session::errors.at(err));
+        return false;
+    }
+
+    *data = encrypt_buffer_;
     return true;
 }
 
 bool srtp_session::decrypt_srtcp(uint8_t* data, size_t* len) {
-
+    srtp_err_status_t err = srtp_unprotect_rtcp(session_, (void*)(data), (int*)(len));
+    if (err != srtp_err_status_ok) {
+        log_errorf("srtp_unprotect_rtcp error: %s", srtp_session::errors.at(err));
+        return false;
+    }
     return true;
 }
 

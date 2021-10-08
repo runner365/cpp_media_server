@@ -6,6 +6,7 @@
 #include "net/stun/stun_packet.hpp"
 #include "net/rtprtcp/rtprtcp_pub.hpp"
 #include "rtc_dtls.hpp"
+#include "srtp_session.hpp"
 #include "utils/ipaddress.hpp"
 #include "utils/byte_crypto.hpp"
 #include <unordered_map>
@@ -101,21 +102,19 @@ void single_udp_session_callback::on_read(const char* data, size_t data_size, ud
     webrtc_session* session = nullptr;
     
     std::string peerid = address.to_string();
-
-    log_infof("udp receive len:%lu, remote:%s", data_size, peerid.c_str());
     
     session = get_webrtc_session(peerid);
     if (session) {
-        session->on_recv_packet((uint8_t*)data, data_size, address);
+        session->on_recv_packet((const uint8_t*)data, data_size, address);
         return;
     }
 
-    if(stun_packet::is_stun((uint8_t*)data, data_size)) {
+    if(stun_packet::is_stun((const uint8_t*)data, data_size)) {
         stun_packet* packet = nullptr;
         log_infof("receive first stun packet...");
         try
         {
-            packet = stun_packet::parse((uint8_t*)data, data_size);
+            packet = stun_packet::parse((const uint8_t*)data, data_size);
 
             std::string username = packet->user_name;
             size_t pos = username.find(":");
@@ -161,7 +160,20 @@ webrtc_session::webrtc_session(int session_direction):rtc_base_session(session_d
 }
 
 webrtc_session::~webrtc_session() {
+    if (write_srtp_) {
+        delete write_srtp_;
+        write_srtp_ = nullptr;
+    }
 
+    if (read_srtp_) {
+        delete read_srtp_;
+        read_srtp_ = nullptr;
+    }
+
+    if (dtls_trans_) {
+        delete dtls_trans_;
+        dtls_trans_ = nullptr;
+    }
 }
 
 void webrtc_session::close_session() {
@@ -192,7 +204,7 @@ void webrtc_session::send_data(uint8_t* data, size_t data_len) {
 
 void webrtc_session::on_recv_packet(const uint8_t* data, size_t data_size,
                             const udp_tuple& address) {
-    if (stun_packet::is_stun((uint8_t*)data, data_size)) {
+    if (stun_packet::is_stun(data, data_size)) {
         log_infof("receive stun packet len:%lu, remote:%s",
                 data_size, address.to_string().c_str());
         try {
@@ -205,9 +217,11 @@ void webrtc_session::on_recv_packet(const uint8_t* data, size_t data_size,
     } else if (is_rtcp(data, data_size)) {
         log_infof("receive rtcp packet len:%lu, remote:%s",
                 data_size, address.to_string().c_str());
+        on_handle_rtcp_data(data, data_size, address);
     } else if (is_rtp(data, data_size)) {
         log_infof("receive rtp packet len:%lu, remote:%s",
                 data_size, address.to_string().c_str());
+        on_handle_rtp_data(data, data_size, address);
     } else if (rtc_dtls::is_dtls(data, data_size)) {
         log_infof("receive dtls packet len:%lu, remote:%s",
                 data_size, address.to_string().c_str());
@@ -231,15 +245,76 @@ void webrtc_session::write_error_stun_packet(stun_packet* pkt, int err, const ud
    return;
 }
 
-void webrtc_session::on_dtls_connected(CRYPTO_SUITE_ENUM srtpCryptoSuite,
-                uint8_t* srtpLocalKey, size_t srtpLocalKeyLen,
-                uint8_t* srtpRemoteKey, size_t srtpRemoteKeyLen,
-                std::string& remoteCert) {
-    log_info_data(srtpLocalKey, srtpLocalKeyLen, "on dtls connected srtp local key");
+void webrtc_session::on_dtls_connected(CRYPTO_SUITE_ENUM suite,
+                uint8_t* local_key, size_t local_key_len,
+                uint8_t* remote_key, size_t remote_key_len,
+                std::string& remote_cert) {
+    log_info_data(local_key, local_key_len, "on dtls connected srtp local key");
 
-    log_info_data(srtpRemoteKey, srtpRemoteKeyLen, "on dtls connected srtp remote key");
+    log_info_data(remote_key, remote_key_len, "on dtls connected srtp remote key");
 
-    log_infof("on dtls connected remote cert:%s", remoteCert.c_str());
+    log_infof("on dtls connected remote cert:%s", remote_cert.c_str());
+
+    try {
+        if (write_srtp_) {
+            delete write_srtp_;
+            write_srtp_ = nullptr;
+        }
+        if (read_srtp_) {
+            delete read_srtp_;
+            read_srtp_ = nullptr;
+        }
+        write_srtp_ = new srtp_session(SRTP_SESSION_OUT_TYPE, suite, local_key, local_key_len);
+        read_srtp_  = new srtp_session(SRTP_SESSION_IN_TYPE, suite, remote_key, remote_key_len);
+    }
+    catch(const std::exception& e) {
+        log_errorf("create srtp session error:%s", e.what());
+    }
+    
+    return;
+}
+
+void webrtc_session::on_handle_rtp_data(const uint8_t* data, size_t data_len, const udp_tuple& address) {
+    if (dtls_trans_->state != DTLS_CONNECTED) {
+        log_errorf("dtls is not connected and discard rtp packet");
+        return;
+    }
+
+    if (!read_srtp_) {
+        log_errorf("read srtp session is not ready and discard rtp packet");
+        return;
+    }
+
+    bool ret = read_srtp_->decrypt_srtp(const_cast<uint8_t*>(data), &data_len);
+    if (!ret) {
+        return;
+    }
+
+    log_infof("+++++ rtp decrypt ok, data len:%lu", data_len);
+    //handle rtp packet
+
+    return;
+}
+
+void webrtc_session::on_handle_rtcp_data(const uint8_t* data, size_t data_len, const udp_tuple& address) {
+    if (dtls_trans_->state != DTLS_CONNECTED) {
+        log_errorf("dtls is not connected and discard rtcp packet");
+        return;
+    }
+
+    if (!read_srtp_) {
+        log_errorf("read srtp session is not ready and discard rtcp packet");
+        return;
+    }
+
+    bool ret = read_srtp_->decrypt_srtcp(const_cast<uint8_t*>(data), &data_len);
+    if (!ret) {
+        return;
+    }
+
+    log_infof("----- rtcp decrypt ok, data len:%lu", data_len);
+    //handle rtcp packet
+
     return;
 }
 
