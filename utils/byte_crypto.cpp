@@ -4,6 +4,7 @@
 #include <openssl/ssl.h>
 #include <chrono>
 #include <random>
+#include <cstring>
 
 uint8_t byte_crypto::hmac_sha1_buffer[20];
 HMAC_CTX* byte_crypto::hmac_sha1_ctx = nullptr;
@@ -48,7 +49,7 @@ std::default_random_engine byte_crypto::random;
 void byte_crypto::init() {
     byte_crypto::hmac_sha1_ctx = HMAC_CTX_new();
 
-    memset(hmac_sha1_buffer, 0, sizeof(hmac_sha1_buffer));
+    std::memset(hmac_sha1_buffer, 0, sizeof(hmac_sha1_buffer));
 
     std::chrono::system_clock::duration d = std::chrono::system_clock::now().time_since_epoch();
 

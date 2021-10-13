@@ -4,6 +4,7 @@
 #include "rtc_session_pub.hpp"
 #include "rtc_dtls.hpp"
 #include "rtc_media_info.hpp"
+#include "rtc_publisher.hpp"
 #include "net/udp/udp_server.hpp"
 #include <openssl/asn1.h>
 #include <openssl/bn.h>
@@ -13,11 +14,13 @@
 #include <openssl/ssl.h>
 #include <openssl/bio.h>
 #include <openssl/x509.h>
+#include <map>
 
 class webrtc_session;
 class stun_packet;
 class rtc_dtls;
 class srtp_session;
+class room_callback_interface;
 
 void insert_webrtc_session(std::string key, webrtc_session* session);
 webrtc_session* get_webrtc_session(const std::string& key);
@@ -32,7 +35,7 @@ protected:
 class webrtc_session : public rtc_base_session
 {
 public:
-    webrtc_session(int session_direction);
+    webrtc_session(room_callback_interface* room, int session_direction, const rtc_media_info& media_info);
     virtual ~webrtc_session();
 
 public:
@@ -52,13 +55,15 @@ public:
     void on_handle_rtp_data(const uint8_t* data, size_t data_len, const udp_tuple& address);
     void on_handle_rtcp_data(const uint8_t* data, size_t data_len, const udp_tuple& address);
 
-    void send_data(uint8_t* data, size_t data_len);
-
 public:
     void on_dtls_connected(CRYPTO_SUITE_ENUM srtpCryptoSuite,
                         uint8_t* srtpLocalKey, size_t srtpLocalKeyLen,
                         uint8_t* srtpRemoteKey, size_t srtpRemoteKeyLen,
                         std::string& remoteCert);
+
+private:
+    virtual void send_rtp_data_in_dtls(uint8_t* data, size_t data_len) override;
+    virtual void send_rtcp_data_in_dtls(uint8_t* data, size_t data_len) override;
 
 private:
     void write_udp_data(uint8_t* data, size_t data_size, const udp_tuple& address);

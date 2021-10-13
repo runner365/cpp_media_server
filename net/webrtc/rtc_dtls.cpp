@@ -402,7 +402,7 @@ void rtc_dtls::send_pending_dtls_data() {
     log_infof("dtls data is ready to be sent to the client, length:%ld", read);
 
     //send to client
-    session_->send_data((uint8_t*)data, (size_t)read);
+    session_->send_plaintext_data((uint8_t*)data, (size_t)read);
 
     (void)BIO_reset(ssl_bio_write_);
 }

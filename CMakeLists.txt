@@ -33,6 +33,7 @@ include_directories(./
                     ./3rdparty/libsdptransform/include
                     ${CMAKE_BINARY_DIR}/output/include
                     ${CMAKE_BINARY_DIR}/output/include/srtp2
+                    ${CMAKE_BINARY_DIR}/output/include/openssl
                     /usr/local/include)
 
 # set lib path
@@ -100,9 +101,9 @@ add_executable(rtmp_play_demo
 add_dependencies(rtmp_play_demo openssl)
 
 IF (APPLE)
-target_link_libraries(rtmp_play_demo pthread dl z m ssl crypto boost_thread boost_system)
+target_link_libraries(rtmp_play_demo pthread dl z m ssl crypto pthread boost_thread boost_system)
 ELSEIF (UNIX)
-target_link_libraries(rtmp_play_demo pthread rt dl z m ssl crypto boost_thread boost_system)
+target_link_libraries(rtmp_play_demo pthread rt dl z m ssl crypto pthread boost_thread boost_system)
 ENDIF ()
 
 add_executable(rtmp_publish_demo
@@ -120,9 +121,9 @@ add_executable(rtmp_publish_demo
 add_dependencies(rtmp_publish_demo openssl)
 
 IF (APPLE)
-target_link_libraries(rtmp_publish_demo pthread dl z m ssl crypto boost_thread boost_system)
+target_link_libraries(rtmp_publish_demo pthread dl z m ssl crypto pthread boost_thread boost_system)
 ELSEIF (UNIX)
-target_link_libraries(rtmp_publish_demo pthread rt dl z m ssl crypto boost_thread boost_system)
+target_link_libraries(rtmp_publish_demo pthread rt dl z m ssl crypto pthread boost_thread boost_system)
 ENDIF ()
 
 add_executable(media_server
@@ -139,6 +140,7 @@ add_executable(media_server
             net/rtmp/rtmp_handshake.cpp
             net/rtmp/chunk_stream.cpp
             net/rtmp/rtmp_writer.cpp
+            net/rtprtcp/rtp_packet.cpp
             net/websocket/ws_server.cpp
             net/websocket/ws_session.cpp
             net/websocket/ws_service_imp.cpp
@@ -154,6 +156,7 @@ add_executable(media_server
             net/webrtc/rtc_dtls.cpp
             net/webrtc/srtp_session.cpp
             net/webrtc/support_rtc_info.cpp
+            net/webrtc/rtc_publisher.cpp
             net/httpflv/httpflv_server.cpp
             net/httpflv/httpflv_writer.cpp
             utils/logger.cpp
@@ -166,7 +169,7 @@ add_executable(media_server
 add_dependencies(media_server openssl sdptransform libsrtp)
 
 IF (APPLE)
-target_link_libraries(media_server pthread dl z m ssl crypto boost_thread boost_system sdptransform srtp2)
+target_link_libraries(media_server pthread dl z m srtp2 ssl crypto pthread boost_thread boost_system sdptransform)
 ELSEIF (UNIX)
-target_link_libraries(media_server pthread rt dl z m ssl crypto boost_thread boost_system sdptransform srtp2)
+target_link_libraries(media_server pthread rt dl z m srtp2 ssl crypto pthread boost_thread boost_system sdptransform)
 ENDIF ()

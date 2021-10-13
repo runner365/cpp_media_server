@@ -7,4 +7,14 @@
 #define RTC_DIRECTION_SEND 1
 #define RTC_DIRECTION_RECV 2
 
+class rtp_packet;
+class rtc_publisher;
+class rtc_base_session;
+
+class room_callback_interface
+{
+public:
+    virtual void rtppacket_publisher2room(rtc_base_session* session, rtc_publisher* publisher, rtp_packet* pkt) = 0;
+};
+
 #endif

@@ -8,7 +8,7 @@ add_subdirectory(libsdptransform)
 
 IF (APPLE)
 ExternalProject_Add(openssl
-    URL ${CMAKE_CURRENT_SOURCE_DIR}/openssl-1.1.1d.tar.gz
+    URL ${CMAKE_CURRENT_SOURCE_DIR}/openssl-1.1.1.tar.gz
     SOURCE_DIR  ${CMAKE_CURRENT_BINARY_DIR}/openssl
     BUILD_IN_SOURCE 1
     CONFIGURE_COMMAND
@@ -19,7 +19,7 @@ ExternalProject_Add(openssl
     )
 ELSEIF (UNIX)
 ExternalProject_Add(openssl
-    URL ${CMAKE_CURRENT_SOURCE_DIR}/openssl-1.1.1d.tar.gz
+    URL ${CMAKE_CURRENT_SOURCE_DIR}/openssl-1.1.1.tar.gz
     SOURCE_DIR  ${CMAKE_CURRENT_BINARY_DIR}/openssl
     BUILD_IN_SOURCE 1
     CONFIGURE_COMMAND
@@ -36,7 +36,7 @@ ExternalProject_Add(libsrtp
     SOURCE_DIR  ${CMAKE_CURRENT_BINARY_DIR}/libsrtp
     BUILD_IN_SOURCE 1
     CONFIGURE_COMMAND
-        ./configure --prefix=${PREFIX_DIR} --libdir=${INSTALL_RPATH} --enable-openssl
+        ./configure --prefix=${PREFIX_DIR} --libdir=${INSTALL_RPATH} --enable-openssl --with-openssl-dir=${INSTALL_RPATH}/..
     BUILD_COMMAND make -j 4
     INSTALL_COMMAND make install
     )

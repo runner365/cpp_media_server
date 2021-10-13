@@ -5,6 +5,8 @@
 #include "net/udp/udp_server.hpp"
 #include "net/stun/stun_packet.hpp"
 #include "net/rtprtcp/rtprtcp_pub.hpp"
+#include "net/rtprtcp/rtp_packet.hpp"
+#include "net/rtprtcp/rtcp_sr.hpp"
 #include "rtc_dtls.hpp"
 #include "srtp_session.hpp"
 #include "utils/ipaddress.hpp"
@@ -21,12 +23,13 @@
 #include <openssl/rsa.h>
 #include <openssl/ssl.h>
 
-static std::shared_ptr<udp_server> single_udp_server_ptr;
-static single_udp_session_callback single_udp_cb;
+std::shared_ptr<udp_server> single_udp_server_ptr;
+single_udp_session_callback single_udp_cb;
+
 //key: "srcip+srcport" or "username", value: webrtc_session*
-static std::unordered_map<std::string, webrtc_session*> single_webrtc_map;
-static std::string single_candidate_ip;
-static uint16_t single_candidate_port = 0;
+std::unordered_map<std::string, webrtc_session*> single_webrtc_map;
+std::string single_candidate_ip;
+uint16_t single_candidate_port = 0;
 
 void init_single_udp_server(boost::asio::io_context& io_context,
         const std::string& candidate_ip, uint16_t port) {
@@ -147,7 +150,9 @@ void single_udp_session_callback::on_read(const char* data, size_t data_size, ud
         data_size, address.to_string().c_str());
 }
 
-webrtc_session::webrtc_session(int session_direction):rtc_base_session(session_direction) {
+webrtc_session::webrtc_session(room_callback_interface* room,
+                            int session_direction,
+                            const rtc_media_info& media_info):rtc_base_session(room, session_direction, media_info) {
     username_fragment_ = byte_crypto::get_random_string(16);
     user_pwd_          = byte_crypto::get_random_string(32);
 
@@ -177,10 +182,41 @@ webrtc_session::~webrtc_session() {
 }
 
 void webrtc_session::close_session() {
+    if (direction_ == RTC_DIRECTION_RECV) {
+        for (auto item : media_info_.medias) {
+            log_infof("start remove publish, media type:%s", item.media_type.c_str());
+            rtc_base_session::remove_publisher(item);
+        }
+    }
+
     int ret = remove_webrtc_session(this);
     if (ret > 0) {
         log_infof("close webrtc session remove %d item from the global map", ret);
     }
+}
+
+void webrtc_session::send_rtp_data_in_dtls(uint8_t* data, size_t data_len) {
+    if(!write_srtp_) {
+        log_errorf("dtls writer is not ready");
+        return;
+    }
+    bool ret = write_srtp_->encrypt_rtp(&data, &data_len);
+    if (!ret) {
+        return;
+    }
+    write_udp_data(data, data_len, remote_address_);
+}
+
+void webrtc_session::send_rtcp_data_in_dtls(uint8_t* data, size_t data_len) {
+    if(!write_srtp_) {
+        log_errorf("dtls writer is not ready");
+        return;
+    }
+    bool ret = write_srtp_->encrypt_rtcp(&data, &data_len);
+    if (!ret) {
+        return;
+    }
+    write_udp_data(data, data_len, remote_address_);
 }
 
 void webrtc_session::write_udp_data(uint8_t* data, size_t data_size, const udp_tuple& address) {
@@ -190,21 +226,10 @@ void webrtc_session::write_udp_data(uint8_t* data, size_t data_size, const udp_t
     single_udp_server_ptr->write((char*)data, data_size, address);
 }
 
-void webrtc_session::send_data(uint8_t* data, size_t data_len) {
-    if (!single_udp_server_ptr) {
-        MS_THROW_ERROR("single udp server is not inited");
-    }
-
-    if (remote_address_.ip_address.empty() || remote_address_.port == 0) {
-        MS_THROW_ERROR("remote address is not inited");
-    }
-
-    single_udp_server_ptr->write((char*)data, data_len, remote_address_);
-}
-
 void webrtc_session::on_recv_packet(const uint8_t* udp_data, size_t udp_data_len,
                             const udp_tuple& address) {
     memcpy(pkt_data_, udp_data, udp_data_len);
+
     if (stun_packet::is_stun(pkt_data_, udp_data_len)) {
         try {
             stun_packet* packet = stun_packet::parse((uint8_t*)pkt_data_, udp_data_len);
@@ -214,8 +239,6 @@ void webrtc_session::on_recv_packet(const uint8_t* udp_data, size_t udp_data_len
             log_errorf("handle stun packet exception:%s", e.what());
         }
     } else if (is_rtcp(pkt_data_, udp_data_len)) {
-        log_infof("receive rtcp packet len:%lu, remote:%s",
-                udp_data_len, address.to_string().c_str());
         on_handle_rtcp_data(pkt_data_, udp_data_len, address);
     } else if (is_rtp(pkt_data_, udp_data_len)) {
         on_handle_rtp_data(pkt_data_, udp_data_len, address);
@@ -284,11 +307,30 @@ void webrtc_session::on_handle_rtp_data(const uint8_t* data, size_t data_len, co
 
     bool ret = read_srtp_->decrypt_srtp(const_cast<uint8_t*>(data), &data_len);
     if (!ret) {
+        //rtp_common_header* header = (rtp_common_header*)data;
+        //log_errorf("rtp decrypt error, data len:%lu, version:%d, padding:%d, ext:%d, csrc count:%d, marker:%d, payload type:%d, seq:%d, timestamp:%u, ssrc:%u",
+        //    data_len, header->version, header->padding, header->extension, header->csrc_count, header->marker, header->payload_type,
+        //    ntohs(header->sequence), ntohl(header->timestamp), ntohl(header->ssrc));
         return;
     }
 
     //handle rtp packet
+    rtp_packet* pkt = nullptr;
+    try {
+        pkt = rtp_packet::parse(const_cast<uint8_t*>(data), data_len);
+    }
+    catch(const std::exception& e) {
+        log_errorf("rtp packet parse error:%s", e.what());
+        return;
+    }
 
+    auto publisher_ptr = rtc_base_session::get_publisher(pkt->get_ssrc());
+    if (!publisher_ptr) {
+        log_errorf("fail to get publisher object by ssrc:%u", pkt->get_ssrc());
+        return;
+    }
+
+    publisher_ptr->on_handle_rtppacket(pkt);
     return;
 }
 
@@ -309,6 +351,73 @@ void webrtc_session::on_handle_rtcp_data(const uint8_t* data, size_t data_len, c
     }
 
     //handle rtcp packet
+    int left_len = (int)data_len;
+    uint8_t* p = const_cast<uint8_t*>(data);
+
+    while (left_len > 0) {
+        rtcp_common_header* header = (rtcp_common_header*)p;
+        uint16_t payload_length = get_rtcp_length(header);
+        size_t item_total = sizeof(rtcp_common_header) + payload_length;
+
+        switch (header->packet_type)
+        {
+            case RTCP_SR:
+            {
+                try {
+                    rtcp_sr_packet* sr_pkt = rtcp_sr_packet::parse(p + sizeof(rtcp_common_header), payload_length);
+                    if (sr_pkt) {
+                        std::shared_ptr<rtc_publisher> publisher_ptr = get_publisher(sr_pkt->get_ssrc());
+                        if (!publisher_ptr) {
+                            log_errorf("fail to get publisher by ssrc:%u", sr_pkt->get_ssrc());
+                        } else {
+                            publisher_ptr->on_handle_rtcp_sr(sr_pkt);
+                        }
+                        delete sr_pkt;
+                    }
+                }
+                catch(const std::exception& e) {
+                    log_errorf("rtcp sr parse error:%s", e.what());
+                }
+                
+                break;
+            }
+            case RTCP_RR:
+            {
+                break;
+            }
+            case RTCP_SDES:
+            {
+                //rtcp sdes packet needn't to be handled.
+                break;
+            }
+            case RTCP_BYE:
+            {
+                break;
+            }
+            case RTCP_APP:
+            {
+                break;
+            }
+            case RTCP_RTPFB:
+            {
+                break;
+            }
+            case RTCP_PSFB:
+            {
+                break;
+            }
+            case RTCP_XR:
+            {
+                break;
+            }
+            default:
+            {
+                log_errorf("unkown rtcp type:%d", header->packet_type);
+            }
+        }
+        p        += item_total;
+        left_len -= item_total;
+    }
 
     return;
 }

@@ -6,7 +6,7 @@
 #include <stdint.h>
 #include <boost/asio.hpp>
 
-#define UDP_DATA_BUFFER_MAX (10*1024)
+#define UDP_DATA_BUFFER_MAX 1500
 
 class udp_tuple
 {

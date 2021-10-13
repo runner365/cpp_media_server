@@ -76,7 +76,7 @@ void get_support_fmtp(const std::vector<FMTP>& input_fmtps,
         std::vector<FMTP>& support_input_fmtps) {
     for (auto input_fmtp : input_fmtps) {
         bool found = false;
-        for (int index = 0; index < sizeof(support_fmtp_list)/sizeof(FMTP); index++) {
+        for (size_t index = 0; index < sizeof(support_fmtp_list)/sizeof(FMTP); index++) {
             auto pos = input_fmtp.config.find(support_fmtp_list[index].config);
             if (pos == 0) {
                 found = true;
@@ -123,7 +123,7 @@ void get_support_ssrc_info(const std::vector<SSRC_INFO>& input_ssrc_infos,
         std::vector<SSRC_INFO>& support_ssrc_infos) {
     for (auto input_ssrc_info : input_ssrc_infos) {
         bool found = false;
-        for (int index = 0; index < sizeof(support_ssrc_info_list)/sizeof(SSRC_INFO); index++) {
+        for (size_t index = 0; index < sizeof(support_ssrc_info_list)/sizeof(SSRC_INFO); index++) {
             if (input_ssrc_info.attribute == support_ssrc_info_list[index].attribute) {
                 found = true;
                 break;
@@ -140,7 +140,7 @@ void get_support_rtcp_fb(const std::vector<RTCP_FB>& input_rtcp_fbs,
 
     for (auto input_fb : input_rtcp_fbs) {
         bool found = false;
-        for (int index = 0; index < sizeof(support_rtcp_fb_list)/sizeof(RTCP_FB); index++) {
+        for (size_t index = 0; index < sizeof(support_rtcp_fb_list)/sizeof(RTCP_FB); index++) {
             if (input_fb.type == support_rtcp_fb_list[index].type) {
                 if (input_fb.subtype.empty()) {
                     found = true;
@@ -163,7 +163,7 @@ void get_support_header_ext(const std::vector<HEADER_EXT>& input_header_exts,
             std::vector<HEADER_EXT>& support_header_ext) {
     for (auto ext : input_header_exts) {
         bool found = false;
-        for (int i = 0; i < sizeof(support_header_ext_list)/sizeof(HEADER_EXT); i++) {
+        for (size_t i = 0; i < sizeof(support_header_ext_list)/sizeof(HEADER_EXT); i++) {
             if (support_header_ext_list[i].uri == ext.uri) {
                 found = true;
                 break;
@@ -182,7 +182,7 @@ void get_support_rtp_encoding(const std::vector<RTP_ENCODING>& input_rtp_encodin
             std::vector<FMTP>& support_input_fmtps) {
     for (auto enc : input_rtp_encodings) {
         bool found = false;
-        for (int i = 0; i < sizeof(support_rtp_encoding_list)/sizeof(RTP_ENCODING); i++) {
+        for (size_t i = 0; i < sizeof(support_rtp_encoding_list)/sizeof(RTP_ENCODING); i++) {
             if ((support_rtp_encoding_list[i].codec == enc.codec) &&
                 (support_rtp_encoding_list[i].clock_rate == enc.clock_rate)) {
                 found = true;

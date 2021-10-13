@@ -4,20 +4,26 @@
 #include <stdint.h>
 #include <string>
 
-inline long long now_millisec() {
+typedef struct NTP_TIMESTAMP_S
+{
+    uint32_t ntp_sec;
+    uint32_t ntp_frac;
+} NTP_TIMESTAMP;
+
+inline int64_t now_millisec() {
     std::chrono::system_clock::duration d = std::chrono::system_clock::now().time_since_epoch();
 
     std::chrono::milliseconds mil = std::chrono::duration_cast<std::chrono::milliseconds>(d);
 
-    return mil.count();
+    return (int64_t)mil.count();
 }
 
-inline long long now_microsec() {
+inline int64_t now_microsec() {
     std::chrono::steady_clock::duration d = std::chrono::steady_clock::now().time_since_epoch();
 
     std::chrono::microseconds mil = std::chrono::duration_cast<std::chrono::microseconds>(d);
 
-    return mil.count();
+    return int64_t(mil.count());
 }
 
 inline std::string get_now_str() {

@@ -12,8 +12,9 @@ public:
     {
     }
 
-    virtual ~timer_interface()
-    {
+    virtual ~timer_interface() {
+        boost::system::error_code ec;
+        timer_.cancel(ec);
     }
 
 public:
@@ -28,6 +29,7 @@ public:
             } else {
                 log_errorf("timer error:%s, value:%d",
                     ec.message().c_str(), ec.value())
+                return;
             }
             this->start_timer();
         });

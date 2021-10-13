@@ -1,6 +1,8 @@
 #include "srtp_session.hpp"
 #include "logger.hpp"
 #include <vector>
+#include <cstring>
+#include <netinet/in.h>
 
 std::vector<const char*> srtp_session::errors =
 {
@@ -186,7 +188,7 @@ bool srtp_session::encrypt_rtp(const uint8_t** data, size_t* len) {
 bool srtp_session::decrypt_srtp(uint8_t* data, size_t* len) {
     srtp_err_status_t err = srtp_unprotect(session_, (void*)(data), (int*)(len));
     if (err != srtp_err_status_ok) {
-        log_errorf("srtp_unprotect error: <%s>, data len:%lu", srtp_session::errors.at(err), *len);
+        //log_errorf("srtp_unprotect error: <%s>, data len:%lu", srtp_session::errors.at(err), *len);
         return false;
     }
     return true;

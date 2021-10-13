@@ -110,6 +110,15 @@ std::string room_service::get_uid_by_json(json& data_json) {
     return uid;
 }
 
+void room_service::rtppacket_publisher2room(rtc_base_session* session, rtc_publisher* publisher, rtp_packet* pkt) {
+    //log_infof("room receive rtp packet roomid:%s, publisher type:%s, publisher:%p, pkt dump:\r\n%s",
+    //    roomId_.c_str(), publisher->get_media_type().c_str(), publisher, pkt->dump().c_str());
+
+    delete pkt;
+    
+    return;
+}
+
 void room_service::handle_publish(const std::string& id, const std::string& method,
                 const std::string& data, protoo_request_interface* feedback_p) {
     std::shared_ptr<user_info> user_ptr;
@@ -148,8 +157,14 @@ void room_service::handle_publish(const std::string& id, const std::string& meth
 
     user_ptr->get_support_media_info(info, support_info);
 
-    std::shared_ptr<webrtc_session> session_ptr = std::make_shared<webrtc_session>(RTC_DIRECTION_RECV);
+    std::shared_ptr<webrtc_session> session_ptr = std::make_shared<webrtc_session>(this, RTC_DIRECTION_RECV, support_info);
     session_ptr->set_remote_finger_print(info.finger_print);
+    for (auto media_item : support_info.medias) {
+        session_ptr->create_publisher(media_item);
+    }
+
+    support_info.ice.ice_pwd = session_ptr->get_user_pwd();
+    support_info.ice.ice_ufrag = session_ptr->get_username_fragment();
 
     support_info.ice.ice_pwd = session_ptr->get_user_pwd();
     support_info.ice.ice_ufrag = session_ptr->get_username_fragment();
@@ -161,8 +176,8 @@ void room_service::handle_publish(const std::string& id, const std::string& meth
     CANDIDATE_INFO candidate_data = {
         .foundation = "0",
         .component  = 1,
-        .priority   = 2113667327,
         .transport  = "udp",
+        .priority   = 2113667327,
         .ip         = session_ptr->get_candidates_ip(),
         .port       = session_ptr->get_candidates_port(),
         .type       = "host"
@@ -170,6 +185,7 @@ void room_service::handle_publish(const std::string& id, const std::string& meth
 
     support_info.candidates.push_back(candidate_data);
 
+    /********* suppot publish rtc information is ready ************/
     //log_infof("support media info:\r\n%s", support_info.dump().c_str());
     std::string resp_sdp_str = user_ptr->rtc_media_info_2_sdp(support_info);
 

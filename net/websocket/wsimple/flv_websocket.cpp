@@ -5,6 +5,7 @@
 #include "logger.hpp"
 #include "utils/byte_stream.hpp"
 #include <sstream>
+#include <assert.h>
 
 int av_outputer::output_packet(MEDIA_PACKET_PTR pkt_ptr) {
     int ret = flv_muxer::add_flv_media_header(pkt_ptr);

@@ -32,8 +32,8 @@ typedef struct HEADER_EXT_S
 typedef struct RTCP_FB_S
 {
     int payload;
-    std::string subtype;//eg: "fir", "pli"
     std::string type;//eg: "transport-cc", "goog-remb", "nack"
+    std::string subtype;//eg: "fir", "pli"
 } RTCP_FB;
 
 typedef struct RTP_ENCODING_S

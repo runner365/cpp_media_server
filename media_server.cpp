@@ -14,6 +14,7 @@ websocket_server* ws_p  = nullptr;
 
 const std::string ssl_pem_file = "../certs/server.key";
 const std::string cert_file = "../certs/server.crt";
+boost::asio::io_context io_context;
 
 void create_wss_server(boost::asio::io_context& io_context, uint16_t ws_port) {
 
@@ -27,15 +28,19 @@ void create_ws_server(boost::asio::io_context& io_context, uint16_t ws_port) {
     log_infof("websocket http server is starting, port:%d", ws_port);
 }
 
+boost::asio::io_context& get_global_io_context() {
+    return io_context;
+}
+
 int main(int argn, char** argv) {
     const uint16_t rtmp_def_port = 1935;
     const uint16_t ws_def_port = 1900;
     const uint16_t ws_webrtc_port = 9110;
     const uint16_t httpflv_port = 8080;
     const uint16_t webrtc_media_port = 7000;
-    const std::string host_ip = "172.17.152.74";
+    const std::string host_ip = "172.29.66.121";
 
-    boost::asio::io_context io_context;
+    
     boost::asio::io_service::work work(io_context);
 
     Logger::get_instance()->set_filename("server.log");

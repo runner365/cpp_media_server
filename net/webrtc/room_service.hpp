@@ -1,6 +1,7 @@
 #ifndef ROOM_SERVICE_HPP
 #define ROOM_SERVICE_HPP
 #include "net/websocket/wsimple/protoo_pub.hpp"
+#include "rtc_session_pub.hpp"
 #include "user_info.hpp"
 #include "json.hpp"
 #include <string>
@@ -9,7 +10,7 @@
 
 using json = nlohmann::json;
 
-class room_service : public protoo_event_callback
+class room_service : public protoo_event_callback, public room_callback_interface
 {
 public:
     room_service(const std::string& roomId);
@@ -25,6 +26,9 @@ public:
     virtual void on_response(int err_code, const std::string& err_message, const std::string& id, 
                         const std::string& data) override;
     virtual void on_notification(const std::string& method, const std::string& data) override;
+
+public:
+    virtual void rtppacket_publisher2room(rtc_base_session* session, rtc_publisher* publisher, rtp_packet* pkt) override;
 
 private:
     void handle_join(const std::string& id, const std::string& method,

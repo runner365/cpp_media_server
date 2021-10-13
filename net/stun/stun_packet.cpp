@@ -5,6 +5,7 @@
 #include "ipaddress.hpp"
 #include <stdint.h>
 #include <sstream>
+#include <cstring>
 
 //The magic cookie field MUST contain the fixed value 0x2112A442
 const uint8_t stun_packet::magic_cookie[] = { 0x21, 0x12, 0xA4, 0x42 };
@@ -218,7 +219,7 @@ stun_packet* stun_packet::parse(const uint8_t* data, size_t len) {
 }
 
 stun_packet::stun_packet() {
-    memset(this->data, 0, sizeof(this->data));
+    std::memset(this->data, 0, sizeof(this->data));
     this->origin_data = this->data;
 }
 
@@ -514,7 +515,7 @@ std::string stun_packet::dump() {
     char transactionid_sz[64];
     int str_len = 0;
 
-    for (int i = 0; i < sizeof(this->transaction_id); i++) {
+    for (size_t i = 0; i < sizeof(this->transaction_id); i++) {
         str_len += snprintf(transactionid_sz + str_len, sizeof(transactionid_sz) - str_len,
                         " %.2x", this->transaction_id[i]);
     }

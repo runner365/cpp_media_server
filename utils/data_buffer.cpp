@@ -1,4 +1,5 @@
 #include "data_buffer.hpp"
+#include <cstring>
 
 data_buffer::data_buffer(size_t data_size) {
     buffer_      = new char[data_size + PRE_RESERVE_HEADER_SIZE];
@@ -6,7 +7,7 @@ data_buffer::data_buffer(size_t data_size) {
     start_       = PRE_RESERVE_HEADER_SIZE;
     end_         = PRE_RESERVE_HEADER_SIZE;
     data_len_    = 0;
-    memset(buffer_, 0, data_size);
+    std::memset(buffer_, 0, data_size);
 }
 
 data_buffer::~data_buffer() {
