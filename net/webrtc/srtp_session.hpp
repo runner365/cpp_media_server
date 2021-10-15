@@ -39,9 +39,9 @@ public:
     static void on_srtp_event(srtp_event_data_t* data);
 
 public:
-    bool encrypt_rtp(const uint8_t** data, size_t* len);
+    bool encrypt_rtp(uint8_t** data, size_t* len);
     bool decrypt_srtp(uint8_t* data, size_t* len);
-    bool encrypt_rtcp(const uint8_t** data, size_t* len);
+    bool encrypt_rtcp(uint8_t** data, size_t* len);
     bool decrypt_srtcp(uint8_t* data, size_t* len);
     void remove_stream(uint32_t ssrc);
 

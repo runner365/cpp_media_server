@@ -1,5 +1,6 @@
 #include "rtc_base_session.hpp"
 #include "rtc_publisher.hpp"
+#include "webrtc_session.hpp"
 #include "net/udp/udp_server.hpp"
 #include "utils/logger.hpp"
 

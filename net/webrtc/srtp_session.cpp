@@ -164,7 +164,7 @@ srtp_session::~srtp_session() {
     }
 }
 
-bool srtp_session::encrypt_rtp(const uint8_t** data, size_t* len) {
+bool srtp_session::encrypt_rtp(uint8_t** data, size_t* len) {
     //#define SRTP_MAX_TRAILER_LEN (SRTP_MAX_TAG_LEN + SRTP_MAX_MKI_LEN)
     //SRTP_MAX_TRAILER_LEN=-16+128
     if (*len + SRTP_MAX_TRAILER_LEN > SRTP_ENCRYPT_BUFFER_SIZE) {
@@ -194,7 +194,7 @@ bool srtp_session::decrypt_srtp(uint8_t* data, size_t* len) {
     return true;
 }
 
-bool srtp_session::encrypt_rtcp(const uint8_t** data, size_t* len) {
+bool srtp_session::encrypt_rtcp(uint8_t** data, size_t* len) {
     //#define SRTP_MAX_TRAILER_LEN (SRTP_MAX_TAG_LEN + SRTP_MAX_MKI_LEN)
     //SRTP_MAX_TRAILER_LEN=-16+128
     if (*len + SRTP_MAX_TRAILER_LEN > SRTP_ENCRYPT_BUFFER_SIZE) {

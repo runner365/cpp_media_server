@@ -200,7 +200,7 @@ void webrtc_session::send_rtp_data_in_dtls(uint8_t* data, size_t data_len) {
         log_errorf("dtls writer is not ready");
         return;
     }
-    bool ret = write_srtp_->encrypt_rtp(&data, &data_len);
+    bool ret = write_srtp_->encrypt_rtp(const_cast<uint8_t**>(&data), &data_len);
     if (!ret) {
         return;
     }
@@ -212,7 +212,7 @@ void webrtc_session::send_rtcp_data_in_dtls(uint8_t* data, size_t data_len) {
         log_errorf("dtls writer is not ready");
         return;
     }
-    bool ret = write_srtp_->encrypt_rtcp(&data, &data_len);
+    bool ret = write_srtp_->encrypt_rtcp(const_cast<uint8_t**>(&data), &data_len);
     if (!ret) {
         return;
     }

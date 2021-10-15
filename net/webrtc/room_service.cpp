@@ -186,7 +186,7 @@ void room_service::handle_publish(const std::string& id, const std::string& meth
     support_info.candidates.push_back(candidate_data);
 
     /********* suppot publish rtc information is ready ************/
-    //log_infof("support media info:\r\n%s", support_info.dump().c_str());
+    log_infof("support media info:\r\n%s", support_info.dump().c_str());
     std::string resp_sdp_str = user_ptr->rtc_media_info_2_sdp(support_info);
 
     user_ptr->publish_session_ptr_ = session_ptr;

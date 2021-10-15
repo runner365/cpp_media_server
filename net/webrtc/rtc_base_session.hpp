@@ -3,6 +3,7 @@
 #include "rtc_session_pub.hpp"
 #include "rtc_base_session.hpp"
 #include "rtc_media_info.hpp"
+#include "net/udp/udp_server.hpp"
 
 class rtc_publisher;
 class room_callback_interface;
@@ -29,6 +30,9 @@ protected:
     room_callback_interface* room_ = nullptr;
     int direction_ = 0;
     rtc_media_info media_info_;
+
+protected:
+    udp_tuple remote_address_;
 
 private:
     std::map<uint32_t, std::shared_ptr<rtc_publisher>> ssrc2publishers_;//key: ssrc, value: rtc_publisher
