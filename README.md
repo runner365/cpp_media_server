@@ -6,14 +6,14 @@ It support rtmp/httpflv/websocket(flv).
 
 ## preinstall
 How to install boost.asio
-* Download boost
+### Download boost
+We suggenst boost v1.76: [boost v1.76](https://boostorg.jfrog.io/ui/native/main/release/1.76.0/source/)
 
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;We suggenst boost v1.76: [boost v1.76](https://boostorg.jfrog.io/ui/native/main/release/1.76.0/source/)
-* How to build boost asio in Mac/linux
+### How to build
+Build boost asio in Mac/linux
+1) ./bootstrap.sh
 
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;1st step: ./bootstrap.sh
-
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;2nd step: ./b2 -j 4 --with-system --with-thread --with-date_time --with-regex --with-serialization stage && ./b2 install
+2) ./b2 -j 4 --with-system --with-thread --with-date_time --with-regex --with-serialization stage && ./b2 install
 
 ## What does It support
 network protocol feature:
