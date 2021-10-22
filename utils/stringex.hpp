@@ -5,6 +5,7 @@
 #include <string>
 #include <stdint.h>
 #include <stddef.h>
+#include <stdio.h>
 
 inline int string_split(const std::string& input_str, const std::string& split_str, std::vector<std::string>& output_vec) {
     if (input_str.length() == 0) {
@@ -25,6 +26,22 @@ inline int string_split(const std::string& input_str, const std::string& split_s
     } while(tempString.size() > 0);
 
     return output_vec.size();
+}
+
+inline std::string data_to_string(uint8_t* data, size_t len) {
+    char print_data[4*1024];
+    size_t print_len = 0;
+    const int max_print = 512;
+
+    for (size_t index = 0; index < (len > max_print ? max_print : len); index++) {
+        if ((index%16) == 0) {
+            print_len += snprintf(print_data + print_len, sizeof(print_data) - print_len, "\r\n");
+        }
+        
+        print_len += snprintf(print_data + print_len, sizeof(print_data) - print_len,
+            " %02x", data[index]);
+    }
+    return std::string(print_data);
 }
 
 #endif //STRING_EXTEN_HPP

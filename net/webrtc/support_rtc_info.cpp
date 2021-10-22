@@ -255,6 +255,9 @@ void get_support_rtc_media(const rtc_media_info& input, rtc_media_info& support_
                                 support_rtc_info.rtp_encodings,
                                 support_rtc_info.fmtps);
 
+        if (!rtc_info.ssrc_groups.empty()) {
+            support_rtc_info.ssrc_groups = rtc_info.ssrc_groups;
+        }
         support_rtc_media.medias.push_back(support_rtc_info);
     }
     support_rtc_media.filter_payloads();

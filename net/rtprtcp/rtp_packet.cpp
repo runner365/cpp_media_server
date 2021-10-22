@@ -269,3 +269,21 @@ bool rtp_packet::has_twebytes_ext(header_extension* rtp_ext) {
     return (get_ext_id(rtp_ext) & 0xfff0) == 0x1000;
 }
 
+void rtp_packet::rtx_demux(uint32_t ssrc, uint8_t payloadtype) {
+    if (this->payload_len < 2) {
+        MS_THROW_ERROR("rtx payload len(%lu) is less than 2", this->payload_len);
+    }
+
+    set_payload_type(payloadtype);
+    set_ssrc(ssrc);
+
+    std::memmove(this->payload, this->payload + 2, this->payload_len - 2);
+    this->payload_len -= 2;
+    this->data_len    -= 2;
+
+    if (this->has_padding()) {
+        set_padding(false);
+        this->data_len -= this->pad_len;
+        this->pad_len   = 0;
+    }
+}

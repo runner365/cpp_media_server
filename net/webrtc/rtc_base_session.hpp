@@ -23,8 +23,8 @@ public:
     void send_plaintext_data(uint8_t* data, size_t data_len);
 
 public:
-    virtual void send_rtp_data_in_dtls(uint8_t* data, size_t data_len) = 0;
-    virtual void send_rtcp_data_in_dtls(uint8_t* data, size_t data_len) = 0;
+    virtual void send_rtp_data_in_dtls(uint8_t* data, size_t data_len) {};
+    virtual void send_rtcp_data_in_dtls(uint8_t* data, size_t data_len) {};
 
 protected:
     room_callback_interface* room_ = nullptr;

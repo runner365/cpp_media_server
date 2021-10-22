@@ -157,6 +157,8 @@ add_executable(media_server
             net/webrtc/srtp_session.cpp
             net/webrtc/support_rtc_info.cpp
             net/webrtc/rtc_publisher.cpp
+            net/webrtc/rtp_stream.cpp
+            net/webrtc/nack_generator.cpp
             net/httpflv/httpflv_server.cpp
             net/httpflv/httpflv_writer.cpp
             utils/logger.cpp

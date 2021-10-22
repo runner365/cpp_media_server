@@ -364,7 +364,7 @@ void webrtc_session::on_handle_rtcp_data(const uint8_t* data, size_t data_len, c
             case RTCP_SR:
             {
                 try {
-                    rtcp_sr_packet* sr_pkt = rtcp_sr_packet::parse(p + sizeof(rtcp_common_header), payload_length);
+                    rtcp_sr_packet* sr_pkt = rtcp_sr_packet::parse(p, sizeof(rtcp_common_header) + payload_length);
                     if (sr_pkt) {
                         std::shared_ptr<rtc_publisher> publisher_ptr = get_publisher(sr_pkt->get_ssrc());
                         if (!publisher_ptr) {

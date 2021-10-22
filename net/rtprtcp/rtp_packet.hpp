@@ -26,6 +26,29 @@ typedef struct twobytes_extension_s {
     uint8_t value[1];
 } twobytes_extension;
 
+/**
+    0                   1                   2                   3
+    0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
+   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+   |V=2|P|X|  CC   |M|     PT      |       sequence number         |
+   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+   |                           timestamp                           |
+   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+   |           synchronization source (SSRC) identifier            |
+   +=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+
+   |            contributing source (CSRC) identifiers             |
+   |                             ....                              |
+   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+
+    0                   1                   2                   3
+    0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
+   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+   |      defined by profile       |           length              |
+   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+   |                        header extension                       |
+   |                             ....                              |
+ */
+
 class rtp_packet
 {
 public:
@@ -37,9 +60,11 @@ public:
 public:
     uint8_t version() {return this->header->version;}
     bool has_padding() {return (this->header->padding == 1) ? true : false;}
+    void set_padding(bool flag) {this->header->padding = flag ? 1 : 0;}
     bool has_extension() {return (this->header->extension == 1) ? true : false;}
     uint8_t csrc_count() {return this->header->csrc_count;}
     uint8_t get_payload_type() {return this->header->payload_type;}
+    void set_payload_type(uint8_t type) {this->header->payload_type = type;}
     uint8_t get_mpayload_type() {
         uint8_t marker = this->header->marker;
         return (marker << 7) | this->header->payload_type;
@@ -48,6 +73,7 @@ public:
     uint16_t get_seq() {return ntohs(this->header->sequence);}
     uint32_t get_timestamp() {return ntohl(this->header->timestamp);}
     uint32_t get_ssrc() {return ntohl(this->header->ssrc);}
+    void set_ssrc(uint32_t ssrc) {this->header->ssrc = (uint32_t)htonl(ssrc);}
 
     uint8_t* get_data() {return (uint8_t*)this->header;}
     size_t get_data_length() {return data_len;}
@@ -56,6 +82,8 @@ public:
     size_t get_payload_length() {return this->payload_len;}
 
     int64_t get_local_ms() {return this->local_ms;}
+
+    void rtx_demux(uint32_t ssrc, uint8_t payloadtype);
 
     std::string dump();
 

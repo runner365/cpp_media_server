@@ -65,7 +65,7 @@ stun_packet* stun_packet::parse(const uint8_t* data, size_t len) {
     p += 2;
 
     if (((size_t)msg_len != (len - 20)) || ((msg_len & 0x03) != 0)) {
-        MS_THROW_ERROR("stun packet message len(%d) error", msg_len);
+        MS_THROW_ERROR("stun packet message len(%d) error, len:%lu", msg_len, len);
     }
 
     stun_packet* ret_packet = new stun_packet(data, len);

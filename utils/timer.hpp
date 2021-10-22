@@ -35,6 +35,10 @@ public:
         });
     }
 
+    void update_timeout(uint32_t timeout_ms) {
+        timeout_ms_ = timeout_ms;
+    }
+
 private:
     boost::asio::deadline_timer timer_;
     uint32_t timeout_ms_;
