@@ -11,6 +11,12 @@ class rtp_packet;
 class rtc_publisher;
 class rtc_base_session;
 
+typedef struct publisher_info_s
+{
+    std::string media_type;
+    uint32_t ssrc;
+} publisher_info;
+
 class room_callback_interface
 {
 public:

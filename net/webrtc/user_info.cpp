@@ -10,7 +10,9 @@ user_info::user_info(const std::string& uid, const std::string& roomId, protoo_r
 
 user_info::~user_info() {
     log_infof("user destruct, uid:%s, roomid:%s", uid_.c_str(), roomId_.c_str());
-    publish_session_ptr_->close_session();
+    if (publish_session_ptr_.get() != nullptr) {
+        publish_session_ptr_->close_session();
+    }
 }
 
 json user_info::parse_remote_sdp(const std::string& sdp) {

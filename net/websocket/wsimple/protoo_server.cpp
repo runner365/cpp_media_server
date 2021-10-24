@@ -315,7 +315,8 @@ void protoo_server::on_writen(int len) {
 }
 
 void protoo_server::on_close(int err_code) {
-    log_infof("protoo server on close, error code:%d", err_code);
+    log_infof("protoo server on close, error code:%d, roomId:%s, uid:%s",
+        err_code, roomId_.c_str(), uid_.c_str());
 
     if (uid_.empty() || roomId_.empty()) {
         log_infof("user has not joined.");

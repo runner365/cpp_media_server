@@ -4,6 +4,7 @@
 #include "rtc_base_session.hpp"
 #include "rtc_media_info.hpp"
 #include "net/udp/udp_server.hpp"
+#include <vector>
 
 class rtc_publisher;
 class room_callback_interface;
@@ -17,6 +18,9 @@ public:
 public:
     void create_publisher(const MEDIA_RTC_INFO& media_info);
     void remove_publisher(const MEDIA_RTC_INFO& media_info);
+    void remove_publisher(int mid);
+    std::vector<publisher_info> get_publishs_information();
+    
     std::shared_ptr<rtc_publisher> get_publisher(uint32_t ssrc);
     std::shared_ptr<rtc_publisher> get_publisher(int mid);
 

@@ -7,6 +7,7 @@
 #include <sstream>
 #include <stdio.h>
 #include <arpa/inet.h>  // htonl(), htons(), ntohl(), ntohs()
+#include <vector>
 
 /*
         0                   1                   2                   3
@@ -26,9 +27,13 @@ typedef struct rtcp_nack_header_s
 {
     uint32_t sender_ssrc;
     uint32_t media_ssrc;
+} rtcp_nack_header;
+
+typedef struct rtcp_nack_block_s
+{
     uint16_t packet_id;//base seq
     uint16_t lost_bitmap;
-} rtcp_nack_header;
+} rtcp_nack_block;
 
 class rtcp_fb_nack
 {
@@ -36,17 +41,17 @@ public:
     rtcp_fb_nack(uint32_t sender_ssrc, uint32_t media_ssrc)
     {
         fb_common_header_ = (rtcp_fb_rtp_header*)(this->data);
-        header_ = (rtcp_nack_header*)(fb_common_header_ + 1);
+        nack_header_ = (rtcp_nack_header*)(fb_common_header_ + 1);
         this->data_len = sizeof(rtcp_fb_rtp_header) + sizeof(rtcp_nack_header);
 
         fb_common_header_->version     = 2;
         fb_common_header_->padding     = 0;
         fb_common_header_->fmt         = (int)FB_RTP_NACK;
         fb_common_header_->packet_type = RTCP_RTPFB;
-        fb_common_header_->length      = (uint32_t)htonl(this->data_len/4) - 1;
+        fb_common_header_->length      = (uint16_t)htons((uint16_t)this->data_len/4) - 1;
 
-        header_->sender_ssrc = sender_ssrc;
-        header_->media_ssrc  = media_ssrc;
+        nack_header_->sender_ssrc = (uint32_t)htonl(sender_ssrc);
+        nack_header_->media_ssrc  = (uint32_t)htonl(media_ssrc);
     }
 
     ~rtcp_fb_nack()
@@ -56,7 +61,7 @@ public:
 
 public:
     static rtcp_fb_nack* parse(uint8_t* data, size_t len) {
-        if (len != sizeof(rtcp_fb_rtp_header) + sizeof(rtcp_nack_header)) {
+        if (len <= sizeof(rtcp_fb_rtp_header) + sizeof(rtcp_nack_header)) {
             return nullptr;
         }
         
@@ -65,40 +70,58 @@ public:
         return pkt;
     }
 
-public:
-    uint32_t get_sender_ssrc() {return (uint32_t)ntohl(header_->sender_ssrc);}
-    uint32_t get_media_ssrc() {return (uint32_t)ntohl(header_->media_ssrc);}
-    uint16_t get_packet_id() {return (uint16_t)ntohs(header_->packet_id);}
-    uint16_t get_bitmap() {return (uint16_t)ntohs(header_->lost_bitmap);}
 
-    bool update_data(uint8_t* data, size_t len) {
-        if (len != sizeof(rtcp_fb_rtp_header) + sizeof(rtcp_nack_header)) {
-            return false;
+    void insert_seq_list(const std::vector<uint16_t>& seq_vec) {
+        std::vector<uint16_t> report_seqs;
+
+        for (size_t index = 0; index < seq_vec.size(); index++) {
+            uint16_t lost_seq = seq_vec[index];
+            report_seqs.push_back(lost_seq);
+
+            if ((report_seqs[report_seqs.size() - 1] - report_seqs[0]) > 16) {
+                insert_block(report_seqs);
+                report_seqs.clear();
+            }
         }
-        memcpy(this->data, data, len);
-        this->data_len = len;
-        fb_common_header_ = (rtcp_fb_rtp_header*)(this->data);
-        header_ = (rtcp_nack_header*)(fb_common_header_ + 1);
-        return true;
+        if (!report_seqs.empty()) {
+            insert_block(report_seqs);
+            report_seqs.clear();
+        }
     }
 
-    uint8_t* get_data(uint16_t seq, uint16_t bitmap, size_t& len) {
-        header_->packet_id   = (uint16_t)htons(seq);
-        header_->lost_bitmap = (uint16_t)htons(bitmap);
+    void insert_block(const std::vector<uint16_t>& report_seqs) {
+        uint16_t packet_id = report_seqs[0];
+        uint16_t bitmap    = 0;
 
-        len = this->data_len;
-        return this->data;
+        for (size_t r = 1; r < report_seqs.size(); r++) {
+            uint16_t temp_seq = report_seqs[r];
+            bitmap |= 1 << (16 - (temp_seq - packet_id));
+        }
+        rtcp_nack_block* block = (rtcp_nack_block*)(this->data + this->data_len);
+        block->packet_id   = htons(packet_id);
+        block->lost_bitmap = htons(bitmap);
+
+        nack_blocks_.push_back(block);
+
+        this->data_len += sizeof(rtcp_nack_block);
+        fb_common_header_->length = htons((uint16_t)(this->data_len/4 - 1));
     }
+public:
+    uint32_t get_sender_ssrc() {return (uint32_t)ntohl(nack_header_->sender_ssrc);}
+    uint32_t get_media_ssrc() {return (uint32_t)ntohl(nack_header_->media_ssrc);}
+    uint8_t* get_data() {return this->data;}
+    size_t get_len() {return this->data_len;}
 
     std::string dump() {
         std::stringstream ss;
-        char bitmap_sz[80];
 
-        snprintf(bitmap_sz, sizeof(bitmap_sz), "0x%04x", get_bitmap());
-
-        ss << "rtcp fb nack: sender ssrc=" << get_sender_ssrc() << ", media ssrc=" << get_media_ssrc()
-           << ", base seq:" << get_packet_id() << ", bitmap:" << std::string(bitmap_sz);
+        ss << "rtcp fb nack: sender ssrc=" << get_sender_ssrc() << ", media ssrc=" << get_media_ssrc() << "\r\n";
         
+        for (auto block : nack_blocks_) {
+            char bitmap_sz[80];
+            snprintf(bitmap_sz, sizeof(bitmap_sz), "0x%04x", ntohs(block->lost_bitmap));
+            ss << " base seq:" << ntohs(block->packet_id) << ", " << "bitmap:" << std::string(bitmap_sz) << "\r\n";
+        }
         char print_data[4*1024];
         size_t print_len = 0;
         const size_t max_print = 256;
@@ -116,12 +139,32 @@ public:
 
         return ss.str();
     }
+private:
+    bool update_data(uint8_t* data, size_t len) {
+        if (len <= sizeof(rtcp_fb_rtp_header) + sizeof(rtcp_nack_header)) {
+            return false;
+        }
+        memcpy(this->data, data, len);
+        this->data_len = len;
+        fb_common_header_ = (rtcp_fb_rtp_header*)(this->data);
+        rtcp_nack_header* nack_header = (rtcp_nack_header*)(fb_common_header_ + 1);
+        rtcp_nack_block* block = (rtcp_nack_block*)(nack_header + 1);
+        uint8_t* p = (uint8_t*)block;
+
+        while ((size_t)(p - this->data) < this->data_len) {
+            nack_blocks_.push_back(block);
+            block++;
+            p = (uint8_t*)block;
+        }
+        return true;
+    }
 
 private:
     uint8_t data[1500];
     size_t  data_len = 0;
-    rtcp_fb_rtp_header* fb_common_header_;
-    rtcp_nack_header*   header_;
+    rtcp_fb_rtp_header* fb_common_header_ = nullptr;
+    rtcp_nack_header* nack_header_        = nullptr;
+    std::vector<rtcp_nack_block*>  nack_blocks_;
     
 
 };

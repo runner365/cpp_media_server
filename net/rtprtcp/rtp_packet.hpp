@@ -71,6 +71,7 @@ public:
     }
     uint8_t get_marker() {return this->header->marker;}
     uint16_t get_seq() {return ntohs(this->header->sequence);}
+    void set_seq(uint16_t seq) {this->header->sequence = htons(seq);}
     uint32_t get_timestamp() {return ntohl(this->header->timestamp);}
     uint32_t get_ssrc() {return ntohl(this->header->ssrc);}
     void set_ssrc(uint32_t ssrc) {this->header->ssrc = (uint32_t)htonl(ssrc);}

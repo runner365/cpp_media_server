@@ -8,6 +8,7 @@
 #include <boost/beast/websocket.hpp>
 #include <boost/asio/dispatch.hpp>
 #include <boost/asio/strand.hpp>
+#include <queue>
 
 class websocket_server_callbackI
 {
@@ -44,10 +45,11 @@ private:
     ws_session_callback* ws_cb_            = nullptr;
     std::string stream_id_;
     bool closed_flag_ = false;
+    bool sending_flag_   = false;
 
 private:
     boost::beast::flat_buffer recv_buffer_;
-    boost::beast::flat_buffer send_buffer_;
+    std::queue<boost::beast::flat_buffer> send_buffer_queue_;
 };
 
 #endif //WEBSOCKET_SESSION_HPP

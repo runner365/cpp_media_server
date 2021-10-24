@@ -2,6 +2,7 @@
 #include "net/rtprtcp/rtprtcp_pub.hpp"
 #include "logger.hpp"
 #include "timeex.hpp"
+#include <algorithm>
 
 extern boost::asio::io_context& get_global_io_context();
 
@@ -43,13 +44,18 @@ void nack_generator::update_nacklist(rtp_packet* pkt) {
         return;
     }
 
+    if ((last_seq_ + 1) == seq) {
+        last_seq_ = seq;
+        return;
+    }
+
     uint16_t seq_start = last_seq_;
     uint16_t seq_end   = seq;
     
     last_seq_ = seq;
 
     //add seqs in nack list
-    for (uint16_t key_seq = seq_start + 1; key_seq <= seq_end; key_seq++) {
+    for (uint16_t key_seq = seq_start + 1; key_seq < seq_end; key_seq++) {
         auto iter = nack_map_.find(key_seq);
         if (iter == nack_map_.end()) {
             nack_map_.insert(std::make_pair(key_seq, NACK_INFO(key_seq, 0, 0)));
@@ -63,7 +69,7 @@ void nack_generator::on_timer() {
     }
 
     int64_t now_ms = now_millisec();
-    std::vector<uint16_t> seq_list;
+    std::vector<uint16_t> lost_seq_list;
     auto iter = nack_map_.begin();
 
     while(iter != nack_map_.end()) {
@@ -78,17 +84,14 @@ void nack_generator::on_timer() {
         iter->second.sent_ms = now_ms;
         iter->second.retry++;
 
-        seq_list.push_back(iter->first);
+        lost_seq_list.push_back(iter->first);
 
-        if ((seq_list.size() > 1) && ((seq_list[seq_list.size()-1] - seq_list[0]) >= 15)) {
-            cb_->generate_nacklist(seq_list);
-            seq_list.clear();
-        }
         iter++;
     }
 
-    if (!seq_list.empty()) {
-        cb_->generate_nacklist(seq_list);
+    if (!lost_seq_list.empty()) {
+        std::sort(lost_seq_list.begin(), lost_seq_list.end());
+        cb_->generate_nacklist(lost_seq_list);
     }
 
     if (nack_map_.size() > NACK_LIST_MAX) {

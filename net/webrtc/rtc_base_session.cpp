@@ -71,6 +71,41 @@ void rtc_base_session::remove_publisher(const MEDIA_RTC_INFO& media_info) {
     }
 }
 
+void rtc_base_session::remove_publisher(int mid) {
+    auto mid_iter = mid2publishers_.find(mid);
+    if (mid_iter == mid2publishers_.end()) {
+        return;
+    }
+    std::shared_ptr<rtc_publisher> publisher_ptr = mid_iter->second;
+    uint32_t ssrc = publisher_ptr->get_rtp_ssrc();
+    mid2publishers_.erase(mid_iter);
+
+    auto ssrc_iter = ssrc2publishers_.find(ssrc);
+    if (ssrc_iter == ssrc2publishers_.end()) {
+        return;
+    }
+    ssrc2publishers_.erase(ssrc_iter);
+}
+
+std::vector<publisher_info> rtc_base_session::get_publishs_information() {
+    std::vector<publisher_info> infos;
+
+    for (auto item : ssrc2publishers_) {
+        publisher_info info;
+        
+        info.ssrc = item.first;
+        std::shared_ptr<rtc_publisher> publisher_ptr = item.second;
+        if (publisher_ptr->get_rtp_ssrc() != info.ssrc) {
+            //skip rtx ssrc
+            continue;
+        }
+        info.media_type = publisher_ptr->get_media_type();
+        
+        infos.push_back(info);
+    }
+    return infos;
+}
+
 std::shared_ptr<rtc_publisher> rtc_base_session::get_publisher(int mid) {
     std::shared_ptr<rtc_publisher> publisher_ptr;
 

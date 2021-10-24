@@ -274,7 +274,9 @@ void rtp_packet::rtx_demux(uint32_t ssrc, uint8_t payloadtype) {
         MS_THROW_ERROR("rtx payload len(%lu) is less than 2", this->payload_len);
     }
 
+    uint16_t replace_seq = ntohs(*(uint16_t*)(this->payload));
     set_payload_type(payloadtype);
+    set_seq(replace_seq);
     set_ssrc(ssrc);
 
     std::memmove(this->payload, this->payload + 2, this->payload_len - 2);

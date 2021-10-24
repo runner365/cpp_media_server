@@ -125,21 +125,32 @@ void websocket_session::on_accept(boost::beast::error_code ec) {
 }
 
 void websocket_session::async_write(const char* data, int len) {
-    auto output_data = send_buffer_.prepare((size_t)len);
-
+    boost::beast::flat_buffer send_buffer;
+    auto output_data = send_buffer.prepare((size_t)len);
     memcpy(output_data.data(), data, len);
+    send_buffer.commit(len);
 
-    send_buffer_.commit(len);
+    send_buffer_queue_.push(send_buffer);
     io_ctx_.post(std::bind(&websocket_session::do_write, this));
     return;
 }
 
 void websocket_session::do_write() {
+    if (send_buffer_queue_.empty()) {
+        return;
+    }
+
+    if (sending_flag_) {
+        return;
+    }
+
+    sending_flag_ = true;
+    boost::beast::flat_buffer send_buffer = send_buffer_queue_.front();
     if (ws_) {
-        ws_->async_write(send_buffer_.data(),
+        ws_->async_write(send_buffer.data(),
             boost::beast::bind_front_handler(&websocket_session::on_write, this));
     } else {
-        wss_->async_write(send_buffer_.data(),
+        wss_->async_write(send_buffer.data(),
             boost::beast::bind_front_handler(&websocket_session::on_write, this));
     }
     return;
@@ -185,10 +196,13 @@ void websocket_session::on_write(boost::beast::error_code ec, size_t bytes_trans
         close_session(ec);
         return;
     }
-    send_buffer_.consume(bytes_transferred);
+    sending_flag_ = false;
+    send_buffer_queue_.pop();
+
     if (ws_cb_) {
         ws_cb_->on_writen((int)bytes_transferred);
     }
+    do_write();
 }
 
 void websocket_session::on_read(boost::beast::error_code ec, size_t bytes_transferred) {

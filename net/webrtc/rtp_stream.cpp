@@ -13,12 +13,14 @@ rtp_stream::rtp_stream(rtc_stream_callback* cb, std::string media_type, uint32_t
         , has_rtx_(is_rtx)
         , nack_handle_(this)
 {
-
+    log_infof("rtp stream construct media type:%s, ssrc:%u, payload type:%d, is rtx:%d, clock rate:%d",
+        media_type.c_str(), ssrc, payloadtype, is_rtx, clock_rate);
 }
 
 rtp_stream::~rtp_stream()
 {
-
+    log_infof("rtp stream destruct media type:%s, ssrc:%u, payload type:%d, is rtx:%d, clock rate:%d",
+        media_type_.c_str(), ssrc_, payloadtype_, has_rtx_, clock_rate_);
 }
 
 //rfc3550: A.1 RTP Data Header Validity Checks
@@ -183,7 +185,10 @@ void rtp_stream::on_handle_rtp(rtp_packet* pkt) {
 
     generate_jitter(pkt->get_timestamp());
 
-    nack_handle_.update_nacklist(pkt);
+    if (media_type_ == "video") {
+        log_debugf("receive video pkt ssrc:%u, seq:%d", pkt->get_ssrc(), pkt->get_seq());
+        nack_handle_.update_nacklist(pkt);
+    }
     return;
 }
 
@@ -194,14 +199,18 @@ void rtp_stream::on_handle_rtx_packet(rtp_packet* pkt) {
     //update sequence after rtx demux
     update_seq(pkt->get_seq());
 
-    nack_handle_.update_nacklist(pkt);
+    if (media_type_ == "video") {
+        log_infof("receive video rtx pkt ssrc:%u, seq:%d", pkt->get_ssrc(), pkt->get_seq());
+        nack_handle_.update_nacklist(pkt);
+    }
+    return;
 }
 
 void rtp_stream::generate_nacklist(const std::vector<uint16_t>& seq_vec) {
-    std::stringstream ss;
-    ss << "nack seqs:";
-    for(auto seq : seq_vec) {
-        ss << seq << " ";
-    }
-    log_infof("start sending %s", ss.str().c_str());
+    rtcp_fb_nack* nack_pkt = new rtcp_fb_nack(0, ssrc_);
+    nack_pkt->insert_seq_list(seq_vec);
+
+    cb_->stream_send_rtcp(nack_pkt->get_data(), nack_pkt->get_len());
+
+    delete nack_pkt;
 }
