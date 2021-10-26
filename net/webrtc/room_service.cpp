@@ -227,6 +227,7 @@ void room_service::handle_publish_close(const std::string& id, const std::string
     std::shared_ptr<user_info> user_ptr;
     json data_json = json::parse(data);
 
+    log_infof("handle publish close: %s", data.c_str());
     std::string uid = get_uid_by_json(data_json);
     if (uid.empty()) {
         feedback_p->reject(id, UID_ERROR, "uid field does not exist");

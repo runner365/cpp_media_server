@@ -13,8 +13,8 @@ public:
     }
 
     virtual ~timer_interface() {
-        boost::system::error_code ec;
-        timer_.cancel(ec);
+        log_infof("timer base destruct...");
+        stop_timer();
     }
 
 public:
@@ -22,8 +22,12 @@ public:
 
 public:
     void start_timer() {
+        running_ = true;
         timer_.expires_from_now(boost::posix_time::millisec(timeout_ms_));
         timer_.async_wait([this](const boost::system::error_code& ec) {
+            if (!this->running_) {
+                return;
+            }
             if(!ec) {
                 this->on_timer();
             } else {
@@ -35,6 +39,14 @@ public:
         });
     }
 
+    void stop_timer() {
+        if (!running_) {
+            return;
+        }
+        running_ = false;
+        boost::system::error_code ec;
+        timer_.cancel(ec);
+    }
     void update_timeout(uint32_t timeout_ms) {
         timeout_ms_ = timeout_ms;
     }
@@ -42,6 +54,7 @@ public:
 private:
     boost::asio::deadline_timer timer_;
     uint32_t timeout_ms_;
+    bool running_ = false;
 };
 
 #endif

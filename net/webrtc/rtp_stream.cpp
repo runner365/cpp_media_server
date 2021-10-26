@@ -11,14 +11,23 @@ rtp_stream::rtp_stream(rtc_stream_callback* cb, std::string media_type, uint32_t
         , clock_rate_(clock_rate)
         , payloadtype_(payloadtype)
         , has_rtx_(is_rtx)
-        , nack_handle_(this)
 {
+    if (media_type == "video") {
+        nack_handle_ = new nack_generator(this);
+    } else {
+        nack_handle_ = nullptr;
+    }
+    
     log_infof("rtp stream construct media type:%s, ssrc:%u, payload type:%d, is rtx:%d, clock rate:%d",
         media_type.c_str(), ssrc, payloadtype, is_rtx, clock_rate);
 }
 
 rtp_stream::~rtp_stream()
 {
+    if (nack_handle_) {
+        delete nack_handle_;
+        nack_handle_ = nullptr;
+    }
     log_infof("rtp stream destruct media type:%s, ssrc:%u, payload type:%d, is rtx:%d, clock rate:%d",
         media_type_.c_str(), ssrc_, payloadtype_, has_rtx_, clock_rate_);
 }
@@ -185,9 +194,9 @@ void rtp_stream::on_handle_rtp(rtp_packet* pkt) {
 
     generate_jitter(pkt->get_timestamp());
 
-    if (media_type_ == "video") {
+    if (media_type_ == "video" && nack_handle_) {
         log_debugf("receive video pkt ssrc:%u, seq:%d", pkt->get_ssrc(), pkt->get_seq());
-        nack_handle_.update_nacklist(pkt);
+        nack_handle_->update_nacklist(pkt);
     }
     return;
 }
@@ -199,9 +208,9 @@ void rtp_stream::on_handle_rtx_packet(rtp_packet* pkt) {
     //update sequence after rtx demux
     update_seq(pkt->get_seq());
 
-    if (media_type_ == "video") {
+    if (media_type_ == "video" && nack_handle_) {
         log_infof("receive video rtx pkt ssrc:%u, seq:%d", pkt->get_ssrc(), pkt->get_seq());
-        nack_handle_.update_nacklist(pkt);
+        nack_handle_->update_nacklist(pkt);
     }
     return;
 }

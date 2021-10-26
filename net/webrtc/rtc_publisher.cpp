@@ -59,6 +59,7 @@ rtc_publisher::rtc_publisher(room_callback_interface* room, rtc_base_session* se
 rtc_publisher::~rtc_publisher() {
     log_infof("rtc_publisher destruct media type:%s, rtp ssrc:%u, rtx ssrc:%u",
         this->get_media_type().c_str(), rtp_ssrc_, rtx_ssrc_);
+    stop_timer();
     if (rtp_handler_) {
         delete rtp_handler_;
     }

@@ -72,7 +72,7 @@ private:
     uint32_t cycles_   = 0;
 
 private:
-    nack_generator nack_handle_;
+    nack_generator* nack_handle_ = nullptr;
 };
 
 #endif

@@ -77,14 +77,30 @@ void rtc_base_session::remove_publisher(int mid) {
         return;
     }
     std::shared_ptr<rtc_publisher> publisher_ptr = mid_iter->second;
-    uint32_t ssrc = publisher_ptr->get_rtp_ssrc();
+    uint32_t ssrc     = publisher_ptr->get_rtp_ssrc();
+    uint32_t rtx_ssrc = publisher_ptr->get_rtx_ssrc();
     mid2publishers_.erase(mid_iter);
+    log_infof("remove rtc publisher from mid2publishs, mid:%d, mediatype:%s, size:%lu",
+        mid, publisher_ptr->get_media_type().c_str(), mid2publishers_.size());
 
     auto ssrc_iter = ssrc2publishers_.find(ssrc);
     if (ssrc_iter == ssrc2publishers_.end()) {
         return;
     }
+    publisher_ptr = ssrc_iter->second;
     ssrc2publishers_.erase(ssrc_iter);
+    log_infof("remove rtc publisher from ssrc2publisers, mid:%d, rtp ssrc:%u, mediatype:%s, size:%lu",
+        mid, ssrc, publisher_ptr->get_media_type().c_str(), ssrc2publishers_.size());
+
+    if (publisher_ptr->has_rtx()) {
+        log_infof("remove rtc publisher from ssrc2publisers, mid:%d, rtx ssrc:%u, mediatype:%s, size:%lu",
+            mid, rtx_ssrc, publisher_ptr->get_media_type().c_str(), ssrc2publishers_.size());
+        ssrc_iter = ssrc2publishers_.find(rtx_ssrc);
+        if (ssrc_iter == ssrc2publishers_.end()) {
+            return;
+        }
+        ssrc2publishers_.erase(ssrc_iter);
+    }
 }
 
 std::vector<publisher_info> rtc_base_session::get_publishs_information() {

@@ -378,7 +378,6 @@ void webrtc_session::on_handle_rtcp_data(const uint8_t* data, size_t data_len, c
                 catch(const std::exception& e) {
                     log_errorf("rtcp sr parse error:%s", e.what());
                 }
-                
                 break;
             }
             case RTCP_RR:

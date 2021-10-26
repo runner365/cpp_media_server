@@ -14,7 +14,7 @@ nack_generator::nack_generator(nack_generator_callback_interface* cb):timer_inte
 
 nack_generator::~nack_generator()
 {
-
+    stop_timer();
 }
 
 void nack_generator::update_nacklist(rtp_packet* pkt) {
