@@ -15,6 +15,8 @@ typedef struct publisher_info_s
 {
     std::string media_type;
     uint32_t ssrc;
+    int mid;
+    std::string pid;
 } publisher_info;
 
 class room_callback_interface

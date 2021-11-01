@@ -153,6 +153,7 @@ add_executable(media_server
             net/webrtc/rtc_media_info.cpp
             net/webrtc/rtc_base_session.cpp
             net/webrtc/webrtc_session.cpp
+            net/webrtc/rtc_subscriber.cpp
             net/webrtc/rtc_dtls.cpp
             net/webrtc/srtp_session.cpp
             net/webrtc/support_rtc_info.cpp

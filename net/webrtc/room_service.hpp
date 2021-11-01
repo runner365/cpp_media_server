@@ -11,6 +11,7 @@
 
 using json = nlohmann::json;
 
+class rtc_subscriber;
 class room_service : public protoo_event_callback, public room_callback_interface
 {
 public:
@@ -38,20 +39,24 @@ private:
                 const std::string& data, protoo_request_interface* feedback_p);
     void response_publish(const std::string& id, protoo_request_interface* feedback_p,
                 int code, const std::string& desc, const std::string& sdp);
-    void handle_publish_close(const std::string& id, const std::string& method,
+    void handle_unpublish(const std::string& id, const std::string& method,
                 const std::string& data, protoo_request_interface* feedback_p);
-
+    void handle_subscribe(const std::string& id, const std::string& method,
+                const std::string& data, protoo_request_interface* feedback_p);
 private:
     std::shared_ptr<user_info> get_user_info(const std::string& uid);
     std::string get_uid_by_json(json& json_obj);
+    std::vector<publisher_info> get_publishers_info_by_json(const json& publishers_json);
     void notify_userin_to_others(const std::string& uid);
     void notify_userout_to_others(const std::string& uid);
     void notify_publisher_to_others(const std::string& uid, const std::vector<publisher_info>& publisher_vec);
+    void notify_unpublisher_to_others(const std::string& uid, const std::vector<publisher_info>& publisher_vec);
     void notify_others_publisher_to_me(const std::string& uid, std::shared_ptr<user_info> me);
 
 private:
     std::string roomId_;
     std::unordered_map<std::string, std::shared_ptr<user_info>> users_;//key: uid, value: user_info
+    std::unordered_map<std::string, std::shared_ptr<rtc_subscriber>> subscribers_;//key: publisher_id, value: rtc_subscriber
 };
 
 std::shared_ptr<protoo_event_callback> GetorCreate_room_service(const std::string& roomId);

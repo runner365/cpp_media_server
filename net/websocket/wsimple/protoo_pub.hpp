@@ -15,6 +15,8 @@
 #define REPEAT_PUBLISH_ERROR      1010
 #define NO_PUBLISH_ERROR          1011
 #define MIDS_ERROR                1012
+#define RM_PUBLISH_ERROR          1013
+#define SUBSCRIBE_JSON_ERROR      1014
 
 class protoo_request_interface
 {

@@ -4,15 +4,20 @@
 #include "utils/timer.hpp"
 #include "utils/timeex.hpp"
 #include "utils/logger.hpp"
+#include "utils/uuid.hpp"
 #include <sstream>
 #include <cstring>
 
 extern boost::asio::io_context& get_global_io_context();
 
-rtc_publisher::rtc_publisher(room_callback_interface* room, rtc_base_session* session, const MEDIA_RTC_INFO& media_info):timer_interface(get_global_io_context(), 500)
+rtc_publisher::rtc_publisher(const std::string& roomId, const std::string& uid,
+        room_callback_interface* room, rtc_base_session* session, const MEDIA_RTC_INFO& media_info):timer_interface(get_global_io_context(), 500)
+        , roomId_(roomId)
+        , uid_(uid)
         , room_(room)
         , session_(session)
         , media_info_(media_info) {
+    pid_ = make_uuid();
     memset(&ntp_, 0, sizeof(NTP_TIMESTAMP));
     media_type_ = media_info_.media_type;
 
@@ -52,13 +57,15 @@ rtc_publisher::rtc_publisher(room_callback_interface* room, rtc_base_session* se
     }
 
     start_timer();
-    log_infof("rtc_publisher construct media type:%s, rtp ssrc:%u, rtx ssrc:%u, clock rate:%d, payload:%d, has rtx:%d, rtx payload:%d",
-        this->get_media_type().c_str(), rtp_ssrc_, rtx_ssrc_, clock_rate_, payloadtype_, has_rtx_, rtx_payloadtype_);
+    log_infof("rtc_publisher construct media type:%s, rtp ssrc:%u, rtx ssrc:%u, clock rate:%d, \
+payload:%d, has rtx:%d, rtx payload:%d, mid:%d, id:%s",
+        this->get_media_type().c_str(), rtp_ssrc_, rtx_ssrc_, clock_rate_, payloadtype_,
+        has_rtx_, rtx_payloadtype_, get_mid(), pid_.c_str());
 }
 
 rtc_publisher::~rtc_publisher() {
-    log_infof("rtc_publisher destruct media type:%s, rtp ssrc:%u, rtx ssrc:%u",
-        this->get_media_type().c_str(), rtp_ssrc_, rtx_ssrc_);
+    log_infof("rtc_publisher destruct media type:%s, rtp ssrc:%u, rtx ssrc:%u, mid:%d",
+        this->get_media_type().c_str(), rtp_ssrc_, rtx_ssrc_, get_mid());
     stop_timer();
     if (rtp_handler_) {
         delete rtp_handler_;

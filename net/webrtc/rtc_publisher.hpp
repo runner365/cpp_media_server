@@ -18,7 +18,8 @@ class room_callback_interface;
 class rtc_publisher : public timer_interface, public rtc_stream_callback
 {
 public:
-    rtc_publisher(room_callback_interface* room, rtc_base_session* session, const MEDIA_RTC_INFO& media_info);
+    rtc_publisher(const std::string& roomId, const std::string& uid,
+            room_callback_interface* room, rtc_base_session* session, const MEDIA_RTC_INFO& media_info);
     virtual ~rtc_publisher();
 
 public:
@@ -26,9 +27,12 @@ public:
     void on_handle_rtcp_sr(rtcp_sr_packet* sr_pkt);
 
 public:
+    MEDIA_RTC_INFO get_media_info() {return media_info_;}
+    std::string get_publisher_id() {return pid_;}
     std::string get_media_type();
     uint32_t get_rtp_ssrc() {return rtp_ssrc_;}
     uint32_t get_rtx_ssrc() {return rtx_ssrc_;}
+    int get_mid() {return media_info_.mid;}
     int get_clockrate();
     uint8_t get_rtp_payloadtype();
     uint8_t get_rtx_payloadtype();
@@ -42,10 +46,13 @@ public://implement rtc_stream_callback
     virtual void stream_send_rtp(uint8_t* data, size_t len) override;
 
 private:
+    std::string roomId_;
+    std::string uid_;
     room_callback_interface* room_ = nullptr;
     rtc_base_session* session_ = nullptr;
 
 private:
+    std::string pid_;
     MEDIA_RTC_INFO media_info_;
     std::string media_type_;
     uint32_t rtp_ssrc_       = 0;

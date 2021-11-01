@@ -35,7 +35,8 @@ protected:
 class webrtc_session : public rtc_base_session
 {
 public:
-    webrtc_session(room_callback_interface* room, int session_direction, const rtc_media_info& media_info);
+    webrtc_session(const std::string& roomId, const std::string& uid,
+        room_callback_interface* room, int session_direction, const rtc_media_info& media_info);
     virtual ~webrtc_session();
 
 public:
@@ -78,6 +79,9 @@ private://for dtls
     srtp_session* write_srtp_ = nullptr;
     srtp_session* read_srtp_  = nullptr;
     uint8_t pkt_data_[2048];
+
+private:
+    bool close_session_ = false;
 };
 
 #endif

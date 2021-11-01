@@ -15,11 +15,16 @@ user_info::~user_info() {
     }
 }
 
+void user_info::reset_media_info() {
+    remote_media_info_.reset();
+}
+
 json user_info::parse_remote_sdp(const std::string& sdp) {
     return remote_sdp_analyze_.parse(sdp);
 }
 
 rtc_media_info& user_info::parse_remote_media_info(json& sdp_json) {
+    remote_media_info_.reset();
     remote_media_info_.parse(sdp_json);
 
     return remote_media_info_;

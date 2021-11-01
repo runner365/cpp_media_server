@@ -14,6 +14,33 @@ rtc_media_info::~rtc_media_info()
 {
 
 }
+/*
+public:
+    int version;
+    std::string extmap_allow_mixed;//"extmap-allow-mixed"
+    std::string name;//"-"
+    ORIGIN origin;
+    std::vector<BASIC_GROUP> groups;
+    MSID_SEMANTIC msid_semantic;
+    TIMING_BASIC timing;
+    std::vector<CANDIDATE_INFO> candidates;
+
+public://for media party
+    int direction_type;//SEND_ONLY, RECV_ONLY, SEND_RECV
+    CONNECT_INFO connect_info;
+    FINGER_PRINT finger_print;
+    ICE_INFO ice;
+    std::vector<MEDIA_RTC_INFO> medias;
+*/
+void rtc_media_info::reset() {
+    this->version = 0;
+    this->extmap_allow_mixed.clear();
+    this->name.clear();
+    this->groups.clear();
+    this->candidates.clear();
+    this->direction_type = RECV_ONLY;
+    this->medias.clear();
+}
 
 int rtc_media_info::parse(json& sdp_json) {
     int ret = -1;
@@ -43,10 +70,11 @@ int rtc_media_info::parse(json& sdp_json) {
         rtc_info.mid = std::stoi(mid_iterJson->get<std::string>());
 
         auto msid_iterJson = media_item_json.find("msid");
-        if ((msid_iterJson == media_item_json.end()) || (!msid_iterJson->is_string())) {
-            MS_THROW_ERROR("no msid field in json");
+        if ((msid_iterJson != media_item_json.end()) && (msid_iterJson->is_string())) {
+            rtc_info.msid = msid_iterJson->get<std::string>();
+        } else {
+            log_warnf("no msid field in json");
         }
-        rtc_info.msid = msid_iterJson->get<std::string>();
 
         auto port_iterJson = media_item_json.find("port");
         if ((port_iterJson == media_item_json.end()) || (!port_iterJson->is_number())) {
@@ -325,23 +353,18 @@ void rtc_media_info::get_rtcpfb(json& info_json, std::vector<RTCP_FB>& rtcp_fbs)
 
 void rtc_media_info::get_ssrcs_info(json& info_json, std::vector<SSRC_INFO>& ssrc_infos) {
     auto ssrcs_iterJson = info_json.find("ssrcs");
-    if (ssrcs_iterJson == info_json.end()) {
-        MS_THROW_ERROR("no ssrcs field in json");
+    if ((ssrcs_iterJson != info_json.end()) && (ssrcs_iterJson->is_array())) {
+        for (auto& ssrc_json : *ssrcs_iterJson) {
+            SSRC_INFO ssrc;
+    
+            ssrc.attribute = ssrc_json["attribute"];
+            ssrc.value     = ssrc_json["value"];
+            ssrc.ssrc      = ssrc_json["id"];
+    
+            ssrc_infos.push_back(ssrc);
+        }
     }
     
-    if (!ssrcs_iterJson->is_array()) {
-        MS_THROW_ERROR("the ssrcs field is not array");
-    }
-
-    for (auto& ssrc_json : *ssrcs_iterJson) {
-        SSRC_INFO ssrc;
-
-        ssrc.attribute = ssrc_json["attribute"];
-        ssrc.value     = ssrc_json["value"];
-        ssrc.ssrc      = ssrc_json["id"];
-
-        ssrc_infos.push_back(ssrc);
-    }
     return;
 }
 

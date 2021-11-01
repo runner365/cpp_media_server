@@ -312,8 +312,10 @@ void rtc_media_info_to_json(const rtc_media_info& input, json& sdp_json) {
         json media_json = json::object();
 
         media_json["type"] = media_info.media_type;
-        media_json["mid"] = std::to_string(media_info.mid);
-        media_json["msid"] = media_info.msid;
+        media_json["mid"]  = std::to_string(media_info.mid);
+        if (!media_info.msid.empty()) {
+            media_json["msid"] = media_info.msid;
+        }
 
         std::string payloads_str;
         int index = 0;

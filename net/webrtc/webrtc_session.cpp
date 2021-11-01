@@ -149,10 +149,10 @@ void single_udp_session_callback::on_read(const char* data, size_t data_size, ud
     log_warnf("fail to find session to handle packet, data len:%lu, remote address:%s",
         data_size, address.to_string().c_str());
 }
-
-webrtc_session::webrtc_session(room_callback_interface* room,
-                            int session_direction,
-                            const rtc_media_info& media_info):rtc_base_session(room, session_direction, media_info) {
+//rtc_base_session(const std::string& roomId, const std::string& uid, room_callback_interface* room, int session_direction, const rtc_media_info& media_info);
+webrtc_session::webrtc_session(const std::string& roomId, const std::string& uid,
+                room_callback_interface* room, int session_direction,
+                const rtc_media_info& media_info):rtc_base_session(roomId, uid, room, session_direction, media_info) {
     username_fragment_ = byte_crypto::get_random_string(16);
     user_pwd_          = byte_crypto::get_random_string(32);
 
@@ -160,11 +160,14 @@ webrtc_session::webrtc_session(room_callback_interface* room,
 
     dtls_trans_ = new rtc_dtls(this, single_udp_server_ptr->get_io_context());
 
-    log_infof("webrtc_session construct username fragement:%s, user password:%s",
-        username_fragment_.c_str(), user_pwd_.c_str());
+    close_session_ = false;
+    log_infof("webrtc_session construct username fragement:%s, user password:%s, roomid:%s, uid:%s, direction:%s",
+        username_fragment_.c_str(), user_pwd_.c_str(), roomId_.c_str(), uid_.c_str(),
+        (direction_ == RTC_DIRECTION_SEND) ? "send" : "receive");
 }
 
 webrtc_session::~webrtc_session() {
+    close_session();
     if (write_srtp_) {
         delete write_srtp_;
         write_srtp_ = nullptr;
@@ -179,9 +182,16 @@ webrtc_session::~webrtc_session() {
         delete dtls_trans_;
         dtls_trans_ = nullptr;
     }
+    log_infof("webrtc_session destruct username fragement:%s, user password:%s, roomid:%s, uid:%s, direction:%s",
+        username_fragment_.c_str(), user_pwd_.c_str(), roomId_.c_str(), uid_.c_str(),
+        (direction_ == RTC_DIRECTION_SEND) ? "send" : "receive");
 }
 
 void webrtc_session::close_session() {
+    if (close_session_) {
+        return;
+    }
+    close_session_ = true;
     if (direction_ == RTC_DIRECTION_RECV) {
         for (auto item : media_info_.medias) {
             log_infof("start remove publish, media type:%s", item.media_type.c_str());
@@ -487,7 +497,10 @@ void webrtc_session::on_handle_stun_packet(stun_packet* pkt, const udp_tuple& ad
         resp_pkt->password    = this->user_pwd_;
         resp_pkt->serialize();
 
-        //log_infof("stun packet response:\r\n %s", resp_pkt->dump().c_str());
+        if (direction_ == RTC_DIRECTION_SEND) {
+            log_infof("stun packet response:\r\n %s", resp_pkt->dump().c_str());
+        }
+        
         remote_address_ = address;
         write_udp_data(resp_pkt->data, resp_pkt->data_len, address);
         delete resp_pkt;

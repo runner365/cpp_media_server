@@ -22,6 +22,7 @@ public:
 public:
     json parse_remote_sdp(const std::string& sdp);
     rtc_media_info& parse_remote_media_info(json& sdp_json);
+    void reset_media_info();
 
 public:
     void get_support_media_info(rtc_media_info& input_info, rtc_media_info& support_info);
@@ -29,6 +30,7 @@ public:
 
 public:
     std::shared_ptr<webrtc_session> publish_session_ptr_;
+    std::shared_ptr<webrtc_session> subscribe_session_ptr_;
 
 private:
     std::string uid_;

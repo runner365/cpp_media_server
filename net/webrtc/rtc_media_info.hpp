@@ -134,6 +134,7 @@ typedef struct MEDIA_RTC_INFO_S
     std::vector<RTP_ENCODING> rtp_encodings;
     std::vector<SSRC_INFO> ssrc_infos;
     std::vector<FMTP> fmtps;
+    std::string publisher_id;
 } MEDIA_RTC_INFO;
 
 class rtc_media_info
@@ -142,6 +143,7 @@ public:
     rtc_media_info();
     ~rtc_media_info();
 
+    void reset();
     int parse(json& sdp_json);
     std::string dump();
     void filter_payloads();
