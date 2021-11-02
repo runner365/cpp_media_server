@@ -442,6 +442,7 @@ void room_service::handle_subscribe(const std::string& id, const std::string& me
         MEDIA_RTC_INFO info = publisher_ptr->get_media_info();
         media.ssrc_infos    = info.ssrc_infos;
         media.ssrc_groups   = info.ssrc_groups;
+        media.msid          = info.msid;
         media.publisher_id  = pid;
     }
 
