@@ -22,7 +22,7 @@ typedef struct publisher_info_s
 class room_callback_interface
 {
 public:
-    virtual void rtppacket_publisher2room(rtc_base_session* session, rtc_publisher* publisher, rtp_packet* pkt) = 0;
+    virtual void on_rtppacket_publisher2room(rtc_base_session* session, rtc_publisher* publisher, rtp_packet* pkt) = 0;
 };
 
 #endif

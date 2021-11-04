@@ -9,7 +9,7 @@
 #include <vector>
 #include <map>
 
-#define NACK_LIST_MAX        2000
+#define NACK_LIST_MAX        5000
 #define NACK_DEFAULT_TIMEOUT 30//ms
 #define NACK_RETRY_MAX       20
 #define NACK_DEFAULT_RTT     20//ms

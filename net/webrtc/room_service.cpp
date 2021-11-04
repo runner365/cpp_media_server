@@ -173,10 +173,39 @@ std::vector<publisher_info> room_service::get_publishers_info_by_json(const json
     return ret_publishers;
 }
 
-void room_service::rtppacket_publisher2room(rtc_base_session* session, rtc_publisher* publisher, rtp_packet* pkt) {
+void room_service::insert_subscriber(const std::string& publisher_id, std::shared_ptr<rtc_subscriber> subscriber_ptr) {
+    auto subs_map_it = pid2subscribers_.find(publisher_id);
+    if (subs_map_it == pid2subscribers_.end()) {
+        log_infof("the publisher id:%s doesn't exist, we need to create one", publisher_id.c_str());
+        SUBSCRIBER_MAP s_map;
+        s_map[subscriber_ptr->get_publisher_id()] = subscriber_ptr;
+        pid2subscribers_[publisher_id] = s_map;
+        return;
+    }
+    std::string sid = subscriber_ptr->get_subscirber_id();
+    auto sub_it = subs_map_it->second.find(sid);
+    if (sub_it != subs_map_it->second.end()) {
+        MS_THROW_ERROR("the subscriber id:%s has already existed", subscriber_ptr->get_subscirber_id().c_str());
+    }
+    subs_map_it->second[sid] = subscriber_ptr;
+    log_infof("the subscriber id(%s) is insert in publisher id(%s) of roomid(%s), uid:%s, remote uid:%s",
+        sid.c_str(), publisher_id.c_str(), roomId_.c_str(),
+        subscriber_ptr->get_uid().c_str(), subscriber_ptr->get_remote_uid().c_str());
+}
+
+void room_service::on_rtppacket_publisher2room(rtc_base_session* session, rtc_publisher* publisher, rtp_packet* pkt) {
     //log_infof("room receive rtp packet roomid:%s, publisher type:%s, publisher:%p, pkt dump:\r\n%s",
     //    roomId_.c_str(), publisher->get_media_type().c_str(), publisher, pkt->dump().c_str());
 
+    std::string publish_id = publisher->get_publisher_id();
+    std::string mediatype = publisher->get_media_type();
+
+    auto subs_map_it = pid2subscribers_.find(publish_id);
+    if (subs_map_it != pid2subscribers_.end()) {
+        for (auto subscribe_item : subs_map_it->second) {
+            subscribe_item.second->send_rtp_packet(roomId_, mediatype, publish_id, pkt);
+        }
+    }
     delete pkt;
     
     return;
@@ -451,7 +480,8 @@ void room_service::handle_subscribe(const std::string& id, const std::string& me
                                                             RTC_DIRECTION_SEND, support_info);
     session_ptr->set_remote_finger_print(info.finger_print);
     for (auto media_item : support_info.medias) {
-        (void)session_ptr->create_subscriber(remote_uid, media_item, media_item.publisher_id);
+        auto subscirber_ptr = session_ptr->create_subscriber(remote_uid, media_item, media_item.publisher_id);
+        insert_subscriber(media_item.publisher_id, subscirber_ptr);
     }
 
     /********************** add ice and finger print **************************/

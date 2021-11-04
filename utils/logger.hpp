@@ -43,7 +43,8 @@ inline void snprintbuffer(char* buffer, size_t size, const char* fmt, ...) {
     va_list ap;
  
     va_start(ap, fmt);
-    vsnprintf(buffer, size, fmt, ap);
+    int ret_len = vsnprintf(buffer, size, fmt, ap);
+    buffer[ret_len] = 0;
     va_end(ap);
 
     return;
@@ -84,7 +85,7 @@ inline void snprintbuffer(char* buffer, size_t size, const char* fmt, ...) {
 inline void log_info_data(const uint8_t* data, int len, const char* dscr) {
     char print_data[10*1024];
     size_t print_len = 0;
-    const int max_print = 64;
+    const int max_print = 2048;
 
     print_len += snprintf(print_data, sizeof(print_data), "%s:", dscr);
     for (int index = 0; index < (len > max_print ? max_print : len); index++) {
@@ -95,6 +96,7 @@ inline void log_info_data(const uint8_t* data, int len, const char* dscr) {
         print_len += snprintf(print_data + print_len, sizeof(print_data) - print_len,
             " %02x", data[index]);
     }
+    print_data[print_len] = 0;
     
     log_infof("%s\r\n", print_data);
     return;
@@ -111,9 +113,9 @@ public:
 #define MS_THROW_ERROR(desc, ...) \
     do \
     { \
-        static char buffer[256]; \
-        std::snprintf(buffer, sizeof(buffer), desc, ##__VA_ARGS__); \
-        log_errorf("media server exception:%s", buffer); \
-        throw MediaServerError(buffer); \
+        char exp_buffer[1024]; \
+        int exp_ret_len = std::snprintf(exp_buffer, sizeof(exp_buffer), desc, ##__VA_ARGS__); \
+        exp_buffer[exp_ret_len] = 0; \
+        throw MediaServerError(exp_buffer); \
     } while (false)
 #endif

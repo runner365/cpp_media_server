@@ -114,7 +114,7 @@ void rtc_publisher::on_handle_rtppacket(rtp_packet* pkt) {
             pkt->get_payload(), pkt->get_ssrc(), media_type_.c_str(), has_rtx_, rtp_ssrc_, rtx_ssrc_);
         return;
     }
-    room_->rtppacket_publisher2room(session_, this, pkt);
+    room_->on_rtppacket_publisher2room(session_, this, pkt);
 }
 
 void rtc_publisher::on_handle_rtcp_sr(rtcp_sr_packet* sr_pkt) {

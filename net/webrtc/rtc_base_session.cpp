@@ -35,11 +35,11 @@ std::shared_ptr<rtc_subscriber> rtc_base_session::create_subscriber(const std::s
     std::shared_ptr<rtc_subscriber> subscriber_ptr;
     auto mid_iter = mid2subscribers_.find(media_info.mid);
     if (mid_iter != mid2subscribers_.end()) {
-        log_errorf("find subscriber mid:%d, the subscriber has existed.", media_info.mid);
-        return subscriber_ptr;
+        MS_THROW_ERROR("find subscriber mid:%d, the subscriber has existed.", media_info.mid);
     }
 
     subscriber_ptr = std::make_shared<rtc_subscriber>(roomId_, uid_, remote_uid, pid, this, media_info);
+    
     mid2subscribers_.insert(std::make_pair(media_info.mid, subscriber_ptr));
     pid2subscribers_.insert(std::make_pair(media_info.publisher_id, subscriber_ptr));
 

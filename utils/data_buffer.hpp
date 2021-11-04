@@ -28,6 +28,8 @@ public:
 
 public:
     bool sent_flag_     = false;
+    std::string dst_ip_;
+    uint16_t    dst_port_ = 0;
 
 private:
     char* buffer_       = nullptr;

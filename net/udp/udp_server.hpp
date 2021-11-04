@@ -1,9 +1,11 @@
 #ifndef UDP_SERVER_HPP
 #define UDP_SERVER_HPP
 #include "logger.hpp"
+#include "data_buffer.hpp"
 #include <memory>
 #include <string>
 #include <stdint.h>
+#include <queue>
 #include <boost/asio.hpp>
 
 #define UDP_DATA_BUFFER_MAX 1500
@@ -46,9 +48,11 @@ public:
     udp_server(boost::asio::io_context& io_context, uint16_t port, udp_session_callbackI* cb):io_ctx_(io_context)
         , cb_(cb)
         , socket_(io_context, boost::asio::ip::udp::endpoint(boost::asio::ip::udp::v4(), port)) {
+        buffer_ = new char[UDP_DATA_BUFFER_MAX];
         try_read();
     }
     ~udp_server() {
+        delete[] buffer_;
     }
 
 public:
@@ -70,28 +74,56 @@ public:
     }
 
     void write(char* data, size_t len, udp_tuple remote_address) {
-        remote_ep_ = boost::asio::ip::udp::endpoint(boost::asio::ip::address::from_string(remote_address.ip_address), remote_address.port);
+        std::shared_ptr<data_buffer> buffer_ptr = std::make_shared<data_buffer>();
+        buffer_ptr->append_data(data, len);
+        buffer_ptr->dst_ip_    = remote_address.ip_address;
+        buffer_ptr->dst_port_  = remote_address.port;
+        buffer_ptr->sent_flag_ = false;
 
+        send_buffer_queue_.push(buffer_ptr);
+
+        do_write();
+    }
+
+private:
+    void do_write() {
+        if (send_buffer_queue_.empty()) {
+            return;
+        }
+
+        auto head_ptr = send_buffer_queue_.front();
+        if (head_ptr->sent_flag_) {
+            return;
+        }
+
+        head_ptr->sent_flag_ = true;
+
+        remote_ep_ = boost::asio::ip::udp::endpoint(boost::asio::ip::address::from_string(head_ptr->dst_ip_), head_ptr->dst_port_);
         socket_.async_send_to(
-            boost::asio::buffer(data, len), remote_ep_,
+            boost::asio::buffer(head_ptr->data(), head_ptr->data_len()), remote_ep_,
             [this](boost::system::error_code ec, std::size_t bytes_sent)
             {
                 udp_tuple send_address(remote_ep_.address().to_string(), remote_ep_.port());
-                if (ec || (bytes_sent == 0)) {
+
+                send_buffer_queue_.pop();
+                if (ec) {
                     log_errorf("udp send error:%s", ec.message().c_str());
                     cb_->on_write(0, send_address);
-                    return;
+                } else {
+                    cb_->on_write(bytes_sent, send_address);
                 }
-                cb_->on_write(bytes_sent, send_address);
-                this->try_read();
+                
+                this->do_write();
             });
     }
+
 private:
     boost::asio::io_context& io_ctx_;
     udp_session_callbackI* cb_       = nullptr;
     boost::asio::ip::udp::socket socket_;
     boost::asio::ip::udp::endpoint remote_ep_;
-    char buffer_[UDP_DATA_BUFFER_MAX];
+    std::queue< std::shared_ptr<data_buffer> > send_buffer_queue_;
+    char* buffer_ = nullptr;
 };
 
 #endif

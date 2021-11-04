@@ -83,7 +83,7 @@ int64_t rtp_stream::get_expected_packets() {
 
 void rtp_stream::on_timer() {
     int64_t ret = ++statics_count_;
-    if ((ret%4) == 0) {
+    if ((ret%12) == 0) {
         size_t fps;
         size_t speed = recv_statics_.bytes_per_second((int64_t)now_millisec(), fps);
     
@@ -209,7 +209,7 @@ void rtp_stream::on_handle_rtx_packet(rtp_packet* pkt) {
     update_seq(pkt->get_seq());
 
     if (media_type_ == "video" && nack_handle_) {
-        log_infof("receive video rtx pkt ssrc:%u, seq:%d", pkt->get_ssrc(), pkt->get_seq());
+        log_debugf("++++ receive video rtx pkt ssrc:%u, seq:%d", pkt->get_ssrc(), pkt->get_seq());
         nack_handle_->update_nacklist(pkt);
     }
     return;

@@ -6,6 +6,7 @@
 #include <stdint.h>
 #include <sstream>
 #include <cstring>
+#include <assert.h>
 
 //The magic cookie field MUST contain the fixed value 0x2112A442
 const uint8_t stun_packet::magic_cookie[] = { 0x21, 0x12, 0xA4, 0x42 };
