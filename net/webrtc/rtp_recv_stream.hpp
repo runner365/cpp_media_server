@@ -1,6 +1,7 @@
 #ifndef RTP_STREAM_HPP
 #define RTP_STREAM_HPP
 #include "utils/stream_statics.hpp"
+#include "utils/timeex.hpp"
 #include "net/rtprtcp/rtp_packet.hpp"
 #include "net/rtprtcp/rtcp_sr.hpp"
 #include "nack_generator.hpp"
@@ -11,16 +12,17 @@
 
 #define RTP_SEQ_MOD (1<<16)
 
-class rtp_stream : public nack_generator_callback_interface
+class rtp_recv_stream : public nack_generator_callback_interface
 {
 public:
-    rtp_stream(rtc_stream_callback* cb, std::string media_type,
+    rtp_recv_stream(rtc_stream_callback* cb, std::string media_type,
         uint32_t ssrc, uint8_t payloadtype, bool is_rtx, int clock_rate);
-    virtual ~rtp_stream();
+    virtual ~rtp_recv_stream();
 
 public:
     void on_handle_rtp(rtp_packet* pkt);
     void on_handle_rtx_packet(rtp_packet* pkt);
+    void on_handle_rtcp_sr(rtcp_sr_packet* sr_pkt);
 
 public:
     virtual void generate_nacklist(const std::vector<uint16_t>& seq_vec) override;
@@ -31,7 +33,6 @@ public:
     void set_rtx_payloadtype(uint8_t type) {rtx_payloadtype_ = type;}
     int64_t get_expected_packets();
     int64_t get_packet_lost();
-    void update_lsr(uint32_t ntp_sec, uint32_t ntp_frac);
 
 private:
     void init_seq(uint16_t seq);
@@ -70,6 +71,14 @@ private:
     uint16_t max_seq_  = 0;
     uint32_t bad_seq_  = RTP_SEQ_MOD + 1;   /* so seq == bad_seq is false */
     uint32_t cycles_   = 0;
+
+private://for rtcp sr
+    NTP_TIMESTAMP ntp_;//from rtcp sr
+    uint32_t sr_ssrc_      = 0;
+    int64_t rtp_timestamp_ = 0;
+    int64_t sr_local_ms_   = 0;
+    uint32_t pkt_count_    = 0;
+    uint32_t bytes_count_  = 0;
 
 private:
     nack_generator* nack_handle_ = nullptr;

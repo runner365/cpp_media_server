@@ -90,6 +90,7 @@ public:
 
 public:
     static rtp_packet* parse(uint8_t* data, size_t len);
+    rtp_packet* clone();
 
 private:
     void parse_ext();
@@ -109,6 +110,7 @@ private:
     uint8_t pad_len           = 0;
     size_t data_len           = 0;
     int64_t local_ms          = 0;
+    bool is_clone_            = false;
 
 private:
     std::map<uint8_t, onebyte_extension*>  onebyte_ext_map_;

@@ -72,10 +72,24 @@ rtp_packet::rtp_packet(rtp_common_header* header, header_extension* ext,
     this->local_ms    = (int64_t)now_millisec();
 
     this->parse_ext();
+    is_clone_ = false;
 }
 
 rtp_packet::~rtp_packet() {
+    uint8_t* data = get_data();
+    if (is_clone_ && data) {
+        delete[] data;
+    }
+}
 
+rtp_packet* rtp_packet::clone() {
+    uint8_t* new_data = new uint8_t[RTP_PACKET_MAX_SIZE];
+    memcpy(new_data, this->get_data(), this->get_data_length());
+
+    rtp_packet* new_pkt = rtp_packet::parse(new_data, this->get_data_length());
+
+    new_pkt->is_clone_ = true;
+    return new_pkt;
 }
 
 std::string rtp_packet::dump() {

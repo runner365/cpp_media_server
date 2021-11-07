@@ -18,7 +18,6 @@ rtc_publisher::rtc_publisher(const std::string& roomId, const std::string& uid,
         , session_(session)
         , media_info_(media_info) {
     pid_ = make_uuid();
-    memset(&ntp_, 0, sizeof(NTP_TIMESTAMP));
     media_type_ = media_info_.media_type;
 
     clock_rate_ = media_info_.rtp_encodings[0].clock_rate;
@@ -95,7 +94,7 @@ bool rtc_publisher::has_rtx() {
 void rtc_publisher::on_handle_rtppacket(rtp_packet* pkt) {
     if ((pkt->get_ssrc() == rtp_ssrc_) && (pkt->get_payload_type() == payloadtype_)) {
         if (!rtp_handler_) {
-            rtp_handler_ = new rtp_stream(this, media_type_, pkt->get_ssrc(), payloadtype_, false, get_clockrate());
+            rtp_handler_ = new rtp_recv_stream(this, media_type_, pkt->get_ssrc(), payloadtype_, false, get_clockrate());
             if (has_rtx()) {
                 rtp_handler_->set_rtx_ssrc(rtx_ssrc_);
                 rtp_handler_->set_rtx_payloadtype(rtx_payloadtype_);
@@ -118,19 +117,7 @@ void rtc_publisher::on_handle_rtppacket(rtp_packet* pkt) {
 }
 
 void rtc_publisher::on_handle_rtcp_sr(rtcp_sr_packet* sr_pkt) {
-    sr_ssrc_       = sr_pkt->get_ssrc();
-    ntp_.ntp_sec   = sr_pkt->get_ntp_sec();
-    ntp_.ntp_frac  = sr_pkt->get_ntp_frac();
-    rtp_timestamp_ = (int64_t)sr_pkt->get_rtp_timestamp();
-    sr_local_ms_   = now_millisec();
-    pkt_count_     = sr_pkt->get_pkt_count();
-    bytes_count_   = sr_pkt->get_bytes_count();
-
-    if ((sr_ssrc_ == rtp_ssrc_) && rtp_handler_) {
-        rtp_handler_->update_lsr(ntp_.ntp_sec, ntp_.ntp_frac);
-    } else {
-        log_errorf("unkown rtcp sr ssrc:%u", sr_ssrc_);
-    }
+    rtp_handler_->on_handle_rtcp_sr(sr_pkt);
 }
 
 void rtc_publisher::stream_send_rtcp(uint8_t* data, size_t len) {
@@ -138,7 +125,7 @@ void rtc_publisher::stream_send_rtcp(uint8_t* data, size_t len) {
 }
 
 void rtc_publisher::stream_send_rtp(uint8_t* data, size_t len) {
-    session_->send_rtp_data_in_dtls(data, len);
+
 }
 
 void rtc_publisher::on_timer() {

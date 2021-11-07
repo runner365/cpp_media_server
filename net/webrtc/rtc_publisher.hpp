@@ -5,7 +5,7 @@
 #include "net/rtprtcp/rtcp_sr.hpp"
 #include "utils/timer.hpp"
 #include "utils/timeex.hpp"
-#include "rtp_stream.hpp"
+#include "rtp_recv_stream.hpp"
 #include "rtc_stream_pub.hpp"
 #include <vector>
 #include <stdint.h>
@@ -62,16 +62,8 @@ private:
     uint8_t rtx_payloadtype_ = 0;
     bool has_rtx_            = false;
 
-private://for rtcp sr
-    NTP_TIMESTAMP ntp_;//from rtcp sr
-    uint32_t sr_ssrc_      = 0;
-    int64_t rtp_timestamp_ = 0;
-    int64_t sr_local_ms_   = 0;
-    uint32_t pkt_count_    = 0;
-    uint32_t bytes_count_  = 0;
-
 private:
-    rtp_stream* rtp_handler_ = nullptr;
+    rtp_recv_stream* rtp_handler_ = nullptr;
 };
 
 #endif

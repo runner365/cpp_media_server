@@ -7,7 +7,10 @@
 #include "net/rtprtcp/rtprtcp_pub.hpp"
 #include "net/rtprtcp/rtp_packet.hpp"
 #include "net/rtprtcp/rtcp_sr.hpp"
+#include "net/rtprtcp/rtcp_rr.hpp"
+#include "net/rtprtcp/rtcpfb_nack.hpp"
 #include "rtc_dtls.hpp"
+#include "rtc_subscriber.hpp"
 #include "srtp_session.hpp"
 #include "utils/ipaddress.hpp"
 #include "utils/byte_crypto.hpp"
@@ -214,6 +217,7 @@ void webrtc_session::send_rtp_data_in_dtls(uint8_t* data, size_t data_len) {
     if (!ret) {
         return;
     }
+    //log_infof("sent srtp data len:%u, remote:%s", data_len, remote_address_.to_string().c_str());
     write_udp_data(data, data_len, remote_address_);
 }
 
@@ -364,34 +368,26 @@ void webrtc_session::on_handle_rtcp_data(const uint8_t* data, size_t data_len, c
     int left_len = (int)data_len;
     uint8_t* p = const_cast<uint8_t*>(data);
 
+    log_infof("handle rtcp direction:%s, total len:%lu",
+        (direction_ == RTC_DIRECTION_SEND) ? "send" : "recv", data_len);
+    log_info_data(data, data_len, "rtcp packet");
     while (left_len > 0) {
         rtcp_common_header* header = (rtcp_common_header*)p;
         uint16_t payload_length = get_rtcp_length(header);
         size_t item_total = sizeof(rtcp_common_header) + payload_length;
 
+        log_infof("handle rtcp payload len:%d, item len:%lu, type:%d, rtcp header len:%d",
+                payload_length, item_total, header->packet_type, ntohs(header->length));
         switch (header->packet_type)
         {
             case RTCP_SR:
             {
-                try {
-                    rtcp_sr_packet* sr_pkt = rtcp_sr_packet::parse(p, sizeof(rtcp_common_header) + payload_length);
-                    if (sr_pkt) {
-                        std::shared_ptr<rtc_publisher> publisher_ptr = get_publisher(sr_pkt->get_ssrc());
-                        if (!publisher_ptr) {
-                            log_errorf("fail to get publisher by ssrc:%u", sr_pkt->get_ssrc());
-                        } else {
-                            publisher_ptr->on_handle_rtcp_sr(sr_pkt);
-                        }
-                        delete sr_pkt;
-                    }
-                }
-                catch(const std::exception& e) {
-                    log_errorf("rtcp sr parse error:%s", e.what());
-                }
+                handle_rtcp_sr(p, item_total);
                 break;
             }
             case RTCP_RR:
             {
+                handle_rtcp_rr(p, item_total);
                 break;
             }
             case RTCP_SDES:
@@ -409,6 +405,7 @@ void webrtc_session::on_handle_rtcp_data(const uint8_t* data, size_t data_len, c
             }
             case RTCP_RTPFB:
             {
+                handle_rtcp_rtpfb(p, item_total);
                 break;
             }
             case RTCP_PSFB:
@@ -429,6 +426,82 @@ void webrtc_session::on_handle_rtcp_data(const uint8_t* data, size_t data_len, c
     }
 
     return;
+}
+
+void webrtc_session::handle_rtcp_rtpfb(uint8_t* data, size_t data_len) {
+    if (data_len <=sizeof(rtcp_fb_rtp_header)) {
+        return;
+    }
+    try {
+        rtcp_fb_rtp_header* header = (rtcp_fb_rtp_header*)data;
+        switch (header->fmt)
+        {
+            case FB_RTP_NACK:
+            {
+                rtcp_fb_nack* nack_pkt = rtcp_fb_nack::parse(data, data_len);
+                uint32_t media_ssrc = nack_pkt->get_media_ssrc();
+                log_infof("receive rtcp nack len:%lu, media ssrc:%u", data_len, media_ssrc);
+                std::shared_ptr<rtc_subscriber> subscriber_ptr = get_subscriber(media_ssrc);
+                if (!subscriber_ptr) {
+                    return;
+                }
+                subscriber_ptr->handle_fb_rtp_nack(nack_pkt);
+                break;
+            }
+            default:
+            {
+                log_warnf("receive rtcp psfb format(%d) is not handled.", header->fmt);
+                break;
+            }
+        }
+    }
+    catch(const std::exception& e) {
+        log_errorf("rtcp feedback parse error:%s", e.what());
+    }
+    return;
+}
+
+void webrtc_session::handle_rtcp_sr(uint8_t* data, size_t data_len) {
+    if (data_len <=sizeof(rtcp_common_header)) {
+        return;
+    }
+    try {
+        rtcp_sr_packet* sr_pkt = rtcp_sr_packet::parse(data, data_len);
+        if (sr_pkt) {
+            std::shared_ptr<rtc_publisher> publisher_ptr = get_publisher(sr_pkt->get_ssrc());
+            if (!publisher_ptr) {
+                log_errorf("fail to get publisher by ssrc:%u for rtcp sr", sr_pkt->get_ssrc());
+            } else {
+                publisher_ptr->on_handle_rtcp_sr(sr_pkt);
+            }
+            delete sr_pkt;
+        }
+    }
+    catch(const std::exception& e) {
+        log_errorf("rtcp sr parse error:%s", e.what());
+    }
+}
+
+void webrtc_session::handle_rtcp_rr(uint8_t* data, size_t data_len) {
+    if (data_len <=sizeof(rtcp_common_header)) {
+        return;
+    }
+    try {
+        rtcp_rr_packet* rr_pkt = rtcp_rr_packet::parse(data, data_len);
+        std::shared_ptr<rtc_subscriber> subscriber_ptr = get_subscriber(rr_pkt->get_reportee_ssrc());
+        if (!subscriber_ptr) {
+            log_errorf("fail to get subscribe by ssrc:%u for rtcp rr", rr_pkt->get_reportee_ssrc());
+        } else {
+            subscriber_ptr->handle_rtcp_rr(rr_pkt);
+            //handl rtcp rr;
+        }
+        delete rr_pkt;
+    }
+    catch(const std::exception& e) {
+        log_errorf("rtcp rr parse error:%s", e.what());
+    }
+    
+    
 }
 
 void webrtc_session::on_handle_dtls_data(const uint8_t* data, size_t data_len, const udp_tuple& address) {
@@ -496,10 +569,6 @@ void webrtc_session::on_handle_stun_packet(stun_packet* pkt, const udp_tuple& ad
         resp_pkt->xor_address = &src_address;
         resp_pkt->password    = this->user_pwd_;
         resp_pkt->serialize();
-
-        if (direction_ == RTC_DIRECTION_SEND) {
-            log_infof("stun packet response:\r\n %s", resp_pkt->dump().c_str());
-        }
         
         remote_address_ = address;
         write_udp_data(resp_pkt->data, resp_pkt->data_len, address);

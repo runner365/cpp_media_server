@@ -29,9 +29,11 @@ public:
 
 public:
     std::shared_ptr<rtc_subscriber> create_subscriber(const std::string& remote_uid, const MEDIA_RTC_INFO& media_info, const std::string& pid);
+    std::shared_ptr<rtc_subscriber> get_subscriber(uint32_t ssrc);
 
 public:
     rtc_media_info get_media_info() {return media_info_;}
+    udp_tuple get_remote_info() {return remote_address_;}
 
     void send_plaintext_data(uint8_t* data, size_t data_len);
 
@@ -57,8 +59,9 @@ private:
     std::map<int, std::shared_ptr<rtc_publisher>> mid2publishers_;//key: mid, value: rtc_publisher
 
 private:
-    std::map<int, std::shared_ptr<rtc_subscriber>> mid2subscribers_;//key: mid, value: rtc_subscriber
-    std::map<std::string, std::shared_ptr<rtc_subscriber>> pid2subscribers_;//key: publisher_id, value: rtc_subscriber
+    std::map<int, std::shared_ptr<rtc_subscriber>> mid2subscribers_;         //key: mid, value: rtc_subscriber
+    std::map<uint32_t, std::shared_ptr<rtc_subscriber>> ssrc2subscribers_;   //key: ssrc, value: rtc_subscriber
+    std::map<std::string, std::shared_ptr<rtc_subscriber>> pid2subscribers_; //key: publisher_id, value: rtc_subscriber
 };
 
 #endif

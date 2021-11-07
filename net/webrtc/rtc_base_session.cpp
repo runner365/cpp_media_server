@@ -42,8 +42,19 @@ std::shared_ptr<rtc_subscriber> rtc_base_session::create_subscriber(const std::s
     
     mid2subscribers_.insert(std::make_pair(media_info.mid, subscriber_ptr));
     pid2subscribers_.insert(std::make_pair(media_info.publisher_id, subscriber_ptr));
-
+    ssrc2subscribers_.insert(std::make_pair(subscriber_ptr->get_rtp_ssrc(), subscriber_ptr));
     return subscriber_ptr;
+}
+
+std::shared_ptr<rtc_subscriber> rtc_base_session::get_subscriber(uint32_t ssrc) {
+    std::shared_ptr<rtc_subscriber> subscriber_ptr;
+
+    auto sub_iter = ssrc2subscribers_.find(ssrc);
+    if (sub_iter == ssrc2subscribers_.end()) {
+        return subscriber_ptr;
+    }
+
+    return sub_iter->second;
 }
 
 void rtc_base_session::create_publisher(const MEDIA_RTC_INFO& media_info) {

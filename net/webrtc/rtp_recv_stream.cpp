@@ -1,10 +1,10 @@
-#include "rtp_stream.hpp"
+#include "rtp_recv_stream.hpp"
 #include "timeex.hpp"
 #include "net/rtprtcp/rtcp_rr.hpp"
 #include "net/rtprtcp/rtcpfb_nack.hpp"
 #include <sstream>
 
-rtp_stream::rtp_stream(rtc_stream_callback* cb, std::string media_type, uint32_t ssrc, uint8_t payloadtype,
+rtp_recv_stream::rtp_recv_stream(rtc_stream_callback* cb, std::string media_type, uint32_t ssrc, uint8_t payloadtype,
                     bool is_rtx, int clock_rate):cb_(cb)
         , media_type_(media_type)
         , ssrc_(ssrc)
@@ -12,6 +12,7 @@ rtp_stream::rtp_stream(rtc_stream_callback* cb, std::string media_type, uint32_t
         , payloadtype_(payloadtype)
         , has_rtx_(is_rtx)
 {
+    memset(&ntp_, 0, sizeof(NTP_TIMESTAMP));
     if (media_type == "video") {
         nack_handle_ = new nack_generator(this);
     } else {
@@ -22,7 +23,7 @@ rtp_stream::rtp_stream(rtc_stream_callback* cb, std::string media_type, uint32_t
         media_type.c_str(), ssrc, payloadtype, is_rtx, clock_rate);
 }
 
-rtp_stream::~rtp_stream()
+rtp_recv_stream::~rtp_recv_stream()
 {
     if (nack_handle_) {
         delete nack_handle_;
@@ -33,7 +34,7 @@ rtp_stream::~rtp_stream()
 }
 
 //rfc3550: A.1 RTP Data Header Validity Checks
-void rtp_stream::init_seq(uint16_t seq) {
+void rtp_recv_stream::init_seq(uint16_t seq) {
     base_seq_ = seq;
     max_seq_  = seq;
     bad_seq_  = RTP_SEQ_MOD + 1;   /* so seq == bad_seq is false */
@@ -41,7 +42,7 @@ void rtp_stream::init_seq(uint16_t seq) {
 }
 
 //rfc3550: A.1 RTP Data Header Validity Checks
-void rtp_stream::update_seq(uint16_t seq) {
+void rtp_recv_stream::update_seq(uint16_t seq) {
     const int MAX_DROPOUT    = 3000;
     const int MAX_MISORDER   = 100;
     //const int MIN_SEQUENTIAL = 2;
@@ -77,11 +78,11 @@ void rtp_stream::update_seq(uint16_t seq) {
     }
 }
 
-int64_t rtp_stream::get_expected_packets() {
+int64_t rtp_recv_stream::get_expected_packets() {
     return cycles_ + max_seq_ - bad_seq_ + 1;
 }
 
-void rtp_stream::on_timer() {
+void rtp_recv_stream::on_timer() {
     int64_t ret = ++statics_count_;
     if ((ret%12) == 0) {
         size_t fps;
@@ -100,7 +101,22 @@ void rtp_stream::on_timer() {
     }
 }
 
-void rtp_stream::send_rtcp_rr() {
+void rtp_recv_stream::on_handle_rtcp_sr(rtcp_sr_packet* sr_pkt) {
+    int64_t now_ms = now_millisec();
+
+    sr_ssrc_       = sr_pkt->get_ssrc();
+    ntp_.ntp_sec   = sr_pkt->get_ntp_sec();
+    ntp_.ntp_frac  = sr_pkt->get_ntp_frac();
+    rtp_timestamp_ = (int64_t)sr_pkt->get_rtp_timestamp();
+    sr_local_ms_   = now_ms;
+    pkt_count_     = sr_pkt->get_pkt_count();
+    bytes_count_   = sr_pkt->get_bytes_count();
+
+    last_sr_ms_ = now_ms;
+    lsr_ = ((ntp_.ntp_sec & 0xffff) << 16) | (ntp_.ntp_frac & 0xffff);
+}
+
+void rtp_recv_stream::send_rtcp_rr() {
     rtcp_rr_packet* rr = new rtcp_rr_packet();
     uint32_t highest_seq = (uint32_t)(max_seq_ + cycles_);
     uint32_t dlsr = 0;
@@ -117,7 +133,8 @@ void rtp_stream::send_rtcp_rr() {
     
     (void)get_packet_lost();
 
-    rr->set_ssrc(ssrc_);
+    rr->set_reporter_ssrc(1);
+    rr->set_reportee_ssrc(ssrc_);
     rr->set_fraclost(frac_lost_);
     rr->set_cumulative_lost(total_lost_);
     rr->set_highest_seq(highest_seq);
@@ -134,7 +151,7 @@ void rtp_stream::send_rtcp_rr() {
     delete rr;
 }
 
-int64_t rtp_stream::get_packet_lost() {
+int64_t rtp_recv_stream::get_packet_lost() {
     int64_t expected = get_expected_packets();
     int64_t recv_count = (int64_t)recv_statics_.get_count();
 
@@ -160,14 +177,7 @@ int64_t rtp_stream::get_packet_lost() {
     return total_lost_;
 }
 
-void rtp_stream::update_lsr(uint32_t ntp_sec, uint32_t ntp_frac) {
-    last_sr_ms_ = now_millisec();
-    lsr_ = ((ntp_sec & 0xffff) << 16) | (ntp_frac & 0xffff);
-    //log_infof("update_lsr ntp_sec:%u, ntp_frac:%u, last_sr_ms_:%ld, ssrc:%u",
-    //    ntp_sec, ntp_frac, last_sr_ms_, ssrc_);
-}
-
-void rtp_stream::generate_jitter(uint32_t rtp_timestamp) {
+void rtp_recv_stream::generate_jitter(uint32_t rtp_timestamp) {
     if (clock_rate_ <= 0) {
         MS_THROW_ERROR("clock rate(%d) is invalid", clock_rate_);
     }
@@ -182,7 +192,7 @@ void rtp_stream::generate_jitter(uint32_t rtp_timestamp) {
     jitter_ += (1.0 / 16.0) * ((double)delay - jitter_);
 }
 
-void rtp_stream::on_handle_rtp(rtp_packet* pkt) {
+void rtp_recv_stream::on_handle_rtp(rtp_packet* pkt) {
     recv_statics_.update(pkt->get_data_length(), pkt->get_local_ms());
 
     if (first_pkt_) {
@@ -201,7 +211,7 @@ void rtp_stream::on_handle_rtp(rtp_packet* pkt) {
     return;
 }
 
-void rtp_stream::on_handle_rtx_packet(rtp_packet* pkt) {
+void rtp_recv_stream::on_handle_rtx_packet(rtp_packet* pkt) {
     recv_statics_.update(pkt->get_data_length(), pkt->get_local_ms());
     pkt->rtx_demux(ssrc_, payloadtype_);
 
@@ -215,7 +225,7 @@ void rtp_stream::on_handle_rtx_packet(rtp_packet* pkt) {
     return;
 }
 
-void rtp_stream::generate_nacklist(const std::vector<uint16_t>& seq_vec) {
+void rtp_recv_stream::generate_nacklist(const std::vector<uint16_t>& seq_vec) {
     rtcp_fb_nack* nack_pkt = new rtcp_fb_nack(0, ssrc_);
     nack_pkt->insert_seq_list(seq_vec);
 

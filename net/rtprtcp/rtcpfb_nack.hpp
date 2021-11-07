@@ -106,11 +106,41 @@ public:
         this->data_len += sizeof(rtcp_nack_block);
         fb_common_header_->length = htons((uint16_t)(this->data_len/4 - 1));
     }
+
+    std::vector<uint16_t> get_lost_seqs() {
+        std::vector<uint16_t> seqs;
+
+        for (auto block : nack_blocks_) {
+            uint16_t seq_base = ntohs(block->packet_id);
+            uint16_t bit_mask = ntohs(block->lost_bitmap);
+
+            seqs.push_back(seq_base);
+            for (int i = 0; i < 16; i++) {
+                uint8_t enable = (bit_mask >> (15 - i)) & 0x01;
+                if (enable) {
+                    seqs.push_back(seq_base + i + 1);
+                }
+            }
+        }
+
+        return seqs;
+    }
+
 public:
     uint32_t get_sender_ssrc() {return (uint32_t)ntohl(nack_header_->sender_ssrc);}
     uint32_t get_media_ssrc() {return (uint32_t)ntohl(nack_header_->media_ssrc);}
     uint8_t* get_data() {return this->data;}
     size_t get_len() {return this->data_len;}
+    size_t get_payload_len() {
+        rtcp_fb_rtp_header* header = (rtcp_fb_rtp_header*)(this->data);
+        return (size_t)ntohs(header->length);
+    }
+    uint16_t get_base_seq(rtcp_nack_block* block) {
+        return ntohs(block->packet_id);
+    }
+    uint16_t get_bit_mask(rtcp_nack_block* block) {
+        return ntohs(block->lost_bitmap);
+    }
 
     std::string dump() {
         std::stringstream ss;

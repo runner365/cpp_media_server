@@ -70,6 +70,11 @@ private:
     void write_udp_data(uint8_t* data, size_t data_size, const udp_tuple& address);
     void write_error_stun_packet(stun_packet* pkt, int err, const udp_tuple& address);
 
+private:
+    void handle_rtcp_sr(uint8_t* data, size_t data_len);
+    void handle_rtcp_rr(uint8_t* data, size_t data_len);
+    void handle_rtcp_rtpfb(uint8_t* data, size_t data_len);
+
 private://for ice
     std::string username_fragment_;
     std::string user_pwd_;

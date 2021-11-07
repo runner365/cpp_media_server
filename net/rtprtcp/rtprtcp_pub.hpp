@@ -9,6 +9,7 @@
 
 #define RTP_PACKET_MAX_SIZE 1500
 #define SEQUENCE_MAX 65535
+
 typedef enum
 {
     RTCP_SR    = 200,

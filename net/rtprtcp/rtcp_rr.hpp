@@ -17,7 +17,9 @@
        +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
 header |V=2|P|    RC   |   PT=RR=201   |             length            |
        +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-report |                 SSRC_1 (SSRC of first source)                 |
+       |                 SSRC_1 (reporter ssrc)                        |
+       +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+report |                 SSRC_2 (reportee ssrc)                        |
 block  +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
   1    | fraction lost |       cumulative number of packets lost       |
        +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
@@ -32,7 +34,8 @@ block  +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
 */
 
 typedef struct rtcp_rr_header_s {
-    uint32_t ssrc;
+    uint32_t reporter_ssrc;
+    uint32_t reportee_ssrc;
     uint32_t loss_fraction : 8;
     uint32_t cumulative_lost : 24;
     uint32_t highest_seq;
@@ -71,12 +74,20 @@ public:
     }
 
 public:
-    uint32_t get_ssrc() {
-        return ntohl(header_->ssrc);
+    uint32_t get_reporter_ssrc() {
+        return ntohl(header_->reporter_ssrc);
     }
 
-    void set_ssrc(uint32_t ssrc) {
-        header_->ssrc = (uint32_t)htonl(ssrc);
+    void set_reporter_ssrc(uint32_t ssrc) {
+        header_->reporter_ssrc = (uint32_t)htonl(ssrc);
+    }
+
+    uint32_t get_reportee_ssrc() {
+        return ntohl(header_->reportee_ssrc);
+    }
+
+    void set_reportee_ssrc(uint32_t ssrc) {
+        header_->reportee_ssrc = (uint32_t)htonl(ssrc);
     }
 
     uint32_t get_highest_seq() {
@@ -151,7 +162,9 @@ public:
     std::string dump() {
         std::stringstream ss;
 
-        ss << "rtcp receive report ssrc:" << this->get_ssrc() << ", frac lost:" << (int)this->get_fraclost()
+        ss << "rtcp receive reporter ssrc:" << this->get_reporter_ssrc()
+           << ", reportee ssrc:" << this->get_reportee_ssrc()
+           << ", frac lost:" << (int)this->get_fraclost()
            << "(" << (float)this->get_fraclost()/256.0 << ")"
            << ", cumulative lost:" << (int)this->get_cumulative_lost() << ", highest sequence:" << this->get_highest_seq()
            << ", jitter:" << this->get_jitter() << ", lsr:" << this->get_lsr() << ", dlsr:" << this->get_dlsr() << "\r\n";
