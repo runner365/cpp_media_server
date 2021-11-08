@@ -125,24 +125,29 @@ void rtp_send_stream::handle_rtcp_rr(rtcp_rr_packet* rr_pkt) {
     uint32_t lsr = rr_pkt->get_lsr();
     uint32_t dlsr = rr_pkt->get_dlsr();
 
+    if (lsr == 0) {
+        rtt_ = RTT_DEFAULT;
+        return;
+    }
+    int64_t now_ms = (int64_t)now_millisec();
     NTP_TIMESTAMP lsr_ntp = {
         .ntp_sec = (lsr & 0xffff0000) >> 16,
-        .ntp_frac = lsr & 0xffff
+        .ntp_frac = (lsr & 0xffff) << 16
     };
     int64_t lsr_ms = ntp_to_millisec(lsr_ntp);
     int64_t dlsr_ms = dlsr * 1000 / 65536;
-    NTP_TIMESTAMP last_sent_ntp = {
-        .ntp_sec = last_sr_ntp_ts_.ntp_sec & 0xffff,
-        .ntp_frac = last_sr_ntp_ts_.ntp_frac & 0xffff0000
-    };
-    int64_t last_sent_ms = ntp_to_millisec(last_sent_ntp);
 
-    rtt_ = last_sent_ms - lsr_ms - dlsr_ms;
+    NTP_TIMESTAMP now_ntp = millisec_to_ntp(now_ms);
+    now_ntp.ntp_sec  = now_ntp.ntp_sec & 0x0000ffff;
+    now_ntp.ntp_frac = now_ntp.ntp_frac & 0xffff0000;
+    uint32_t now_uint32_ms = ntp_to_millisec(now_ntp);
+
+    rtt_ = now_uint32_ms - lsr_ms - dlsr_ms;
 
     log_infof("handle rtcp rr media(%s), ssrc:%u, lost total:%u, lost rate:%.03f, jitter:%u, rtt_:%d",
         media_type_.c_str(), rtp_ssrc_, lost_total_, lost_rate_, jitter_, rtt_);
-    log_infof("handle rtcp rr last sent ms:%ld, lsr ms:%ld, dlsr ms:%ld",
-        last_sent_ms, lsr_ms, dlsr_ms);
+    log_infof("handle rtcp rr now_uint32_ms:%u, lsr ms:%ld, dlsr ms:%ld",
+        now_uint32_ms, lsr_ms, dlsr_ms);
     if (rtt_ < 0) {
         rtt_ = 1;
     }

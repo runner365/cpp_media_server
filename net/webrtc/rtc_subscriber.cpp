@@ -100,9 +100,9 @@ void rtc_subscriber::on_timer() {
 }
 
 void rtc_subscriber::stream_send_rtcp(uint8_t* data, size_t len) {
-
+    session_->send_rtcp_data_in_dtls(data, len);
 }
 
 void rtc_subscriber::stream_send_rtp(uint8_t* data, size_t len) {
-
+    session_->send_rtp_data_in_dtls(data, len);
 }
