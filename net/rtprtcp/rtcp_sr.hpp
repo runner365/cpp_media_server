@@ -52,9 +52,9 @@ public:
         rtcp_header_ = (rtcp_common_header*)(this->data);
         rtcp_header_->version     = 2;
         rtcp_header_->padding     = 0;
-        rtcp_header_->count       = 1;
+        rtcp_header_->count       = 0;
         rtcp_header_->packet_type = (uint8_t)RTCP_SR;
-        rtcp_header_->length      = 6;
+        rtcp_header_->length      = (uint32_t)htons(sizeof(rtcp_sr_header)/sizeof(uint32_t));
         this->header_             = (rtcp_sr_header*)(this->data + sizeof(rtcp_common_header));
     }
 

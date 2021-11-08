@@ -500,8 +500,6 @@ void webrtc_session::handle_rtcp_rr(uint8_t* data, size_t data_len) {
     catch(const std::exception& e) {
         log_errorf("rtcp rr parse error:%s", e.what());
     }
-    
-    
 }
 
 void webrtc_session::on_handle_dtls_data(const uint8_t* data, size_t data_len, const udp_tuple& address) {

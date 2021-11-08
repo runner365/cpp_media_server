@@ -163,8 +163,15 @@ void rtp_send_stream::on_timer() {
             media_type_.c_str(), rtp_ssrc_, rtp_payload_type_, speed, fps);
     }
 
-    if ((statics_count_%2) == 0) {
+    if ((ret%2) == 0) {
         rtcp_sr_packet* sr_pkt = get_rtcp_sr(now_ms);
+
+        log_infof("rtcp sr ssrc:%u, ntp sec:%u, ntp frac:%u, rtp ts:%u, pkt count:%u, bytes count:%u, data len:%lu, data:%p",
+            sr_pkt->get_ssrc(), sr_pkt->get_ntp_sec(), sr_pkt->get_ntp_frac(),
+            sr_pkt->get_rtp_timestamp(), sr_pkt->get_pkt_count(), sr_pkt->get_bytes_count(),
+            sr_pkt->get_data_len(), sr_pkt->get_data());
+        log_info_data(sr_pkt->get_data(), sr_pkt->get_data_len(), "rtcp sr data");
         cb_->stream_send_rtcp(sr_pkt->get_data(), sr_pkt->get_data_len());
+        delete sr_pkt;
     }
 }

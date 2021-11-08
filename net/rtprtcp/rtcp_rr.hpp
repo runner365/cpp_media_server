@@ -100,25 +100,25 @@ public:
 
     uint8_t get_fraclost() {
         uint8_t* p = (uint8_t*)header_;
-        p += 4;
+        p += 4 + 4;
         return *p;
     }
 
     void set_fraclost(uint8_t fraclost) {
         uint8_t* p = (uint8_t*)header_;
-        p += 4;
+        p += 4 + 4;
         *p = fraclost;
     }
 
     uint32_t get_cumulative_lost() {
         uint8_t* p = (uint8_t*)header_;
-        p += 5;
+        p += 4 + 4 + 1;
         return read_3bytes(p);
     }
 
     void set_cumulative_lost(uint32_t cumulative_lost) {
         uint8_t* p = (uint8_t*)header_;
-        p += 5;
+        p += 4 + 4 + 1;
 
         write_3bytes(p, cumulative_lost);
     }
@@ -152,7 +152,7 @@ public:
         rtcp_common_header* rtcp_header = (rtcp_common_header*)this->data;
         rtcp_header->version     = 2;
         rtcp_header->padding     = 0;
-        rtcp_header->count       = 1;
+        rtcp_header->count       = 0;
         rtcp_header->packet_type = RTCP_RR;
         rtcp_header->length      = (uint32_t)htonl(data_len/4) - 1;
         
