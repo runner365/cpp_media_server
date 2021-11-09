@@ -1,6 +1,7 @@
 #include "rtc_publisher.hpp"
 #include "rtc_session_pub.hpp"
 #include "rtc_base_session.hpp"
+#include "net/rtprtcp/rtcp_pspli.hpp"
 #include "utils/timer.hpp"
 #include "utils/timeex.hpp"
 #include "utils/logger.hpp"
@@ -134,7 +135,16 @@ void rtc_publisher::request_keyframe(uint32_t media_ssrc) {
             media_ssrc, rtp_ssrc_);
         return;
     }
+    rtcp_pspli* pspli_pkt = new rtcp_pspli();
+
+    pspli_pkt->set_sender_ssrc(1);
+    pspli_pkt->set_media_ssrc(media_ssrc);
+
+    log_info_data(pspli_pkt->get_data(), pspli_pkt->get_data_len(), "publiser send rtcp ps pli");
     
+    session_->send_rtcp_data_in_dtls(pspli_pkt->get_data(), pspli_pkt->get_data_len());
+
+    delete pspli_pkt;
 }
 
 void rtc_publisher::on_timer() {

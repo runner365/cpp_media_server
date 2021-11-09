@@ -14,11 +14,13 @@
 #include <memory>
 
 class rtc_base_session;
+class room_callback_interface;
+
 class rtc_subscriber : public timer_interface, public rtc_stream_callback
 {
 public:
     rtc_subscriber(const std::string& roomId, const std::string& uid, const std::string& remote_uid, const std::string& pid
-            , rtc_base_session* session, const MEDIA_RTC_INFO& media_info);
+            , rtc_base_session* session, const MEDIA_RTC_INFO& media_info, room_callback_interface* room_cb);
     ~rtc_subscriber();
 
 public:
@@ -63,6 +65,9 @@ private:
     uint8_t payloadtype_     = 0;
     uint8_t rtx_payloadtype_ = 0;
     bool has_rtx_            = false;
+
+private:
+    room_callback_interface* room_cb_ = nullptr;
 };
 
 

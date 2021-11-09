@@ -447,6 +447,7 @@ void webrtc_session::handle_rtcp_psfb(uint8_t* data, size_t data_len) {
                     log_errorf("parse rtcp ps pli error");
                     return;
                 }
+                log_infof("receive keyframe request: %s", pspli_pkt->dump().c_str());
                 if (direction_ != RTC_DIRECTION_SEND) {
                     log_errorf("webrtc session recv direction get rtcp ps pli....");
                     return;
@@ -469,9 +470,8 @@ void webrtc_session::handle_rtcp_psfb(uint8_t* data, size_t data_len) {
             }
         }
     }
-    catch(const std::exception& e)
-    {
-        std::cerr << e.what() << '\n';
+    catch(const std::exception& e) {
+        log_errorf("handle rtcp ps feedback error:%s", e.what());
     }
     
 }

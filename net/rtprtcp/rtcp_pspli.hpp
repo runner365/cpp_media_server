@@ -31,7 +31,7 @@ public:
     ~rtcp_pspli() {
     }
 
-    static rtcp_pspli* parse(uint32_t* data, size_t len) {
+    static rtcp_pspli* parse(uint8_t* data, size_t len) {
         if (len != (sizeof(rtcp_fb_common_header) + sizeof(rtcp_fb_header))) {
             return nullptr;
         }
@@ -39,6 +39,8 @@ public:
         memcpy(pkt->data, data, len);
         pkt->header_ = (rtcp_fb_common_header*)(pkt->data);
         pkt->fb_header_ = (rtcp_fb_header*)(pkt->header_ + 1);
+
+        return pkt;
     }
 
 public:
@@ -48,14 +50,14 @@ public:
     uint32_t get_media_ssrc() { return (uint32_t)ntohl(fb_header_->media_ssrc); }
 
     uint8_t* get_data() { return this->data; }
-    uint8_t* get_data_len() { return sizeof(rtcp_fb_common_header) + sizeof(rtcp_fb_header); }
+    size_t get_data_len() { return sizeof(rtcp_fb_common_header) + sizeof(rtcp_fb_header); }
 
     std::string dump() {
         std::stringstream ss;
         
         ss << "rtcp ps feedback length:" << this->get_data_len();
         ss << ", sender ssrc:" << this->get_sender_ssrc();
-        ss << ", media ssrc" << this->get_media_ssrc() << "\r\n";
+        ss << ", media ssrc:" << this->get_media_ssrc() << "\r\n";
         return ss.str();
     }
 

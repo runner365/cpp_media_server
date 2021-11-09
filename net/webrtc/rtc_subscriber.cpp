@@ -6,12 +6,13 @@
 extern boost::asio::io_context& get_global_io_context();
 
 rtc_subscriber::rtc_subscriber(const std::string& roomId, const std::string& uid, const std::string& remote_uid, const std::string& pid
-    , rtc_base_session* session, const MEDIA_RTC_INFO& media_info):timer_interface(get_global_io_context(), 500)
+    , rtc_base_session* session, const MEDIA_RTC_INFO& media_info, room_callback_interface* room_cb):timer_interface(get_global_io_context(), 500)
             , roomId_(roomId)
             , uid_(uid)
             , remote_uid_(remote_uid)
             , pid_(pid)
             , session_(session)
+            , room_cb_(room_cb)
 {
     sid_ = make_uuid();
 
@@ -108,5 +109,5 @@ void rtc_subscriber::stream_send_rtp(uint8_t* data, size_t len) {
 }
 
 void rtc_subscriber::request_keyframe() {
-
+    room_cb_->on_request_keyframe(pid_, sid_, rtp_ssrc_);
 }

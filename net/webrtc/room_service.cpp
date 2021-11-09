@@ -212,9 +212,17 @@ void room_service::on_request_keyframe(const std::string& pid, const std::string
     log_infof("request keyframe publisherid:%s, subscriberid:%s, media ssrc:%u", pid.c_str(), sid.c_str(), media_ssrc);
 
     for(auto user : users_) {
-        if (user.second->publish_session_ptr_->get_publisher_id() == pid) {
+        auto session_ptr = user.second->publish_session_ptr_;
+        if (!session_ptr) {
+            continue;
+        }
+        auto publisher_ptr = session_ptr->get_publisher(media_ssrc);
+        if (!publisher_ptr) {
+            continue;
+        }
+        if (publisher_ptr->get_publisher_id() == pid) {
             log_infof("request keyframe from uid(%s), pid(%s)", user.first.c_str(), pid.c_str());
-            user.second->publish_session_ptr_->request_keyframe(media_ssrc);
+            publisher_ptr->request_keyframe(media_ssrc);
             break;
         }
     }
@@ -489,7 +497,7 @@ void room_service::handle_subscribe(const std::string& id, const std::string& me
                                                             RTC_DIRECTION_SEND, support_info);
     session_ptr->set_remote_finger_print(info.finger_print);
     for (auto media_item : support_info.medias) {
-        auto subscirber_ptr = session_ptr->create_subscriber(remote_uid, media_item, media_item.publisher_id);
+        auto subscirber_ptr = session_ptr->create_subscriber(remote_uid, media_item, media_item.publisher_id, this);
         insert_subscriber(media_item.publisher_id, subscirber_ptr);
     }
 

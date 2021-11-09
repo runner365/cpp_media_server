@@ -28,7 +28,8 @@ public:
     size_t get_publisher_count() {return mid2publishers_.size();}//ssrc2publishers_ may have multple publish for rtx ssrc
 
 public:
-    std::shared_ptr<rtc_subscriber> create_subscriber(const std::string& remote_uid, const MEDIA_RTC_INFO& media_info, const std::string& pid);
+    std::shared_ptr<rtc_subscriber> create_subscriber(const std::string& remote_uid, const MEDIA_RTC_INFO& media_info,
+                                                    const std::string& pid, room_callback_interface* room_cb);
     std::shared_ptr<rtc_subscriber> get_subscriber(uint32_t ssrc);
 
 public:

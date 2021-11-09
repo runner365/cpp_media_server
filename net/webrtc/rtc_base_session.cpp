@@ -31,14 +31,17 @@ rtc_base_session::~rtc_base_session() {
             roomId_.c_str(), uid_.c_str());
 }
 
-std::shared_ptr<rtc_subscriber> rtc_base_session::create_subscriber(const std::string& remote_uid, const MEDIA_RTC_INFO& media_info, const std::string& pid) {
+std::shared_ptr<rtc_subscriber> rtc_base_session::create_subscriber(const std::string& remote_uid,
+                                                                const MEDIA_RTC_INFO& media_info,
+                                                                const std::string& pid,
+                                                                room_callback_interface* room_cb) {
     std::shared_ptr<rtc_subscriber> subscriber_ptr;
     auto mid_iter = mid2subscribers_.find(media_info.mid);
     if (mid_iter != mid2subscribers_.end()) {
         MS_THROW_ERROR("find subscriber mid:%d, the subscriber has existed.", media_info.mid);
     }
 
-    subscriber_ptr = std::make_shared<rtc_subscriber>(roomId_, uid_, remote_uid, pid, this, media_info);
+    subscriber_ptr = std::make_shared<rtc_subscriber>(roomId_, uid_, remote_uid, pid, this, media_info, room_cb);
     
     mid2subscribers_.insert(std::make_pair(media_info.mid, subscriber_ptr));
     pid2subscribers_.insert(std::make_pair(media_info.publisher_id, subscriber_ptr));
