@@ -144,16 +144,21 @@ void rtp_send_stream::handle_rtcp_rr(rtcp_rr_packet* rr_pkt) {
 
     rtt_ = now_uint32_ms - lsr_ms - dlsr_ms;
 
-    log_infof("handle rtcp rr media(%s), ssrc:%u, lost total:%u, lost rate:%.03f, jitter:%u, rtt_:%d",
-        media_type_.c_str(), rtp_ssrc_, lost_total_, lost_rate_, jitter_, rtt_);
-    log_infof("handle rtcp rr now_uint32_ms:%u, lsr ms:%ld, dlsr ms:%ld",
-        now_uint32_ms, lsr_ms, dlsr_ms);
     if (rtt_ < 0) {
         rtt_ = 1;
     }
     if (rtt_ > 150) {
         rtt_ = 150;
     }
+    if (avg_rtt_ == 0) {
+        avg_rtt_ = rtt_;
+    } else {
+        avg_rtt_ += (rtt_ - avg_rtt_)/16;
+    }
+    log_infof("handle rtcp rr media(%s), ssrc:%u, lost total:%u, lost rate:%.03f, jitter:%u, rtt_:%d, avg rtt:%d",
+        media_type_.c_str(), rtp_ssrc_, lost_total_, lost_rate_, jitter_, rtt_, avg_rtt_);
+    log_infof("handle rtcp rr now_uint32_ms:%u, lsr ms:%ld, dlsr ms:%ld",
+        now_uint32_ms, lsr_ms, dlsr_ms);
 }
 
 void rtp_send_stream::on_timer() {

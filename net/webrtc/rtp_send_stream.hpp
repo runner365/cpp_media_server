@@ -77,7 +77,8 @@ private:
 private:
     uint32_t last_sr_rtp_ts_ = 0;
     NTP_TIMESTAMP last_sr_ntp_ts_;
-    int rtt_ = RTT_DEFAULT;
+    int rtt_     = RTT_DEFAULT;
+    int avg_rtt_ = 0;
 
 private://for rtcp rr
     float lost_rate_     = 0.0;

@@ -23,6 +23,7 @@ class room_callback_interface
 {
 public:
     virtual void on_rtppacket_publisher2room(rtc_base_session* session, rtc_publisher* publisher, rtp_packet* pkt) = 0;
+    virtual void on_request_keyframe(const std::string& pid, const std::string& sid, uint32_t media_ssrc) = 0;
 };
 
 #endif

@@ -35,6 +35,7 @@ public:
                     const std::string& publish_id, rtp_packet* pkt);
     void handle_fb_rtp_nack(rtcp_fb_nack* nack_pkt);
     void handle_rtcp_rr(rtcp_rr_packet* rr_pkt);
+    void request_keyframe();
 
 public://implement timer_interface
     virtual void on_timer() override;

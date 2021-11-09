@@ -194,9 +194,6 @@ void room_service::insert_subscriber(const std::string& publisher_id, std::share
 }
 
 void room_service::on_rtppacket_publisher2room(rtc_base_session* session, rtc_publisher* publisher, rtp_packet* pkt) {
-    //log_infof("room receive rtp packet roomid:%s, publisher type:%s, publisher:%p, pkt dump:\r\n%s",
-    //    roomId_.c_str(), publisher->get_media_type().c_str(), publisher, pkt->dump().c_str());
-
     std::string publish_id = publisher->get_publisher_id();
     std::string mediatype = publisher->get_media_type();
 
@@ -209,6 +206,18 @@ void room_service::on_rtppacket_publisher2room(rtc_base_session* session, rtc_pu
     delete pkt;
     
     return;
+}
+
+void room_service::on_request_keyframe(const std::string& pid, const std::string& sid, uint32_t media_ssrc) {
+    log_infof("request keyframe publisherid:%s, subscriberid:%s, media ssrc:%u", pid.c_str(), sid.c_str(), media_ssrc);
+
+    for(auto user : users_) {
+        if (user.second->publish_session_ptr_->get_publisher_id() == pid) {
+            log_infof("request keyframe from uid(%s), pid(%s)", user.first.c_str(), pid.c_str());
+            user.second->publish_session_ptr_->request_keyframe(media_ssrc);
+            break;
+        }
+    }
 }
 
 void room_service::handle_publish(const std::string& id, const std::string& method,

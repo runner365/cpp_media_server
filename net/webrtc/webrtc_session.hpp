@@ -74,6 +74,7 @@ private:
     void handle_rtcp_sr(uint8_t* data, size_t data_len);
     void handle_rtcp_rr(uint8_t* data, size_t data_len);
     void handle_rtcp_rtpfb(uint8_t* data, size_t data_len);
+    void handle_rtcp_psfb(uint8_t* data, size_t data_len);
 
 private://for ice
     std::string username_fragment_;

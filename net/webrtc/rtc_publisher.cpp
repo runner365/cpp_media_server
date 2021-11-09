@@ -128,6 +128,15 @@ void rtc_publisher::stream_send_rtp(uint8_t* data, size_t len) {
 
 }
 
+void rtc_publisher::request_keyframe(uint32_t media_ssrc) {
+    if (rtp_ssrc_ != media_ssrc) {
+        log_errorf("the request keyframe media ssrc(%u) is error, the publisher rtp ssrc:%u",
+            media_ssrc, rtp_ssrc_);
+        return;
+    }
+    
+}
+
 void rtc_publisher::on_timer() {
     if (rtp_handler_) {
         rtp_handler_->on_timer();

@@ -8,7 +8,9 @@
 #include "net/rtprtcp/rtp_packet.hpp"
 #include "net/rtprtcp/rtcp_sr.hpp"
 #include "net/rtprtcp/rtcp_rr.hpp"
+#include "net/rtprtcp/rtcp_fb_pub.hpp"
 #include "net/rtprtcp/rtcpfb_nack.hpp"
+#include "net/rtprtcp/rtcp_pspli.hpp"
 #include "rtc_dtls.hpp"
 #include "rtc_subscriber.hpp"
 #include "srtp_session.hpp"
@@ -410,6 +412,7 @@ void webrtc_session::on_handle_rtcp_data(const uint8_t* data, size_t data_len, c
             }
             case RTCP_PSFB:
             {
+                handle_rtcp_psfb(p, item_total);
                 break;
             }
             case RTCP_XR:
@@ -428,12 +431,57 @@ void webrtc_session::on_handle_rtcp_data(const uint8_t* data, size_t data_len, c
     return;
 }
 
+void webrtc_session::handle_rtcp_psfb(uint8_t* data, size_t data_len) {
+    if (data_len <=sizeof(rtcp_fb_common_header)) {
+        return;
+    }
+
+    try {
+        rtcp_fb_common_header* header = (rtcp_fb_common_header*)data;
+        switch (header->fmt)
+        {
+            case FB_PS_PLI:
+            {
+                rtcp_pspli* pspli_pkt = rtcp_pspli::parse(data, data_len);
+                if (!pspli_pkt) {
+                    log_errorf("parse rtcp ps pli error");
+                    return;
+                }
+                if (direction_ != RTC_DIRECTION_SEND) {
+                    log_errorf("webrtc session recv direction get rtcp ps pli....");
+                    return;
+                }
+                std::shared_ptr<rtc_subscriber> subscriber_ptr = get_subscriber(pspli_pkt->get_media_ssrc());
+                if (!subscriber_ptr) {
+                    log_errorf("get subscriber error, media ssrc:%u, sender ssrc:%u",
+                            pspli_pkt->get_media_ssrc(), pspli_pkt->get_sender_ssrc());
+                    return;
+                }
+
+                subscriber_ptr->request_keyframe();
+                
+                break;
+            }
+            
+            default:
+            {
+                break;
+            }
+        }
+    }
+    catch(const std::exception& e)
+    {
+        std::cerr << e.what() << '\n';
+    }
+    
+}
+
 void webrtc_session::handle_rtcp_rtpfb(uint8_t* data, size_t data_len) {
-    if (data_len <=sizeof(rtcp_fb_rtp_header)) {
+    if (data_len <=sizeof(rtcp_fb_common_header)) {
         return;
     }
     try {
-        rtcp_fb_rtp_header* header = (rtcp_fb_rtp_header*)data;
+        rtcp_fb_common_header* header = (rtcp_fb_common_header*)data;
         switch (header->fmt)
         {
             case FB_RTP_NACK:

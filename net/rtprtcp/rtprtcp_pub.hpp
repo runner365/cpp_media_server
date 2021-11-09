@@ -74,14 +74,14 @@ typedef struct rtcp_common_header_s
 header |V=2|P|  FMT    |       PT      |             length            |
        +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
  */
-typedef struct rtcp_fb_rtp_header_s
+typedef struct rtcp_fb_common_header_s
 {
     uint8_t fmt : 5;
     uint8_t padding : 1;
     uint8_t version : 2;
     uint8_t packet_type : 8;
     uint16_t length : 16;
-} rtcp_fb_rtp_header;
+} rtcp_fb_common_header;
 
 /**
     0                   1                   2                   3

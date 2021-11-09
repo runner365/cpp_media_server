@@ -38,6 +38,8 @@ public:
     uint8_t get_rtx_payloadtype();
     bool has_rtx();
 
+    void request_keyframe(uint32_t media_ssrc);
+
 public://implement timer_interface
     virtual void on_timer() override;
 
