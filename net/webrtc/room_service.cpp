@@ -121,6 +121,7 @@ std::string room_service::get_uid_by_json(json& data_json) {
     std::string media_type;
     uint32_t ssrc;
     int mid;
+    int localMid;//web mid in web local sdp
     std::string pid;
 */
 std::vector<publisher_info> room_service::get_publishers_info_by_json(const json& publishers_json) {
@@ -167,6 +168,15 @@ std::vector<publisher_info> room_service::get_publishers_info_by_json(const json
             return ret_publishers;
         }
         info.mid = mid_iter->get<int>();
+
+        auto localMid_iter = item.find("localMid");
+        if (localMid_iter == item.end()) {
+            return ret_publishers;
+        }
+        if (!localMid_iter->is_number()) {
+            return ret_publishers;
+        }
+        info.localMid = localMid_iter->get<int>();
 
         ret_publishers.push_back(info);
     }
@@ -381,7 +391,7 @@ void room_service::handle_unpublish(const std::string& id, const std::string& me
             return;
         }
         if (!type_iter->is_string()) {
-            feedback_p->reject(id, MIDS_ERROR, "type is not number");
+            feedback_p->reject(id, MIDS_ERROR, "type is not string");
             return;
         }
         std::string media_type = type_iter->get<std::string>();
@@ -481,6 +491,7 @@ void room_service::handle_subscribe(const std::string& id, const std::string& me
         for (auto info : publishers) {
             if (info.mid == media.mid) {
                 pid = info.pid;
+                media.localMid = info.localMid;
                 break;
             }
         }
@@ -492,10 +503,17 @@ void room_service::handle_subscribe(const std::string& id, const std::string& me
         media.publisher_id  = pid;
     }
 
+    std::shared_ptr<webrtc_session> session_ptr;
     /********************** create subscribe session **************************/
-    std::shared_ptr<webrtc_session> session_ptr = std::make_shared<webrtc_session>(roomId_, uid, this,
-                                                            RTC_DIRECTION_SEND, support_info);
-    session_ptr->set_remote_finger_print(info.finger_print);
+    if (!user_ptr->subscribe_session_ptr_) {
+        session_ptr = std::make_shared<webrtc_session>(roomId_, uid, this,
+                                                                RTC_DIRECTION_SEND, support_info);
+        session_ptr->set_remote_finger_print(info.finger_print);
+        user_ptr->subscribe_session_ptr_ = session_ptr;
+    } else {
+        session_ptr = user_ptr->subscribe_session_ptr_;
+    }
+
     for (auto media_item : support_info.medias) {
         auto subscirber_ptr = session_ptr->create_subscriber(remote_uid, media_item, media_item.publisher_id, this);
         insert_subscriber(media_item.publisher_id, subscirber_ptr);
@@ -523,7 +541,6 @@ void room_service::handle_subscribe(const std::string& id, const std::string& me
     log_infof("get subscribe support media info:\r\n%s", support_info.dump().c_str());
 
     std::string resp_sdp_str = user_ptr->rtc_media_info_2_sdp(support_info);
-    user_ptr->subscribe_session_ptr_ = session_ptr;
 
     auto resp_json = json::object();
     resp_json["code"] = 0;

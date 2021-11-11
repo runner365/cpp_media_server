@@ -16,6 +16,7 @@ typedef struct publisher_info_s
     std::string media_type;
     uint32_t ssrc;
     int mid;
+    int localMid;
     std::string pid;
 } publisher_info;
 
