@@ -17,16 +17,29 @@ Build boost asio in Mac/linux
 
 ## What does It support
 network protocol feature:
-* rtmp
-* httpflv
+
+### webrtc
+* roommanager
 * websocket
-* webrtc
+* join
+* publish/unpublish
+* subscribe/unsubscribe
+
+The webrtc client sdk demo: [webrtc sdk demo](https://github.com/runner365/webrtc-client-sdk)
+### rtmp
+* rtmp publish
+* rtmp play
+
+### httpflv
+* httpflv play
+* flv(h264/vp8/vp9, aac/opus)
+
+### websocket
+* flv in websocket push
 
 webcodec encode media in flv(h264+opus) over websocket, we suggest webclient demo: 
-
 [webcodecpush](https://github.com/runner365/webcodecpush)
 
-media format support:
-* flv(h264/vp8/vp9, aac/opus)
+
 
 
