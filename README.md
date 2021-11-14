@@ -2,7 +2,7 @@
 
 A media server is writen by C++11, and the network io is writen by Boost.Asio.
 
-It support rtmp/httpflv/websocket(flv).
+It support rtmp/httpflv/websocket(flv)/webrtc.
 
 ## preinstall
 How to install boost.asio
@@ -20,6 +20,7 @@ network protocol feature:
 * rtmp
 * httpflv
 * websocket
+* webrtc
 
 webcodec encode media in flv(h264+opus) over websocket, we suggest webclient demo: 
 
