@@ -17,6 +17,7 @@ public:
     virtual ~rtc_base_session();
 
 public:
+    std::string get_id() { return id_; }
     void create_publisher(const MEDIA_RTC_INFO& media_info);
     void remove_publisher(const MEDIA_RTC_INFO& media_info);
     int remove_publisher(int mid, const std::string& media_type);
@@ -43,6 +44,7 @@ public:
     virtual void send_rtcp_data_in_dtls(uint8_t* data, size_t data_len) {};
 
 public:
+    std::string id_;
     std::string roomId_;
     std::string uid_;
 

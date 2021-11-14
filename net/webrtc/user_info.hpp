@@ -7,6 +7,7 @@
 #include "udp/udp_server.hpp"
 #include <string>
 #include <memory>
+#include <map>
 
 class user_info
 {
@@ -29,8 +30,8 @@ public:
     std::string rtc_media_info_2_sdp(const rtc_media_info& input);
 
 public:
-    std::shared_ptr<webrtc_session> publish_session_ptr_;
-    std::shared_ptr<webrtc_session> subscribe_session_ptr_;
+    std::map<std::string, std::shared_ptr<webrtc_session>> publish_sessions_;//key: pc_id, value: webrtc_session
+    std::map<std::string, std::shared_ptr<webrtc_session>> subscribe_sessions_;//key: pc_id, value: webrtc_session
 
 private:
     std::string uid_;

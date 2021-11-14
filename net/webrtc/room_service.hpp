@@ -35,6 +35,8 @@ public:
 public:
     virtual void on_rtppacket_publisher2room(rtc_base_session* session, rtc_publisher* publisher, rtp_packet* pkt) override;
     virtual void on_request_keyframe(const std::string& pid, const std::string& sid, uint32_t media_ssrc) override;
+    virtual void on_unpublish(const std::string& pid) override;
+    virtual void on_unsubscribe(const std::string& pid, const std::string& sid) override;
 
 private:
     void handle_join(const std::string& id, const std::string& method,
@@ -42,11 +44,14 @@ private:
     void handle_publish(const std::string& id, const std::string& method,
                 const std::string& data, protoo_request_interface* feedback_p);
     void response_publish(const std::string& id, protoo_request_interface* feedback_p,
-                int code, const std::string& desc, const std::string& sdp);
+                int code, const std::string& desc, const std::string& sdp, const std::string& pc_id);
     void handle_unpublish(const std::string& id, const std::string& method,
                 const std::string& data, protoo_request_interface* feedback_p);
     void handle_subscribe(const std::string& id, const std::string& method,
                 const std::string& data, protoo_request_interface* feedback_p);
+    void handle_unsubscribe(const std::string& id, const std::string& method,
+                const std::string& data, protoo_request_interface* feedback_p);
+
 private:
     std::shared_ptr<user_info> get_user_info(const std::string& uid);
     std::string get_uid_by_json(json& json_obj);
@@ -54,14 +59,14 @@ private:
     void insert_subscriber(const std::string& publisher_id, std::shared_ptr<rtc_subscriber> subscriber_ptr);
     void notify_userin_to_others(const std::string& uid);
     void notify_userout_to_others(const std::string& uid);
-    void notify_publisher_to_others(const std::string& uid, const std::vector<publisher_info>& publisher_vec);
+    void notify_publisher_to_others(const std::string& uid, const std::string& pc_id, const std::vector<publisher_info>& publisher_vec);
     void notify_unpublisher_to_others(const std::string& uid, const std::vector<publisher_info>& publisher_vec);
     void notify_others_publisher_to_me(const std::string& uid, std::shared_ptr<user_info> me);
     
 private:
     std::string roomId_;
     std::unordered_map<std::string, std::shared_ptr<user_info>> users_;//key: uid, value: user_info
-    std::unordered_map<std::string, SUBSCRIBER_MAP> pid2subscribers_;//key: publisher_id, value: rtc_subscriber
+    std::unordered_map<std::string, SUBSCRIBER_MAP> pid2subscribers_;//key: publisher_id, value: rtc_subscribers
 };
 
 std::shared_ptr<protoo_event_callback> GetorCreate_room_service(const std::string& roomId);

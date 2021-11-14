@@ -118,7 +118,7 @@ typedef struct CANDIDATE_INFO_S
 typedef struct MEDIA_RTC_INFO_S
 {
     int mid;
-    int localMid;//mid for web local mid
+    int src_mid;//it's the publisher's mid for subscriber;
     std::string msid;
     std::string media_type;
     int port;

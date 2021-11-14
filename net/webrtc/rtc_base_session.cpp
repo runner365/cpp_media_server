@@ -20,14 +20,26 @@ rtc_base_session::rtc_base_session(const std::string& roomId, const std::string&
                             , room_(room)
                             , direction_(session_direction)
                             , media_info_(media_info) {
-    log_infof("rtc_base_session construct direction:%s, roomId:%s, uid:%s",
-            (direction_ == RTC_DIRECTION_SEND) ? "send" : "receive",
+    id_ = make_uuid();
+    log_infof("rtc_base_session construct id:%s direction:%s, roomId:%s, uid:%s",
+            id_.c_str(), (direction_ == RTC_DIRECTION_SEND) ? "send" : "receive",
             roomId.c_str(), uid.c_str());
 }
     
 rtc_base_session::~rtc_base_session() {
-    log_infof("rtc_base_session destruct direction:%s, roomId:%s, uid:%s",
-            (direction_ == RTC_DIRECTION_SEND) ? "send" : "receive",
+    if (direction_ == RTC_DIRECTION_SEND) {
+        for (auto item : mid2subscribers_) {
+            room_->on_unsubscribe(item.second->get_publisher_id(),
+                                item.second->get_subscirber_id());
+        }
+    }
+    if (direction_ == RTC_DIRECTION_RECV) {
+        for (auto item : mid2publishers_) {
+            room_->on_unpublish(item.second->get_publisher_id());
+        }
+    }
+    log_infof("rtc_base_session destruct id:%s, direction:%s, roomId:%s, uid:%s",
+            id_.c_str(), (direction_ == RTC_DIRECTION_SEND) ? "send" : "receive",
             roomId_.c_str(), uid_.c_str());
 }
 

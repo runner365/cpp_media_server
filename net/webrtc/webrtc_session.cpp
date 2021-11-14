@@ -370,15 +370,15 @@ void webrtc_session::on_handle_rtcp_data(const uint8_t* data, size_t data_len, c
     int left_len = (int)data_len;
     uint8_t* p = const_cast<uint8_t*>(data);
 
-    log_infof("handle rtcp direction:%s, total len:%lu",
+    log_debugf("handle rtcp direction:%s, total len:%lu",
         (direction_ == RTC_DIRECTION_SEND) ? "send" : "recv", data_len);
-    log_info_data(data, data_len, "rtcp packet");
+    //log_info_data(data, data_len, "rtcp packet");
     while (left_len > 0) {
         rtcp_common_header* header = (rtcp_common_header*)p;
         uint16_t payload_length = get_rtcp_length(header);
         size_t item_total = sizeof(rtcp_common_header) + payload_length;
 
-        log_infof("handle rtcp payload len:%d, item len:%lu, type:%d, rtcp header len:%d",
+        log_debugf("handle rtcp payload len:%d, item len:%lu, type:%d, rtcp header len:%d",
                 payload_length, item_total, header->packet_type, ntohs(header->length));
         switch (header->packet_type)
         {
@@ -546,7 +546,7 @@ void webrtc_session::handle_rtcp_rr(uint8_t* data, size_t data_len) {
         delete rr_pkt;
     }
     catch(const std::exception& e) {
-        log_errorf("rtcp rr parse error:%s", e.what());
+        //log_errorf("rtcp rr parse error:%s", e.what());
     }
 }
 

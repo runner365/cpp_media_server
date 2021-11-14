@@ -59,6 +59,7 @@ private:
     MEDIA_RTC_INFO media_info_;
     std::string media_type_;
     int      mid_            = 0;
+    int      src_mid_        = 0;
     uint32_t rtp_ssrc_       = 0;
     uint32_t rtx_ssrc_       = 0;
     int clock_rate_          = 0;

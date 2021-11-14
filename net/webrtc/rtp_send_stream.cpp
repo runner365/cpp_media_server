@@ -155,9 +155,9 @@ void rtp_send_stream::handle_rtcp_rr(rtcp_rr_packet* rr_pkt) {
     } else {
         avg_rtt_ += (rtt_ - avg_rtt_)/16;
     }
-    log_infof("handle rtcp rr media(%s), ssrc:%u, lost total:%u, lost rate:%.03f, jitter:%u, rtt_:%d, avg rtt:%d",
+    log_debugf("handle rtcp rr media(%s), ssrc:%u, lost total:%u, lost rate:%.03f, jitter:%u, rtt_:%d, avg rtt:%d",
         media_type_.c_str(), rtp_ssrc_, lost_total_, lost_rate_, jitter_, rtt_, avg_rtt_);
-    log_infof("handle rtcp rr now_uint32_ms:%u, lsr ms:%ld, dlsr ms:%ld",
+    log_debugf("handle rtcp rr now_uint32_ms:%u, lsr ms:%ld, dlsr ms:%ld",
         now_uint32_ms, lsr_ms, dlsr_ms);
 }
 
@@ -176,11 +176,10 @@ void rtp_send_stream::on_timer() {
     if ((ret%2) == 0) {
         rtcp_sr_packet* sr_pkt = get_rtcp_sr(now_ms);
 
-        log_infof("rtcp sr ssrc:%u, ntp sec:%u, ntp frac:%u, rtp ts:%u, pkt count:%u, bytes count:%u, data len:%lu, data:%p",
+        log_debugf("rtcp sr ssrc:%u, ntp sec:%u, ntp frac:%u, rtp ts:%u, pkt count:%u, bytes count:%u, data len:%lu, data:%p",
             sr_pkt->get_ssrc(), sr_pkt->get_ntp_sec(), sr_pkt->get_ntp_frac(),
             sr_pkt->get_rtp_timestamp(), sr_pkt->get_pkt_count(), sr_pkt->get_bytes_count(),
             sr_pkt->get_data_len(), sr_pkt->get_data());
-        log_info_data(sr_pkt->get_data(), sr_pkt->get_data_len(), "rtcp sr data");
         cb_->stream_send_rtcp(sr_pkt->get_data(), sr_pkt->get_data_len());
         delete sr_pkt;
     }

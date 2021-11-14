@@ -19,6 +19,7 @@ rtc_subscriber::rtc_subscriber(const std::string& roomId, const std::string& uid
     media_info_ = media_info;
     media_type_ = media_info_.media_type;
     mid_        = media_info_.mid;
+    src_mid_    = media_info_.src_mid;
     clock_rate_ = media_info_.rtp_encodings[0].clock_rate;
 
     has_rtx_ = false;
@@ -83,6 +84,9 @@ void rtc_subscriber::send_rtp_packet(const std::string& roomId, const std::strin
     //    roomId.c_str(), media_type.c_str(), publish_id.c_str(), pkt->dump().c_str());
 
     stream_ptr_->on_send_rtp_packet(pkt);
+
+    //TODO: need to replace mid by this->src_mid;
+
     session_->send_rtp_data_in_dtls(pkt->get_data(), pkt->get_data_length());
 
     return;
@@ -105,6 +109,7 @@ void rtc_subscriber::stream_send_rtcp(uint8_t* data, size_t len) {
 }
 
 void rtc_subscriber::stream_send_rtp(uint8_t* data, size_t len) {
+    //TODO: need to replace mid by this->src_mid;
     session_->send_rtp_data_in_dtls(data, len);
 }
 

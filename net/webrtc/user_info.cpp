@@ -10,8 +10,10 @@ user_info::user_info(const std::string& uid, const std::string& roomId, protoo_r
 
 user_info::~user_info() {
     log_infof("user destruct, uid:%s, roomid:%s", uid_.c_str(), roomId_.c_str());
-    if (publish_session_ptr_.get() != nullptr) {
-        publish_session_ptr_->close_session();
+
+    for (auto item : publish_sessions_) {
+        std::shared_ptr<webrtc_session> session_ptr = item.second;
+        session_ptr->close_session();
     }
 }
 
