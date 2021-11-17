@@ -82,6 +82,18 @@ public:
     uint8_t* get_payload() {return this->payload;}
     size_t get_payload_length() {return this->payload_len;}
 
+    void set_mid_extension_id(uint8_t id) { mid_extension_id_ = id; }
+    uint8_t get_mid_extension_id() { return mid_extension_id_; }
+
+    void set_abs_time_extension_id(uint8_t id) { abs_time_extension_id_ = id; }
+    uint8_t get_abs_time_extension_id() { return abs_time_extension_id_; }
+
+    bool update_mid(uint8_t mid);
+    bool read_mid(uint8_t& mid);
+
+    bool read_abs_time(uint32_t& abs_time_24bits);
+    bool update_abs_time(uint32_t abs_time_24bits);
+
     int64_t get_local_ms() {return this->local_ms;}
 
     void rtx_demux(uint32_t ssrc, uint8_t payloadtype);
@@ -102,6 +114,10 @@ private:
     bool has_onebyte_ext(header_extension* rtp_ext);
     bool has_twebytes_ext(header_extension* rtp_ext);
 
+    uint8_t* get_extension(uint8_t id, uint8_t& len);
+
+    bool update_extension_length(uint8_t id, uint8_t len);
+    
 private:
     rtp_common_header* header = nullptr;
     header_extension* ext     = nullptr;
@@ -111,6 +127,10 @@ private:
     size_t data_len           = 0;
     int64_t local_ms          = 0;
     bool is_clone_            = false;
+
+private:
+    uint8_t mid_extension_id_      = 0;
+    uint8_t abs_time_extension_id_ = 0;
 
 private:
     std::map<uint8_t, onebyte_extension*>  onebyte_ext_map_;

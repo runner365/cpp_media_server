@@ -80,6 +80,7 @@ payload:%d, has rtx:%d, rtx payload:%d, mid:%d, id:%s",
 
 void rtc_subscriber::send_rtp_packet(const std::string& roomId, const std::string& media_type,
                     const std::string& publish_id, rtp_packet* pkt) {
+    pkt->update_mid(this->get_mid());
     //log_debugf("subscriber receive rtp packet roomid:%s, media type:%s, publisher:%s, pkt dump:\r\n%s",
     //    roomId.c_str(), media_type.c_str(), publish_id.c_str(), pkt->dump().c_str());
 

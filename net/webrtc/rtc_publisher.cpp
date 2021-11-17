@@ -56,11 +56,19 @@ rtc_publisher::rtc_publisher(const std::string& roomId, const std::string& uid,
         }
     }
 
+    for (auto ext_item : media_info_.header_extentions) {
+        if (ext_item.uri == "urn:ietf:params:rtp-hdrext:sdes:mid") {
+            mid_extension_id_ = ext_item.value;
+        } else if (ext_item.uri == "http://www.webrtc.org/experiments/rtp-hdrext/abs-send-time") {
+            abs_time_extension_id_ = ext_item.value;
+        }
+    }
     start_timer();
     log_infof("rtc_publisher construct media type:%s, rtp ssrc:%u, rtx ssrc:%u, clock rate:%d, \
-payload:%d, has rtx:%d, rtx payload:%d, mid:%d, id:%s",
+payload:%d, has rtx:%d, rtx payload:%d, mid:%d, mid extension id:%d, abs_time_extension_id:%d, id:%s",
         this->get_media_type().c_str(), rtp_ssrc_, rtx_ssrc_, clock_rate_, payloadtype_,
-        has_rtx_, rtx_payloadtype_, get_mid(), pid_.c_str());
+        has_rtx_, rtx_payloadtype_, get_mid(), mid_extension_id_, abs_time_extension_id_,
+        pid_.c_str());
 }
 
 rtc_publisher::~rtc_publisher() {
@@ -93,6 +101,10 @@ bool rtc_publisher::has_rtx() {
 }
 
 void rtc_publisher::on_handle_rtppacket(rtp_packet* pkt) {
+    //set mid
+    pkt->set_mid_extension_id((uint8_t)mid_extension_id_);
+    pkt->set_abs_time_extension_id((uint8_t)abs_time_extension_id_);
+
     if ((pkt->get_ssrc() == rtp_ssrc_) && (pkt->get_payload_type() == payloadtype_)) {
         if (!rtp_handler_) {
             rtp_handler_ = new rtp_recv_stream(this, media_type_, pkt->get_ssrc(), payloadtype_, false, get_clockrate());
@@ -114,6 +126,15 @@ void rtc_publisher::on_handle_rtppacket(rtp_packet* pkt) {
             pkt->get_payload(), pkt->get_ssrc(), media_type_.c_str(), has_rtx_, rtp_ssrc_, rtx_ssrc_);
         return;
     }
+
+    uint8_t pkt_mid = 0;
+    bool ret_mid = false;
+    uint32_t abs_time = 0;
+    bool ret_abs_time = false;
+    ret_mid = pkt->read_mid(pkt_mid);
+    ret_abs_time = pkt->read_abs_time(abs_time);
+    log_infof("rtp media:%s mid:%d:%d, abs_time:%u:%d",
+        media_type_.c_str(), pkt_mid, ret_mid, abs_time, ret_abs_time);
     room_->on_rtppacket_publisher2room(session_, this, pkt);
 }
 

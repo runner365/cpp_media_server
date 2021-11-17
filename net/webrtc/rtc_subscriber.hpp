@@ -31,6 +31,7 @@ public:
     std::string get_subscirber_id() {return sid_;}
     uint32_t get_rtp_ssrc() { return rtp_ssrc_; }
     uint32_t get_rtx_ssrc() { return rtx_ssrc_; }
+    uint8_t get_mid() { return media_info_.mid; }
 
 public:
     void send_rtp_packet(const std::string& roomId, const std::string& media_type,

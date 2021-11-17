@@ -28,6 +28,10 @@ static HEADER_EXT support_header_ext_list[] = {
     {
         .uri = "urn:ietf:params:rtp-hdrext:sdes:mid",
         .value = 0
+    },
+    {
+        .uri = "http://www.webrtc.org/experiments/rtp-hdrext/abs-send-time",
+        .value = 0
     }
 };
 

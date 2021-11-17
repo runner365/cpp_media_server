@@ -2,6 +2,7 @@
 #include "rtprtcp_pub.hpp"
 #include "logger.hpp"
 #include "timeex.hpp"
+#include "byte_stream.hpp"
 #include <arpa/inet.h>
 #include <sstream>
 #include <cstring>
@@ -118,7 +119,15 @@ std::string rtp_packet::dump() {
             ss <<  "  rtp onebyte extension:" << "\r\n";
             for (auto item : this->onebyte_ext_map_) {
                 onebyte_extension* item_ext = item.second;
-                ss << "    id:" << (int)item.first << ", length:" << (int)item_ext->len << "\r\n";
+                ss << "    id:" << (int)item.first << ", length:" << (int)(item_ext->len) << "\r\n";
+                if (item.first == mid_extension_id_) {
+                    std::string mid_str((char*)(item_ext->value), (int)item_ext->len + 1);
+                    ss << "      mid:" << mid_str << "\r\n";
+                } else if (item.first == abs_time_extension_id_) {
+                    uint32_t abs_time_24bits = read_3bytes(item_ext->value);
+                    int64_t send_ms = abs_time_to_ms(abs_time_24bits);
+                    ss << "      abs time:" << send_ms << "\r\n";
+                }
             }
         }
 
@@ -127,6 +136,10 @@ std::string rtp_packet::dump() {
             for ( auto item : this->twobytes_ext_map_) {
                 twobytes_extension* item_ext = item.second;
                 ss << "    id:" << (int)item.first << ", length:" << (int)item_ext->len << "\r\n";
+                if (item.first == mid_extension_id_) {
+                    std::string mid_str((char*)(item_ext->value), (int)item_ext->len + 1);
+                    ss << "      mid:" << mid_str << "\r\n";
+                }
             }
         }
     }
@@ -281,6 +294,135 @@ bool rtp_packet::has_twebytes_ext(header_extension* rtp_ext) {
       +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
 */
     return (get_ext_id(rtp_ext) & 0xfff0) == 0x1000;
+}
+
+uint8_t* rtp_packet::get_extension(uint8_t id, uint8_t& len) {
+    if (has_onebyte_ext(this->ext)) {
+        auto iter = onebyte_ext_map_.find(id);
+        if (iter == onebyte_ext_map_.end()) {
+            return nullptr;
+        }
+
+        onebyte_extension* ext_data = iter->second;
+        len = ext_data->len + 1;
+        return ext_data->value;
+    } else if (has_twebytes_ext(this->ext)) {
+        auto iter = twobytes_ext_map_.find(id);
+        if (iter == twobytes_ext_map_.end()) {
+            return nullptr;
+        }
+        twobytes_extension* ext_data = iter->second;
+        len = ext_data->len;
+        if (len == 0) {
+            return nullptr;
+        }
+        return ext_data->value;
+    } else {
+        log_errorf("the extension bytes type is wrong.")
+        return nullptr;
+    }
+}
+
+bool rtp_packet::update_mid(uint8_t mid) {
+    uint8_t extern_len = 0;
+    uint8_t* extern_value = get_extension(this->mid_extension_id_, extern_len);
+
+    if (extern_value == nullptr) {
+        log_errorf("The rtp packet has not extern mid:%d", this->mid_extension_id_);
+        return false;
+    }
+
+    std::string mid_str = std::to_string(mid);
+
+    memcpy(extern_value, mid_str.c_str(), mid_str.length());
+
+    //update extension length
+    return update_extension_length(mid_extension_id_, mid_str.length());
+}
+
+bool rtp_packet::read_mid(uint8_t& mid) {
+    uint8_t extern_len = 0;
+    uint8_t* extern_value = get_extension(this->mid_extension_id_, extern_len);
+
+    if (extern_value == nullptr) {
+        log_errorf("The rtp packet has not extern mid:%d", this->mid_extension_id_);
+        return false;
+    }
+    std::string mid_str((char*)extern_value, extern_len);
+    mid = (uint8_t)atoi(mid_str.c_str());
+
+    return true;
+}
+
+bool rtp_packet::read_abs_time(uint32_t& abs_time_24bits) {
+    uint8_t extern_len = 0;
+    uint8_t* extern_value = get_extension(this->abs_time_extension_id_, extern_len);
+
+    if (extern_value == nullptr) {
+        log_errorf("The rtp packet has not extern abs time id:%d", this->abs_time_extension_id_);
+        return false;
+    }
+
+    if (extern_len != 3) {
+        log_warnf("read abs time length is not 3, extern_len:%d", extern_len);
+    }
+    abs_time_24bits = read_3bytes(extern_value);
+
+    return true;
+}
+
+bool rtp_packet::update_abs_time(uint32_t abs_time_24bits) {
+    uint8_t extern_len = 0;
+    uint8_t* extern_value = get_extension(this->abs_time_extension_id_, extern_len);
+
+    if (extern_value == nullptr) {
+        log_errorf("The rtp packet has not extern abs time id:%d", this->abs_time_extension_id_);
+        return false;
+    }
+
+    if (extern_len != 3) {
+        log_warnf("update abs time length is not 3, extern_len:%d", extern_len);
+    }
+    write_3bytes(extern_value, abs_time_24bits);
+
+    //update extension length
+    return update_extension_length(abs_time_extension_id_, 3);
+}
+
+bool rtp_packet::update_extension_length(uint8_t id, uint8_t len) {
+    if (len == 0) {
+        log_errorf("update extension length error: len must not be zero.");
+        return false;
+    }
+    if (has_onebyte_ext(this->ext)) {
+        auto iter = this->onebyte_ext_map_.find(id);
+        if (iter == this->onebyte_ext_map_.end()) {
+            log_errorf("fail to get id:%d from the onebyte ext map.", id);
+            return false;
+        }
+        auto* extension = iter->second;
+        uint8_t current_len = extension->len + 1;
+        if (len < current_len) {
+            memset(extension->value + len, 0, current_len - len);
+        }
+        extension->len = len - 1;
+    } else if (has_twebytes_ext(this->ext)) {
+        auto iter = this->twobytes_ext_map_.find(id);
+        if (iter == this->twobytes_ext_map_.end()) {
+            log_errorf("fail to get id:%d from the twobytes ext map.", id);
+            return false;
+        }
+        auto* extension = iter->second;
+        uint8_t current_len = extension->len;
+        if (len < current_len) {
+            memset(extension->value + len, 0, current_len - len);
+        }
+        extension->len = len;
+    } else {
+        log_errorf("the extension bytes type is wrong.")
+        return false;
+    }
+    return true;
 }
 
 void rtp_packet::rtx_demux(uint32_t ssrc, uint8_t payloadtype) {

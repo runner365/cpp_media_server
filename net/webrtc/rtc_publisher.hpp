@@ -57,12 +57,14 @@ private:
     std::string pid_;
     MEDIA_RTC_INFO media_info_;
     std::string media_type_;
-    uint32_t rtp_ssrc_       = 0;
-    uint32_t rtx_ssrc_       = 0;
-    int clock_rate_          = 0;
-    uint8_t payloadtype_     = 0;
-    uint8_t rtx_payloadtype_ = 0;
-    bool has_rtx_            = false;
+    uint32_t rtp_ssrc_        = 0;
+    uint32_t rtx_ssrc_        = 0;
+    int clock_rate_           = 0;
+    uint8_t payloadtype_      = 0;
+    uint8_t rtx_payloadtype_  = 0;
+    bool has_rtx_             = false;
+    int mid_extension_id_     = 0;
+    int abs_time_extension_id_ = 0;
 
 private:
     rtp_recv_stream* rtp_handler_ = nullptr;
