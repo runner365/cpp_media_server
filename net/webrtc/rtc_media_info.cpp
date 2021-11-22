@@ -114,6 +114,7 @@ int rtc_media_info::parse(json& sdp_json) {
         get_rtp_encodings(media_item_json, rtc_info.rtp_encodings);
         get_ssrcs_info(media_item_json, rtc_info.ssrc_infos);
         get_fmtps(media_item_json, rtc_info.fmtps);
+        get_rtcpfb(media_item_json, rtc_info.rtcp_fbs);
 
         this->medias.push_back(rtc_info);
     }
@@ -338,8 +339,9 @@ void rtc_media_info::get_rtcpfb(json& info_json, std::vector<RTCP_FB>& rtcp_fbs)
     for (auto& rtcp_fb_json : *rtcp_fb_iterJson) {
         RTCP_FB rtcp_fb;
 
-        rtcp_fb.payload   = rtcp_fb_json["payload"];
-        rtcp_fb.type      = rtcp_fb_json["type"];
+        std::string payloadString = rtcp_fb_json["payload"];
+        rtcp_fb.payload           = atoi(payloadString.c_str());
+        rtcp_fb.type              = rtcp_fb_json["type"];
 
         auto subtype_iter = rtcp_fb_json.find("subtype");
         if (subtype_iter != rtcp_fb_json.end()) {
@@ -416,6 +418,36 @@ void rtc_media_info::get_fmtps(json& info_json, std::vector<FMTP>& fmtps) {
 }
 
 void rtc_media_info::filter_payloads() {
+    //filter rtcp feedback firstly
+    for (auto& media_item: medias) {
+        std::vector<RTCP_FB> update_rtcp_fbs;
+        for (auto encoding : media_item.rtp_encodings) {
+            if (encoding.codec == "rtx") {
+                continue;
+            }
+            
+            for (auto rtcp_fb_item: media_item.rtcp_fbs) {
+                if (rtcp_fb_item.payload == encoding.payload) {
+                    bool new_item = true;
+                    for (auto update_fb_item : update_rtcp_fbs) {
+                        if ((update_fb_item.payload == rtcp_fb_item.payload)
+                            && (update_fb_item.type == rtcp_fb_item.type)
+                            && (update_fb_item.subtype == rtcp_fb_item.subtype)) {
+                            new_item = false;
+                            break;
+                        }
+                    }
+                    if (new_item) {
+                        log_debugf("filter rtcp fb payload:%d, subtype:%s, type:%s",
+                            rtcp_fb_item.payload, rtcp_fb_item.subtype.c_str(), rtcp_fb_item.type.c_str())
+                        update_rtcp_fbs.push_back(rtcp_fb_item);
+                    }
+                }
+            }
+        }
+        media_item.rtcp_fbs = update_rtcp_fbs;
+    }
+
     for (auto& media_item : medias) {
         std::vector<int> ret_payloads;
         for (auto payload : media_item.payloads) {

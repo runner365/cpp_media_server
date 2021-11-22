@@ -133,7 +133,7 @@ void rtc_publisher::on_handle_rtppacket(rtp_packet* pkt) {
     bool ret_abs_time = false;
     ret_mid = pkt->read_mid(pkt_mid);
     ret_abs_time = pkt->read_abs_time(abs_time);
-    log_infof("rtp media:%s mid:%d:%d, abs_time:%u:%d",
+    log_debugf("rtp media:%s mid:%d:%d, abs_time:%u:%d",
         media_type_.c_str(), pkt_mid, ret_mid, abs_time, ret_abs_time);
     room_->on_rtppacket_publisher2room(session_, this, pkt);
 }

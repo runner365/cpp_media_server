@@ -425,6 +425,9 @@ void rtc_media_info_to_json(const rtc_media_info& input, json& sdp_json) {
                 json rtcp_fb_json = json::object();
                 rtcp_fb_json["payload"] = std::to_string(rtcp_fb.payload);
                 rtcp_fb_json["type"]    = rtcp_fb.type;
+                if (!rtcp_fb.subtype.empty()) {
+                    rtcp_fb_json["subtype"] = rtcp_fb.subtype;
+                }
 
                 media_json["rtcpFb"].push_back(rtcp_fb_json);
             }
