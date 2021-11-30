@@ -6,6 +6,8 @@
 *.obj
 *.bak
 media_server
+cpp_media_server
+tags
 
 *.log
 
