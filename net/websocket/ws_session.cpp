@@ -63,7 +63,14 @@ void websocket_session::run() {
         log_infof("websocket ssl accept....");
         boost::beast::get_lowest_layer(*wss_).expires_never();
         //boost::beast::get_lowest_layer(*wss_).expires_after(std::chrono::seconds(30));
-
+        std::string hostname = boost::asio::ip::host_name();
+        log_infof("get hostname:%s", hostname.c_str());
+        if(! SSL_set_tlsext_host_name((*wss_).next_layer().native_handle(), hostname.c_str()))
+        {
+           boost::system::error_code ec{static_cast<int>(::ERR_get_error()), boost::asio::error::get_ssl_category()};
+           throw boost::system::system_error{ec};
+        }
+        log_infof("SSL_set_tlsext_host_name ok, hostname:%s", hostname.c_str());
          // Perform the SSL handshake
         wss_->next_layer().async_handshake(
             boost::asio::ssl::stream_base::server,

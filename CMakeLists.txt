@@ -126,7 +126,7 @@ ELSEIF (UNIX)
 target_link_libraries(rtmp_publish_demo pthread rt dl z m ssl crypto pthread boost_thread boost_system)
 ENDIF ()
 
-add_executable(media_server
+add_executable(cpp_media_server
             media_server.cpp
             format/flv/flv_demux.cpp
             format/flv/flv_mux.cpp
@@ -170,10 +170,10 @@ add_executable(media_server
             utils/av/media_stream_manager.cpp
             utils/av/gop_cache.cpp)
 
-add_dependencies(media_server openssl sdptransform libsrtp)
+add_dependencies(cpp_media_server openssl sdptransform libsrtp)
 
 IF (APPLE)
-target_link_libraries(media_server pthread dl z m srtp2 ssl crypto pthread boost_thread boost_system sdptransform)
+target_link_libraries(cpp_media_server pthread dl z m srtp2 ssl crypto pthread boost_thread boost_system sdptransform)
 ELSEIF (UNIX)
-target_link_libraries(media_server pthread rt dl z m srtp2 ssl crypto pthread boost_thread boost_system sdptransform)
+target_link_libraries(cpp_media_server pthread rt dl z m srtp2 ssl crypto pthread boost_thread boost_system sdptransform)
 ENDIF ()
