@@ -10,8 +10,6 @@
 #include <stddef.h>
 #include <string>
 
-#define RTP_SEQ_MOD (1<<16)
-
 class rtp_recv_stream : public nack_generator_callback_interface
 {
 public:

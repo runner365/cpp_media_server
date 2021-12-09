@@ -161,6 +161,7 @@ add_executable(cpp_media_server
             net/webrtc/rtp_recv_stream.cpp
             net/webrtc/rtp_send_stream.cpp
             net/webrtc/nack_generator.cpp
+            net/webrtc/jitterbuffer.cpp
             net/httpflv/httpflv_server.cpp
             net/httpflv/httpflv_writer.cpp
             utils/logger.cpp

@@ -7,6 +7,8 @@
 #include <arpa/inet.h>
 #include <map>
 
+#define RTP_SEQ_MOD (1<<16)
+
 typedef struct header_extension_s
 {
     uint16_t id;

@@ -17,7 +17,8 @@ rtc_publisher::rtc_publisher(const std::string& roomId, const std::string& uid,
         , uid_(uid)
         , room_(room)
         , session_(session)
-        , media_info_(media_info) {
+        , media_info_(media_info)
+        , jb_handler_(this, get_global_io_context()) {
     pid_ = make_uuid();
     media_type_ = media_info_.media_type;
 
@@ -172,4 +173,19 @@ void rtc_publisher::on_timer() {
     if (rtp_handler_) {
         rtp_handler_->on_timer();
     }
+}
+
+void rtc_publisher::rtp_packet_reset(std::shared_ptr<rtp_packet_info> pkt_ptr) {
+    if (!pkt_ptr) {
+        return;
+    }
+    uint32_t media_ssrc = pkt_ptr->pkt->get_ssrc();
+    request_keyframe(media_ssrc);
+    return;
+}
+
+void rtc_publisher::rtp_packet_output(std::shared_ptr<rtp_packet_info> pkt_ptr) {
+    log_infof("jitterbuffer output roomid:%s uid:%s mediatype:%s, stream_type:%s ssrc:%u, seq:%d, ext_seq:%d",
+        pkt_ptr->roomId_.c_str(), pkt_ptr->uid_.c_str(), pkt_ptr->media_type_.c_str(), pkt_ptr->stream_type_.c_str(),
+        pkt_ptr->pkt->get_ssrc(), pkt_ptr->pkt->get_seq(), pkt_ptr->extend_seq_);
 }
