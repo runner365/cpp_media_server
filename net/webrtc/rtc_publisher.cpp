@@ -136,6 +136,9 @@ void rtc_publisher::on_handle_rtppacket(rtp_packet* pkt) {
     ret_abs_time = pkt->read_abs_time(abs_time);
     log_debugf("rtp media:%s mid:%d:%d, abs_time:%u:%d",
         media_type_.c_str(), pkt_mid, ret_mid, abs_time, ret_abs_time);
+    
+    jb_handler_.input_rtp_packet(roomId_, uid_, media_type_, stream_type_, pkt);
+    
     room_->on_rtppacket_publisher2room(session_, this, pkt);
 }
 

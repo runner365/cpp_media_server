@@ -1,0 +1,19 @@
+#ifndef PACK_HANDLE_PUB_HPP
+#define PACK_HANDLE_PUB_HPP
+#include <stdint.h>
+#include <stddef.h>
+#include <string>
+#include <memory>
+#include "jitterbuffer_pub.hpp"
+#include "utils/av/media_packet.hpp"
+
+class pack_handle_base
+{
+public:
+    virtual void input_rtp_packet(std::shared_ptr<rtp_packet_info> pkt_ptr) = 0;
+    virtual void rtp_packet_reset(std::shared_ptr<rtp_packet_info> pkt_ptr) = 0;
+    virtual void media_packet_output(std::shared_ptr<MEDIA_PACKET> pkt_ptr) = 0;
+};
+
+
+#endif

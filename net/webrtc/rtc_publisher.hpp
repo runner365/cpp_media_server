@@ -39,6 +39,8 @@ public:
     uint8_t get_rtp_payloadtype();
     uint8_t get_rtx_payloadtype();
     bool has_rtx();
+    void set_stream_type(const std::string& stream_type) { stream_type_ = stream_type; }
+    std::string get_stream_type() { return stream_type_; }
 
     void request_keyframe(uint32_t media_ssrc);
 
@@ -63,6 +65,7 @@ private:
     std::string pid_;
     MEDIA_RTC_INFO media_info_;
     std::string media_type_;
+    std::string stream_type_  = "camera";
     uint32_t rtp_ssrc_        = 0;
     uint32_t rtx_ssrc_        = 0;
     int clock_rate_           = 0;

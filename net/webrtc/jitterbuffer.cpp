@@ -40,14 +40,17 @@ void jitterbuffer::input_rtp_packet(const std::string& roomId, const std::string
                                                                                 input_pkt,
                                                                                 extend_seq);
     if (reset) {
+        //if the rtc client is reset, call the reset callback which send pli
         cb_->rtp_packet_reset(pkt_info_ptr);
     }
 
+    //if it's the first packet, output the packet
     if (first_pkt || reset) {
         output_packet(pkt_info_ptr);
         return;
     }
 
+    //if the seq is continued, output the packet
     if ((output_seq_ + 1) == extend_seq) {
         output_packet(pkt_info_ptr);
 
