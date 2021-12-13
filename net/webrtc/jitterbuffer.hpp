@@ -19,7 +19,8 @@ public:
 
 public:
     void input_rtp_packet(const std::string& roomId, const std::string& uid,
-            const std::string& media_type, const std::string& stream_type, rtp_packet* input_pkt);
+            const std::string& media_type, const std::string& stream_type,
+            int clock_rate, rtp_packet* input_pkt);
 
 public:
     virtual void on_timer() override;

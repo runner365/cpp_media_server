@@ -11,7 +11,8 @@ jitterbuffer::~jitterbuffer() {
 }
 
 void jitterbuffer::input_rtp_packet(const std::string& roomId, const std::string& uid,
-            const std::string& media_type, const std::string& stream_type, rtp_packet* input_pkt) {
+                            const std::string& media_type, const std::string& stream_type,
+                            int clock_rate, rtp_packet* input_pkt) {
     int64_t extend_seq = 0;
     bool reset = false;
     bool first_pkt = false;
@@ -37,6 +38,7 @@ void jitterbuffer::input_rtp_packet(const std::string& roomId, const std::string
                                                                                 uid,
                                                                                 media_type,
                                                                                 stream_type,
+                                                                                clock_rate,
                                                                                 input_pkt,
                                                                                 extend_seq);
     if (reset) {

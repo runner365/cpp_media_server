@@ -188,7 +188,8 @@ void rtc_publisher::rtp_packet_reset(std::shared_ptr<rtp_packet_info> pkt_ptr) {
 }
 
 void rtc_publisher::rtp_packet_output(std::shared_ptr<rtp_packet_info> pkt_ptr) {
-    log_infof("jitterbuffer output roomid:%s uid:%s mediatype:%s, stream_type:%s ssrc:%u, seq:%d, ext_seq:%d",
+    log_infof("jitterbuffer output roomid:%s uid:%s mediatype:%s, stream_type:%s ssrc:%u, seq:%d, ext_seq:%d, mark:%d, length:%lu",
         pkt_ptr->roomId_.c_str(), pkt_ptr->uid_.c_str(), pkt_ptr->media_type_.c_str(), pkt_ptr->stream_type_.c_str(),
-        pkt_ptr->pkt->get_ssrc(), pkt_ptr->pkt->get_seq(), pkt_ptr->extend_seq_);
+        pkt_ptr->pkt->get_ssrc(), pkt_ptr->pkt->get_seq(), pkt_ptr->extend_seq_, pkt_ptr->pkt->get_marker(),
+        pkt_ptr->pkt->get_data_length());
 }
