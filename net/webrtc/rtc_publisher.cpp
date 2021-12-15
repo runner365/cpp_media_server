@@ -1,6 +1,8 @@
 #include "rtc_publisher.hpp"
 #include "rtc_session_pub.hpp"
 #include "rtc_base_session.hpp"
+#include "pack_handle_h264.hpp"
+#include "pack_handle_audio.hpp"
 #include "net/rtprtcp/rtcp_pspli.hpp"
 #include "utils/timer.hpp"
 #include "utils/timeex.hpp"
@@ -64,6 +66,12 @@ rtc_publisher::rtc_publisher(const std::string& roomId, const std::string& uid,
             abs_time_extension_id_ = ext_item.value;
         }
     }
+    if (media_type_ == "video") {
+        pack_handle_ = new pack_handle_h264(this, get_global_io_context());
+    } else {
+        pack_handle_ = new pack_handle_audio(this);
+    }
+    
     start_timer();
     log_infof("rtc_publisher construct media type:%s, rtp ssrc:%u, rtx ssrc:%u, clock rate:%d, \
 payload:%d, has rtx:%d, rtx payload:%d, mid:%d, mid extension id:%d, abs_time_extension_id:%d, id:%s",
@@ -78,6 +86,9 @@ rtc_publisher::~rtc_publisher() {
     stop_timer();
     if (rtp_handler_) {
         delete rtp_handler_;
+    }
+    if (pack_handle_) {
+        delete pack_handle_;
     }
 }
 
@@ -137,7 +148,7 @@ void rtc_publisher::on_handle_rtppacket(rtp_packet* pkt) {
     log_debugf("rtp media:%s mid:%d:%d, abs_time:%u:%d",
         media_type_.c_str(), pkt_mid, ret_mid, abs_time, ret_abs_time);
     
-    jb_handler_.input_rtp_packet(roomId_, uid_, media_type_, stream_type_, pkt);
+    jb_handler_.input_rtp_packet(roomId_, uid_, media_type_, stream_type_, clock_rate_, pkt);
     
     room_->on_rtppacket_publisher2room(session_, this, pkt);
 }
@@ -183,13 +194,36 @@ void rtc_publisher::rtp_packet_reset(std::shared_ptr<rtp_packet_info> pkt_ptr) {
         return;
     }
     uint32_t media_ssrc = pkt_ptr->pkt->get_ssrc();
+
+    log_warnf("jitter buffer lost and request keyframe, ssrc:%u", media_ssrc);
     request_keyframe(media_ssrc);
     return;
 }
 
 void rtc_publisher::rtp_packet_output(std::shared_ptr<rtp_packet_info> pkt_ptr) {
-    log_infof("jitterbuffer output roomid:%s uid:%s mediatype:%s, stream_type:%s ssrc:%u, seq:%d, ext_seq:%d, mark:%d, length:%lu",
+    log_debugf("jitterbuffer output roomid:%s uid:%s mediatype:%s, stream_type:%s ssrc:%u, seq:%d, ext_seq:%d, mark:%d, length:%lu",
         pkt_ptr->roomId_.c_str(), pkt_ptr->uid_.c_str(), pkt_ptr->media_type_.c_str(), pkt_ptr->stream_type_.c_str(),
         pkt_ptr->pkt->get_ssrc(), pkt_ptr->pkt->get_seq(), pkt_ptr->extend_seq_, pkt_ptr->pkt->get_marker(),
         pkt_ptr->pkt->get_data_length());
+    
+    if (pack_handle_) {
+        pack_handle_->input_rtp_packet(pkt_ptr);
+    }
+}
+
+void rtc_publisher::pack_handle_reset(std::shared_ptr<rtp_packet_info> pkt_ptr) {
+    if (!pkt_ptr) {
+        return;
+    }
+    uint32_t media_ssrc = pkt_ptr->pkt->get_ssrc();
+    log_warnf("pack handle lost and request keyframe, ssrc:%u", media_ssrc);
+    request_keyframe(media_ssrc);
+    return;
+}
+
+void rtc_publisher::media_packet_output(std::shared_ptr<MEDIA_PACKET> pkt_ptr) {
+    log_infof("packet get packet dts:%ld, data len:%lu, av type:%d, codec type:%d, fmt type:%d",
+            pkt_ptr->dts_, pkt_ptr->buffer_ptr_->data_len(),
+            pkt_ptr->av_type_, pkt_ptr->codec_type_, pkt_ptr->fmt_type_);
+    return;
 }

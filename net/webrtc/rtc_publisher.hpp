@@ -9,6 +9,7 @@
 #include "rtc_stream_pub.hpp"
 #include "jitterbuffer_pub.hpp"
 #include "jitterbuffer.hpp"
+#include "pack_handle_pub.hpp"
 #include <vector>
 #include <stdint.h>
 #include <stddef.h>
@@ -17,7 +18,7 @@
 class rtc_base_session;
 class room_callback_interface;
 
-class rtc_publisher : public timer_interface, public rtc_stream_callback, public jitterbuffer_callbackI
+class rtc_publisher : public timer_interface, public rtc_stream_callback, public jitterbuffer_callbackI, public pack_callbackI
 {
 public:
     rtc_publisher(const std::string& roomId, const std::string& uid,
@@ -55,6 +56,10 @@ public://implement jitterbuffer_pub
     virtual void rtp_packet_reset(std::shared_ptr<rtp_packet_info> pkt_ptr) override;
     virtual void rtp_packet_output(std::shared_ptr<rtp_packet_info> pkt_ptr) override;
 
+public://implement 
+    virtual void pack_handle_reset(std::shared_ptr<rtp_packet_info> pkt_ptr) override;
+    virtual void media_packet_output(std::shared_ptr<MEDIA_PACKET> pkt_ptr) override;
+
 private:
     std::string roomId_;
     std::string uid_;
@@ -76,8 +81,9 @@ private:
     int abs_time_extension_id_ = 0;
 
 private:
-    rtp_recv_stream* rtp_handler_ = nullptr;
+    rtp_recv_stream* rtp_handler_  = nullptr;
     jitterbuffer jb_handler_;
+    pack_handle_base* pack_handle_ = nullptr;
 };
 
 #endif

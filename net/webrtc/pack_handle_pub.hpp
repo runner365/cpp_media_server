@@ -12,7 +12,7 @@
 class pack_callbackI
 {
 public:
-    virtual void rtp_packet_reset(std::shared_ptr<rtp_packet_info> pkt_ptr) = 0;
+    virtual void pack_handle_reset(std::shared_ptr<rtp_packet_info> pkt_ptr) = 0;
     virtual void media_packet_output(std::shared_ptr<MEDIA_PACKET> pkt_ptr) = 0;
 };
 

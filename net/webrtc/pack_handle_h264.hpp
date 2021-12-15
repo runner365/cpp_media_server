@@ -5,11 +5,11 @@
 #include "timer.hpp"
 #include <queue>
 
-class h264_pack_handle : public timer_interface
+class pack_handle_h264 : public pack_handle_base, public timer_interface
 {
 public:
-    h264_pack_handle(pack_callbackI* cb, boost::asio::io_context& io_ctx);
-    virtual ~h264_pack_handle();
+    pack_handle_h264(pack_callbackI* cb, boost::asio::io_context& io_ctx);
+    virtual ~pack_handle_h264();
 
 public:
     virtual void input_rtp_packet(std::shared_ptr<rtp_packet_info> pkt_ptr) override;
@@ -23,7 +23,7 @@ private:
     bool demux_fua(MEDIA_PACKET_PTR h264_pkt_ptr, int64_t& timestamp);
     bool demux_stapA(std::shared_ptr<rtp_packet_info>);
     bool parse_stapA_offsets(const uint8_t* data, size_t data_len, std::vector<size_t> &offsets);
-    void check_timeout();
+    void check_fua_timeout();
     
 private:
     bool init_flag_  = false;
