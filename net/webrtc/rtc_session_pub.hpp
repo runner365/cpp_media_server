@@ -3,6 +3,7 @@
 #include <string>
 #include <stdint.h>
 #include <stddef.h>
+#include "media_packet.hpp"
 
 #define RTC_DIRECTION_SEND 1
 #define RTC_DIRECTION_RECV 2
@@ -26,6 +27,8 @@ public:
     virtual void on_request_keyframe(const std::string& pid, const std::string& sid, uint32_t media_ssrc) = 0;
     virtual void on_unpublish(const std::string& pid) = 0;
     virtual void on_unsubscribe(const std::string& pid, const std::string& sid) = 0;
+    virtual void on_rtmp_callback(const std::string& roomId, const std::string& uid,
+                                const std::string& stream_type, MEDIA_PACKET_PTR pkt_ptr) = 0;
 };
 
 #endif

@@ -112,6 +112,8 @@ void rtp_recv_stream::on_handle_rtcp_sr(rtcp_sr_packet* sr_pkt) {
     pkt_count_     = sr_pkt->get_pkt_count();
     bytes_count_   = sr_pkt->get_bytes_count();
 
+    log_infof("rtcp sr ssrc:%u, sec:%u, frac:%u",
+            sr_ssrc_, ntp_.ntp_sec, ntp_.ntp_frac);
     last_sr_ms_ = now_ms;
     lsr_ = ((ntp_.ntp_sec & 0xffff) << 16) | (ntp_.ntp_frac & 0xffff);
 }

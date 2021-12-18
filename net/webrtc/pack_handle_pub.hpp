@@ -19,6 +19,14 @@ public:
 class pack_handle_base
 {
 public:
+    pack_handle_base()
+    {
+    }
+    virtual ~pack_handle_base()
+    {
+    }
+    
+public:
     virtual void input_rtp_packet(std::shared_ptr<rtp_packet_info> pkt_ptr) = 0;
 };
 

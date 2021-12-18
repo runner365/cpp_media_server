@@ -10,7 +10,9 @@
 #include "jitterbuffer_pub.hpp"
 #include "jitterbuffer.hpp"
 #include "pack_handle_pub.hpp"
+#include "data_buffer.hpp"
 #include <vector>
+#include <queue>
 #include <stdint.h>
 #include <stddef.h>
 #include <string>
@@ -61,6 +63,9 @@ public://implement
     virtual void media_packet_output(std::shared_ptr<MEDIA_PACKET> pkt_ptr) override;
 
 private:
+    void set_rtmp_info(std::shared_ptr<MEDIA_PACKET> pkt_ptr);
+    
+private:
     std::string roomId_;
     std::string uid_;
     room_callback_interface* room_ = nullptr;
@@ -84,6 +89,10 @@ private:
     rtp_recv_stream* rtp_handler_  = nullptr;
     jitterbuffer jb_handler_;
     pack_handle_base* pack_handle_ = nullptr;
+    data_buffer sps_data_;
+    data_buffer pps_data_;
+    std::queue<std::shared_ptr<MEDIA_PACKET>> flv_queue_;
+    bool first_flv_audio_ = true;
 };
 
 #endif

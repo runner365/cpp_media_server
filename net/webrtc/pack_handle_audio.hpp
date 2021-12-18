@@ -22,7 +22,6 @@ public:
     {
         std::shared_ptr<MEDIA_PACKET> audio_pkt_ptr = std::make_shared<MEDIA_PACKET>();
         int64_t dts = (int64_t)pkt_ptr->pkt->get_timestamp();
-        dts = dts * 1000 / (int64_t)pkt_ptr->clock_rate_;
 
         audio_pkt_ptr->av_type_    = MEDIA_AUDIO_TYPE;
         audio_pkt_ptr->codec_type_ = MEDIA_CODEC_OPUS;

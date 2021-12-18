@@ -4,10 +4,15 @@
 #include "pack_handle_h264.hpp"
 #include "pack_handle_audio.hpp"
 #include "net/rtprtcp/rtcp_pspli.hpp"
+#include "format/flv/flv_mux.hpp"
+#include "format/flv/flv_pub.hpp"
 #include "utils/timer.hpp"
 #include "utils/timeex.hpp"
 #include "utils/logger.hpp"
 #include "utils/uuid.hpp"
+#include "utils/byte_stream.hpp"
+#include "utils/av/media_packet.hpp"
+#include "utils/av/media_stream_manager.hpp"
 #include <sstream>
 #include <cstring>
 
@@ -222,8 +227,105 @@ void rtc_publisher::pack_handle_reset(std::shared_ptr<rtp_packet_info> pkt_ptr) 
 }
 
 void rtc_publisher::media_packet_output(std::shared_ptr<MEDIA_PACKET> pkt_ptr) {
-    log_infof("packet get packet dts:%ld, data len:%lu, av type:%d, codec type:%d, fmt type:%d",
+    log_debugf("packet get packet dts:%ld, data len:%lu, av type:%d, codec type:%d, fmt type:%d",
             pkt_ptr->dts_, pkt_ptr->buffer_ptr_->data_len(),
             pkt_ptr->av_type_, pkt_ptr->codec_type_, pkt_ptr->fmt_type_);
+    
+    if (pkt_ptr->av_type_ == MEDIA_VIDEO_TYPE) {
+        uint8_t nalu_len_data[4];
+        if (pkt_ptr->is_key_frame_) {
+            uint8_t extra_data[2048];
+            int extra_len = 0;
+
+            get_video_extradata((uint8_t*)pps_data_.data(), pps_data_.data_len(), 
+                                (uint8_t*)sps_data_.data(), sps_data_.data_len(), 
+                                extra_data, extra_len);
+
+            std::shared_ptr<MEDIA_PACKET> seq_pkt_ptr = std::make_shared<MEDIA_PACKET>();
+            seq_pkt_ptr->buffer_ptr_->append_data((char*)extra_data, (size_t)extra_len);
+            seq_pkt_ptr->copy_properties(pkt_ptr);
+            seq_pkt_ptr->is_key_frame_ = false;
+            seq_pkt_ptr->is_seq_hdr_   = true;
+            set_rtmp_info(seq_pkt_ptr);
+            seq_pkt_ptr->fmt_type_ = MEDIA_FORMAT_FLV;
+
+            room_->on_rtmp_callback(roomId_, uid_, stream_type_, seq_pkt_ptr);
+        } else if (pkt_ptr->is_seq_hdr_) {
+            uint8_t* p = (uint8_t*)pkt_ptr->buffer_ptr_->data();
+            uint8_t nalu_type = p[4] & 0x1f;
+            if (nalu_type == (uint8_t)kAvcNaluTypeSPS) {
+                sps_data_.reset();
+                sps_data_.append_data(pkt_ptr->buffer_ptr_->data() + 4, pkt_ptr->buffer_ptr_->data_len() - 4);
+            } else if (nalu_type == (uint8_t)kAvcNaluTypePPS) {
+                pps_data_.reset();
+                pps_data_.append_data(pkt_ptr->buffer_ptr_->data() + 4, pkt_ptr->buffer_ptr_->data_len() - 4);
+            } else {
+                log_errorf("the video nalu type:0x%02x", nalu_type);
+            }
+            return;
+        }
+        write_4bytes(nalu_len_data, (uint32_t)pkt_ptr->buffer_ptr_->data_len() - 4);
+        uint8_t* p = (uint8_t*)pkt_ptr->buffer_ptr_->data();
+        memcpy(p, nalu_len_data, sizeof(nalu_len_data));
+    } else {
+        uint8_t audio_flv_header[4];
+        audio_flv_header[0] = FLV_AUDIO_OPUS_CODEC | FLV_SAMPLERATE_44100HZ | FLV_SAMPLESSIZE_16BIT | FLV_STEREO;
+
+        if (first_flv_audio_) {
+            uint16_t seq_data    = 0;
+            int samplerate_index = 0;
+            int channel = 2;
+
+            first_flv_audio_ = false;
+            audio_flv_header[1] = 0;
+
+
+            for (samplerate_index = 0; samplerate_index < 16; samplerate_index++) {
+                if (48000 == mpeg4audio_sample_rates[samplerate_index])
+                    break;
+            }
+            seq_data |= 2 << 11;//profile aac lc
+            seq_data |= samplerate_index << 7;
+            seq_data |= channel << 3;
+            write_2bytes(audio_flv_header + 2, seq_data);
+
+            std::shared_ptr<MEDIA_PACKET> seq_pkt_ptr = std::make_shared<MEDIA_PACKET>();
+            seq_pkt_ptr->buffer_ptr_->append_data((char*)audio_flv_header, sizeof(audio_flv_header));
+            seq_pkt_ptr->copy_properties(pkt_ptr);
+            seq_pkt_ptr->is_key_frame_ = false;
+            seq_pkt_ptr->is_seq_hdr_   = true;
+            set_rtmp_info(seq_pkt_ptr);
+            seq_pkt_ptr->fmt_type_ = MEDIA_FORMAT_FLV;
+
+            room_->on_rtmp_callback(roomId_, uid_, stream_type_, seq_pkt_ptr);
+        } else {
+            audio_flv_header[1] = 1;
+        }
+        set_rtmp_info(pkt_ptr);
+        pkt_ptr->buffer_ptr_->consume_data(-2);
+        pkt_ptr->fmt_type_ = MEDIA_FORMAT_FLV;
+        uint8_t* p = (uint8_t*)pkt_ptr->buffer_ptr_->data();
+
+        memcpy(p, audio_flv_header, 2);
+        room_->on_rtmp_callback(roomId_, uid_, stream_type_, pkt_ptr);
+        return;
+    }
+
+    set_rtmp_info(pkt_ptr);
+    room_->on_rtmp_callback(roomId_, uid_, stream_type_, pkt_ptr);
+    
     return;
+}
+
+void rtc_publisher::set_rtmp_info(std::shared_ptr<MEDIA_PACKET> pkt_ptr) {
+    pkt_ptr->app_ = roomId_;
+    pkt_ptr->streamname_ = uid_;
+    pkt_ptr->key_ = roomId_;
+    pkt_ptr->key_ += "/";
+    pkt_ptr->key_ += uid_;
+
+    pkt_ptr->dts_ = pkt_ptr->dts_ * 1000 / clock_rate_;
+    pkt_ptr->pts_ = pkt_ptr->pts_ * 1000 / clock_rate_;
+
+    flv_muxer::add_flv_media_header(pkt_ptr);
 }

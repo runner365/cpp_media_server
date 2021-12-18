@@ -60,8 +60,7 @@ void pack_handle_h264::input_rtp_packet(std::shared_ptr<rtp_packet_info> pkt_ptr
     uint8_t nal_type = payload_data[0] & 0x1f;
 
     if ((nal_type >= 1) && (nal_type <= 23)) {//single nalu
-        int64_t dts = (int64_t)pkt_ptr->pkt->get_timestamp();
-        dts = dts * 1000 / (int64_t)pkt_ptr->clock_rate_;
+        int64_t dts = pkt_ptr->pkt->get_timestamp();
 
         MEDIA_PACKET_PTR h264_pkt_ptr = std::make_shared<MEDIA_PACKET>();
 
@@ -73,6 +72,17 @@ void pack_handle_h264::input_rtp_packet(std::shared_ptr<rtp_packet_info> pkt_ptr
         h264_pkt_ptr->fmt_type_   = MEDIA_FORMAT_RAW;
         h264_pkt_ptr->dts_        = dts;
         h264_pkt_ptr->pts_        = dts;
+
+        if ((nal_type == kAvcNaluTypeSPS) || (nal_type == kAvcNaluTypePPS)) {
+            h264_pkt_ptr->is_seq_hdr_   = true;
+            h264_pkt_ptr->is_key_frame_ = false;
+        } else if (nal_type == kAvcNaluTypeIDR) {
+            h264_pkt_ptr->is_seq_hdr_   = false;
+            h264_pkt_ptr->is_key_frame_ = true;
+        } else {
+            h264_pkt_ptr->is_seq_hdr_   = false;
+            h264_pkt_ptr->is_key_frame_ = false;
+        }
 
         cb_->media_packet_output(h264_pkt_ptr);
         return;
@@ -113,6 +123,18 @@ void pack_handle_h264::input_rtp_packet(std::shared_ptr<rtp_packet_info> pkt_ptr
                 h264_pkt_ptr->fmt_type_   = MEDIA_FORMAT_RAW;
                 h264_pkt_ptr->dts_        = dts;
                 h264_pkt_ptr->pts_        = dts;
+                nal_type = ((uint8_t*)h264_pkt_ptr->buffer_ptr_->data())[4];
+                nal_type = nal_type & 0x1f;
+                if ((nal_type == kAvcNaluTypeSPS) || (nal_type == kAvcNaluTypePPS)) {
+                    h264_pkt_ptr->is_seq_hdr_   = true;
+                    h264_pkt_ptr->is_key_frame_ = false;
+                } else if (nal_type == kAvcNaluTypeIDR) {
+                    h264_pkt_ptr->is_seq_hdr_   = false;
+                    h264_pkt_ptr->is_key_frame_ = true;
+                } else {
+                    h264_pkt_ptr->is_seq_hdr_   = false;
+                    h264_pkt_ptr->is_key_frame_ = false;
+                }
                 cb_->media_packet_output(h264_pkt_ptr);
             }
             start_flag_ = false;
@@ -162,7 +184,6 @@ bool pack_handle_h264::demux_stapA(std::shared_ptr<rtp_packet_info> pkt_ptr) {
         return ret;
     }
     int64_t dts = (int64_t)pkt_ptr->pkt->get_timestamp();
-    dts = dts * 1000 / (int64_t)pkt_ptr->clock_rate_;
 
     offsets.push_back(payload_length + H264_STAPA_FIELD_SIZE);//end offset.
     for (size_t index = 0; index < (offsets.size() - 1); index++) {
@@ -183,6 +204,18 @@ bool pack_handle_h264::demux_stapA(std::shared_ptr<rtp_packet_info> pkt_ptr) {
         h264_pkt_ptr->dts_        = dts;
         h264_pkt_ptr->pts_        = dts;
 
+        uint8_t nal_type = *(payload_data + start_offset) & 0x1f;
+
+        if ((nal_type == kAvcNaluTypeSPS) || (nal_type == kAvcNaluTypePPS)) {
+            h264_pkt_ptr->is_seq_hdr_   = true;
+            h264_pkt_ptr->is_key_frame_ = false;
+        } else if (nal_type == kAvcNaluTypeIDR) {
+            h264_pkt_ptr->is_seq_hdr_   = false;
+            h264_pkt_ptr->is_key_frame_ = true;
+        } else {
+            h264_pkt_ptr->is_seq_hdr_   = false;
+            h264_pkt_ptr->is_key_frame_ = false;
+        }
         cb_->media_packet_output(h264_pkt_ptr);
     }
     return true;
@@ -231,7 +264,6 @@ bool pack_handle_h264::demux_fua(MEDIA_PACKET_PTR h264_pkt_ptr, int64_t& timesta
         packets_queue_.pop_front();
 
         timestamp = (int64_t)pkt_ptr->pkt->get_timestamp();
-        timestamp = timestamp * 1000 / pkt_ptr->clock_rate_;
         get_startend_bit(pkt_ptr->pkt, start, end);
 
         uint8_t* payload   = pkt_ptr->pkt->get_payload();

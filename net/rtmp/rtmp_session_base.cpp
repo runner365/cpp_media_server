@@ -92,7 +92,7 @@ MEDIA_PACKET_PTR rtmp_session_base::get_media_packet(CHUNK_STREAM_PTR cs_ptr) {
     pkt_ptr = std::make_shared<MEDIA_PACKET>();
 
     pkt_ptr->typeid_   = cs_ptr->type_id_;
-    pkt_ptr->fmt_type_ = MEDIA_FORMAT_RAW;
+    pkt_ptr->fmt_type_ = MEDIA_FORMAT_FLV;
 
     if (cs_ptr->type_id_ == RTMP_MEDIA_PACKET_VIDEO) {
         uint8_t codec = p[0] & 0x0f;
