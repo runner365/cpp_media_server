@@ -194,6 +194,7 @@ void room_service::on_rtmp_callback(const std::string& roomId, const std::string
                                 const std::string& stream_type, MEDIA_PACKET_PTR pkt_ptr) {
     auto iter = users_.find(uid);
     if (iter == users_.end()) {
+        log_errorf("fail to find uid:%s, roomId:%s", uid.c_str(), roomId.c_str());
         return;
     }
     std::shared_ptr<user_info> user_ptr = iter->second;

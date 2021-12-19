@@ -30,6 +30,7 @@ private:
     bool update_seq(rtp_packet* input_pkt, int64_t& extend_seq, bool& reset);
     void output_packet(std::shared_ptr<rtp_packet_info>);
     void check_timeout();
+    void report_lost(std::shared_ptr<rtp_packet_info> pkt_ptr);
 
 private:
     jitterbuffer_callbackI* cb_ = nullptr;
@@ -42,6 +43,7 @@ private:
 
 private:
     int64_t output_seq_ = 0;
+    int64_t report_lost_ts_ = -1;
 };
 
 #endif

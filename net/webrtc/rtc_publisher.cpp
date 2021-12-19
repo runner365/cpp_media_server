@@ -198,6 +198,9 @@ void rtc_publisher::rtp_packet_reset(std::shared_ptr<rtp_packet_info> pkt_ptr) {
     if (!pkt_ptr) {
         return;
     }
+    if (media_type_ != "video") {
+        return;
+    }
     uint32_t media_ssrc = pkt_ptr->pkt->get_ssrc();
 
     log_warnf("jitter buffer lost and request keyframe, ssrc:%u", media_ssrc);
@@ -268,17 +271,17 @@ void rtc_publisher::media_packet_output(std::shared_ptr<MEDIA_PACKET> pkt_ptr) {
         uint8_t* p = (uint8_t*)pkt_ptr->buffer_ptr_->data();
         memcpy(p, nalu_len_data, sizeof(nalu_len_data));
     } else {
-        uint8_t audio_flv_header[4];
-        audio_flv_header[0] = FLV_AUDIO_OPUS_CODEC | FLV_SAMPLERATE_44100HZ | FLV_SAMPLESSIZE_16BIT | FLV_STEREO;
+        uint8_t audio_flv_header[2];
 
         if (first_flv_audio_) {
+            const uint8_t opus_seq_data[] = {0x4f, 0x70, 0x75, 0x73, 0x48, 0x65, 0x61, 0x64,
+                                            0x01, 0x02, 0x38, 0x01, 0x80, 0xbb, 0x00, 0x00,
+                                            0x00, 0x00, 0x00};
             uint16_t seq_data    = 0;
             int samplerate_index = 0;
             int channel = 2;
 
             first_flv_audio_ = false;
-            audio_flv_header[1] = 0;
-
 
             for (samplerate_index = 0; samplerate_index < 16; samplerate_index++) {
                 if (48000 == mpeg4audio_sample_rates[samplerate_index])
@@ -287,26 +290,24 @@ void rtc_publisher::media_packet_output(std::shared_ptr<MEDIA_PACKET> pkt_ptr) {
             seq_data |= 2 << 11;//profile aac lc
             seq_data |= samplerate_index << 7;
             seq_data |= channel << 3;
-            write_2bytes(audio_flv_header + 2, seq_data);
+            write_2bytes(audio_flv_header, seq_data);
 
             std::shared_ptr<MEDIA_PACKET> seq_pkt_ptr = std::make_shared<MEDIA_PACKET>();
-            seq_pkt_ptr->buffer_ptr_->append_data((char*)audio_flv_header, sizeof(audio_flv_header));
+            //seq_pkt_ptr->buffer_ptr_->append_data((char*)audio_flv_header, sizeof(audio_flv_header));
+            seq_pkt_ptr->buffer_ptr_->append_data((char*)opus_seq_data, sizeof(opus_seq_data));
             seq_pkt_ptr->copy_properties(pkt_ptr);
             seq_pkt_ptr->is_key_frame_ = false;
             seq_pkt_ptr->is_seq_hdr_   = true;
             set_rtmp_info(seq_pkt_ptr);
             seq_pkt_ptr->fmt_type_ = MEDIA_FORMAT_FLV;
 
+            log_info_data((uint8_t*)seq_pkt_ptr->buffer_ptr_->data(),
+                    seq_pkt_ptr->buffer_ptr_->data_len(), "opus seq data");
             room_->on_rtmp_callback(roomId_, uid_, stream_type_, seq_pkt_ptr);
-        } else {
-            audio_flv_header[1] = 1;
         }
         set_rtmp_info(pkt_ptr);
-        pkt_ptr->buffer_ptr_->consume_data(-2);
         pkt_ptr->fmt_type_ = MEDIA_FORMAT_FLV;
-        uint8_t* p = (uint8_t*)pkt_ptr->buffer_ptr_->data();
 
-        memcpy(p, audio_flv_header, 2);
         room_->on_rtmp_callback(roomId_, uid_, stream_type_, pkt_ptr);
         return;
     }

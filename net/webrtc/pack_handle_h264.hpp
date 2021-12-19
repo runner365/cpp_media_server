@@ -24,6 +24,7 @@ private:
     bool demux_stapA(std::shared_ptr<rtp_packet_info>);
     bool parse_stapA_offsets(const uint8_t* data, size_t data_len, std::vector<size_t> &offsets);
     void check_fua_timeout();
+    void report_lost(std::shared_ptr<rtp_packet_info> pkt_ptr);
     
 private:
     bool init_flag_  = false;
@@ -32,6 +33,7 @@ private:
     int64_t last_extend_seq_ = 0;
     std::deque<std::shared_ptr<rtp_packet_info>> packets_queue_;
     pack_callbackI* cb_ = nullptr;
+    int64_t report_lost_ts_ = -1;
 };
 
 #endif

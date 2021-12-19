@@ -7,7 +7,7 @@
 #include "jitterbuffer_pub.hpp"
 #include "utils/av/media_packet.hpp"
 
-#define PACK_BUFFER_TIMEOUT 400 //ms
+#define PACK_BUFFER_TIMEOUT 600 //ms
 
 class pack_callbackI
 {

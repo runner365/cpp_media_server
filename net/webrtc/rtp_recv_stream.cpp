@@ -88,7 +88,7 @@ void rtp_recv_stream::on_timer() {
         size_t fps;
         size_t speed = recv_statics_.bytes_per_second((int64_t)now_millisec(), fps);
     
-        log_infof("rtc receive mediatype:%s, ssrc:%u, payloadtype:%d, is_rtx:%d, speed(bytes/s):%lu, fps:%lu",
+        log_debugf("rtc receive mediatype:%s, ssrc:%u, payloadtype:%d, is_rtx:%d, speed(bytes/s):%lu, fps:%lu",
             media_type_.c_str(), ssrc_, payloadtype_, has_rtx_, speed, fps);
     }
 
@@ -112,8 +112,6 @@ void rtp_recv_stream::on_handle_rtcp_sr(rtcp_sr_packet* sr_pkt) {
     pkt_count_     = sr_pkt->get_pkt_count();
     bytes_count_   = sr_pkt->get_bytes_count();
 
-    log_infof("rtcp sr ssrc:%u, sec:%u, frac:%u",
-            sr_ssrc_, ntp_.ntp_sec, ntp_.ntp_frac);
     last_sr_ms_ = now_ms;
     lsr_ = ((ntp_.ntp_sec & 0xffff) << 16) | (ntp_.ntp_frac & 0xffff);
 }

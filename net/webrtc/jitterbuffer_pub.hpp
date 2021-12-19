@@ -7,7 +7,7 @@
 #include <string>
 #include <memory>
 
-#define JITTER_BUFFER_TIMEOUT 400 //ms
+#define JITTER_BUFFER_TIMEOUT 600 //ms
 
 class rtp_packet_info
 {

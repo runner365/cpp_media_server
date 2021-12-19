@@ -49,7 +49,7 @@ void pack_handle_h264::input_rtp_packet(std::shared_ptr<rtp_packet_info> pkt_ptr
             start_flag_ = false;
             end_flag_   = false;
 
-            cb_->pack_handle_reset(pkt_ptr);
+            report_lost(pkt_ptr);
             last_extend_seq_ = pkt_ptr->extend_seq_;
             return;
         }
@@ -98,12 +98,14 @@ void pack_handle_h264::input_rtp_packet(std::shared_ptr<rtp_packet_info> pkt_ptr
         } else if (start && end) {//exception happened
             log_errorf("rtp h264 pack error: both start and end flag are enable");
             reset_rtp_fua();
+            report_lost(pkt_ptr);
             return;
         }
 
         if (end && !start_flag_) {
             log_errorf("rtp h264 pack error: get end rtp packet but there is no start rtp packet");
             reset_rtp_fua();
+            report_lost(pkt_ptr);
             return;
         }
 
@@ -136,6 +138,8 @@ void pack_handle_h264::input_rtp_packet(std::shared_ptr<rtp_packet_info> pkt_ptr
                     h264_pkt_ptr->is_key_frame_ = false;
                 }
                 cb_->media_packet_output(h264_pkt_ptr);
+            } else {
+                report_lost(pkt_ptr);
             }
             start_flag_ = false;
             end_flag_   = false;
@@ -147,11 +151,20 @@ void pack_handle_h264::input_rtp_packet(std::shared_ptr<rtp_packet_info> pkt_ptr
     } else if (nal_type == 24) {//handle stapA
         bool ret = demux_stapA(pkt_ptr);
         if (!ret) {
-            cb_->pack_handle_reset(pkt_ptr);
+            report_lost(pkt_ptr);
         }
     }
 
     return;
+}
+
+void pack_handle_h264::report_lost(std::shared_ptr<rtp_packet_info> pkt_ptr) {
+    int64_t now_ms = now_millisec();
+
+    if ((now_ms - report_lost_ts_) > 500) {
+        report_lost_ts_ = now_ms;
+        cb_->pack_handle_reset(pkt_ptr);
+    }
 }
 
 void pack_handle_h264::check_fua_timeout() {

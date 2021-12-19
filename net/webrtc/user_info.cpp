@@ -104,7 +104,9 @@ void user_info::update_camera_video_dts(MEDIA_PACKET_PTR pkt_ptr) {
             }
         }
     }
-
+    if (delta_ts > 5) {
+        delta_ts -= 5;
+    }
     pkt_ptr->dts_ = last_ts + delta_ts;
     pkt_ptr->pts_ = last_ts + delta_ts;
 
@@ -159,6 +161,9 @@ void user_info::update_camera_audio_dts(MEDIA_PACKET_PTR pkt_ptr) {
         }
     }
 
+    if (delta_ts > 5) {
+        delta_ts -= 5;
+    }
     pkt_ptr->dts_ = last_ts + delta_ts;
     pkt_ptr->pts_ = last_ts + delta_ts;
 }
@@ -170,13 +175,13 @@ void user_info::on_rtmp_camera_callback(MEDIA_PACKET_PTR pkt_ptr) {
     } else if (pkt_ptr->av_type_ == MEDIA_AUDIO_TYPE) {
         update_camera_audio_dts(pkt_ptr);
     } else {
-        log_infof("rtmp camera callback av type(%d) is unkown, roomId(%s), uid(%s)",
+        log_errorf("rtmp camera callback av type(%d) is unkown, roomId(%s), uid(%s)",
                 pkt_ptr->av_type_, roomId_.c_str(), uid_.c_str());
         return;
     }
 
-    log_infof("rtmp camera write %s dts:%ld", (pkt_ptr->av_type_ == MEDIA_VIDEO_TYPE) ? "video" : "audio",
-            pkt_ptr->dts_);
+    //log_infof("rtmp camera write %s dts:%ld", (pkt_ptr->av_type_ == MEDIA_VIDEO_TYPE) ? "video" : "audio",
+    //        pkt_ptr->dts_);
     media_stream_manager::writer_media_packet(pkt_ptr);
 }
 
