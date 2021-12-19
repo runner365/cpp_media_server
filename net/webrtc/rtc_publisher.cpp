@@ -180,8 +180,6 @@ void rtc_publisher::request_keyframe(uint32_t media_ssrc) {
 
     pspli_pkt->set_sender_ssrc(1);
     pspli_pkt->set_media_ssrc(media_ssrc);
-
-    log_info_data(pspli_pkt->get_data(), pspli_pkt->get_data_len(), "publiser send rtcp ps pli");
     
     session_->send_rtcp_data_in_dtls(pspli_pkt->get_data(), pspli_pkt->get_data_len());
 
@@ -191,6 +189,9 @@ void rtc_publisher::request_keyframe(uint32_t media_ssrc) {
 void rtc_publisher::on_timer() {
     if (rtp_handler_) {
         rtp_handler_->on_timer();
+    }
+    if (((++key_count_) % 6 == 0) && (media_type_ == "video")) {
+        request_keyframe(rtp_ssrc_);
     }
 }
 
