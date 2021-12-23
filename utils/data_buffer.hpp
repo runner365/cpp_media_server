@@ -6,6 +6,7 @@
 #include <string.h>
 #include <string>
 #include <vector>
+#include <memory>
 
 #define EXTRA_LEN (10*1024)
 
@@ -38,4 +39,7 @@ private:
     int start_          = PRE_RESERVE_HEADER_SIZE;
     int end_            = 0;
 };
+
+typedef std::shared_ptr<data_buffer> DATA_BUFFER_PTR;
+
 #endif //DATA_BUFFER_H
