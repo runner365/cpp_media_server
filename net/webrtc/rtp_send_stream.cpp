@@ -54,7 +54,10 @@ void rtp_send_stream::save_buffer(rtp_packet* input_pkt) {
 void rtp_send_stream::on_send_rtp_packet(rtp_packet* pkt) {
     send_statics_.update(pkt->get_data_length(),  pkt->get_local_ms());
 
-    save_buffer(pkt);
+    if (nack_enable_) {
+        save_buffer(pkt);
+    }
+    return;
 }
 
 void rtp_send_stream::clear_buffer() {

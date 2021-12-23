@@ -24,7 +24,7 @@ public:
 
 int main(int argn, char** argv) {
     if (argn < 2) {
-        printf("please input: ./flv_demux_demo ./*.flv.\r\n");
+        log_infof("please input: ./flv_demux_demo ./*.flv.\r\n");
         return -1;
     }
     Logger::get_instance()->set_filename("flv_demux.log");
@@ -36,7 +36,7 @@ int main(int argn, char** argv) {
     FILE* fh_p = fopen(filename.c_str(), "r");
 
     if (!fh_p) {
-        printf("fail to open filename:%s\r\n", filename.c_str());
+        log_errorf("fail to open filename:%s\r\n", filename.c_str());
         return -1;
     }
 
