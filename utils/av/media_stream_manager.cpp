@@ -5,6 +5,18 @@
 #include <vector>
 
 std::unordered_map<std::string, MEDIA_STREAM_PTR> media_stream_manager::media_streams_map_;
+std::vector<stream_manager_callbackI*> media_stream_manager::cb_vec_;
+
+bool media_stream_manager::get_app_streamname(const std::string& stream_key, std::string& app, std::string& streamname) {
+    size_t pos = stream_key.find("/");
+    if (pos == stream_key.npos) {
+        return false;
+    }
+    app = stream_key.substr(0, pos);
+    streamname = stream_key.substr(pos+1);
+
+    return true;
+}
 
 int media_stream_manager::add_player(av_writer_base* writer_p) {
     std::string key_str = writer_p->get_key();
@@ -61,6 +73,15 @@ MEDIA_STREAM_PTR media_stream_manager::add_publisher(const std::string& stream_k
         log_infof("add new publisher stream key:%s, stream_p:%p",
             stream_key.c_str(), (void*)ret_stream_ptr.get());
         media_streams_map_.insert(std::make_pair(stream_key, ret_stream_ptr));
+
+        std::string app;
+        std::string streamname;
+        if (get_app_streamname(stream_key, app, streamname)) {
+            for(auto cb : cb_vec_) {
+                cb->on_publish(app, streamname);
+            }
+        }
+
         return ret_stream_ptr;
     }
     ret_stream_ptr = iter->second;
@@ -81,6 +102,15 @@ void media_stream_manager::remove_publisher(const std::string& stream_key) {
         log_infof("delete stream %s for the publisher and players are empty.", stream_key.c_str());
         media_streams_map_.erase(iter);
     }
+
+    std::string app;
+    std::string streamname;
+    if (get_app_streamname(stream_key, app, streamname)) {
+        for(auto cb : cb_vec_) {
+            cb->on_unpublish(app, streamname);
+        }
+    }
+    return;
 }
 
 int media_stream_manager::writer_media_packet(MEDIA_PACKET_PTR pkt_ptr) {

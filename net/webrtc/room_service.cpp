@@ -1,15 +1,16 @@
 #include "room_service.hpp"
 #include "rtc_subscriber.hpp"
 #include "utils/logger.hpp"
+#include "utils/av/media_stream_manager.hpp"
 #include "json.hpp"
 #include <unordered_map>
 #include <sstream>
 
 using json = nlohmann::json;
 
-static std::unordered_map<std::string, std::shared_ptr<protoo_event_callback>> s_rooms;
+static std::unordered_map<std::string, std::shared_ptr<room_service>> s_rooms;
 
-std::shared_ptr<protoo_event_callback> GetorCreate_room_service(const std::string& roomId) {
+std::shared_ptr<room_service> GetorCreate_room_service(const std::string& roomId) {
     auto iter = s_rooms.find(roomId);
     if (iter != s_rooms.end()) {
         return iter->second;
@@ -27,6 +28,28 @@ void remove_room_service(const std::string& roomId) {
 
     s_rooms.erase(iter);
     return;
+}
+
+webrtc_stream_manager_callback::webrtc_stream_manager_callback() {
+
+}
+
+webrtc_stream_manager_callback::~webrtc_stream_manager_callback() {
+
+}
+
+void webrtc_stream_manager_callback::on_publish(const std::string& app, const std::string& streamname) {
+    log_infof("webrtc on publish app:%s, streamname:%s", app.c_str(), streamname.c_str());
+}
+
+void webrtc_stream_manager_callback::on_unpublish(const std::string& app, const std::string& streamname) {
+    log_infof("webrtc on unpublish app:%s, streamname:%s", app.c_str(), streamname.c_str());
+}
+
+static webrtc_stream_manager_callback s_webrtc_callback;
+
+void init_webrtc_stream_manager_callback() {
+    media_stream_manager::add_stream_callback(&s_webrtc_callback);
 }
 
 room_service::room_service(const std::string& roomId):roomId_(roomId) {

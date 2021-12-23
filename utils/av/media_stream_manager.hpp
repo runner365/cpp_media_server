@@ -6,6 +6,7 @@
 #include <unordered_map>
 #include <string>
 #include <memory>
+#include <vector>
 #include <list>
 
 class rtmp_server_session;
@@ -24,6 +25,13 @@ public:
 
 typedef std::shared_ptr<media_stream> MEDIA_STREAM_PTR;
 
+class stream_manager_callbackI
+{
+public:
+    virtual void on_publish(const std::string& app, const std::string& streamname) = 0;
+    virtual void on_unpublish(const std::string& app, const std::string& streamname) = 0;
+};
+
 class media_stream_manager
 {
 public:
@@ -36,9 +44,17 @@ public:
 public:
     static int writer_media_packet(MEDIA_PACKET_PTR pkt_ptr);
 
+public:
+    static void add_stream_callback(stream_manager_callbackI* cb) {
+        cb_vec_.push_back(cb);
+    }
+
+private:
+    static bool get_app_streamname(const std::string& stream_key, std::string& app, std::string& streamname);
+
 private:
     static std::unordered_map<std::string, MEDIA_STREAM_PTR> media_streams_map_;//key("app/stream"), MEDIA_STREAM_PTR
-
+    static std::vector<stream_manager_callbackI*> cb_vec_;
 };
 
 #endif //RTMP_MEDIA_STREAM_HPP

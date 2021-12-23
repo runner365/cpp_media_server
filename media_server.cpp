@@ -50,6 +50,7 @@ int main(int argn, char** argv) {
         rtc_dtls::dtls_init(ssl_pem_file, cert_file);
         srtp_session::init();
         init_single_udp_server(io_context, host_ip, webrtc_media_port);
+        init_webrtc_stream_manager_callback();
 
         rtmp_server server(io_context, rtmp_def_port);
         websocket_server ws(io_context, ws_def_port, WEBSOCKET_IMPLEMENT_FLV_TYPE);

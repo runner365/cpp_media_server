@@ -1,6 +1,7 @@
 #ifndef ROOM_SERVICE_HPP
 #define ROOM_SERVICE_HPP
 #include "net/websocket/wsimple/protoo_pub.hpp"
+#include "utils/av/media_stream_manager.hpp"
 #include "rtc_session_pub.hpp"
 #include "user_info.hpp"
 #include "json.hpp"
@@ -14,6 +15,17 @@ using json = nlohmann::json;
 class rtc_subscriber;
 
 typedef std::unordered_map<std::string, std::shared_ptr<rtc_subscriber>> SUBSCRIBER_MAP;
+
+class webrtc_stream_manager_callback : public stream_manager_callbackI
+{
+public:
+    webrtc_stream_manager_callback();
+    virtual ~webrtc_stream_manager_callback();
+
+public:
+    virtual void on_publish(const std::string& app, const std::string& streamname) override;
+    virtual void on_unpublish(const std::string& app, const std::string& streamname) override;
+};
 
 class room_service : public protoo_event_callback, public room_callback_interface
 {
@@ -71,7 +83,7 @@ private:
     std::unordered_map<std::string, SUBSCRIBER_MAP> pid2subscribers_;//key: publisher_id, value: rtc_subscribers
 };
 
-std::shared_ptr<protoo_event_callback> GetorCreate_room_service(const std::string& roomId);
+std::shared_ptr<room_service> GetorCreate_room_service(const std::string& roomId);
 void remove_room_service(const std::string& roomId);
 
 #endif

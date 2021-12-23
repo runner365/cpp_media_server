@@ -10,6 +10,7 @@
 using json = nlohmann::json;
 
 class websocket_session;
+class room_service;
 class protoo_server : public ws_session_callback, public protoo_request_interface
 {
 public:
@@ -35,7 +36,7 @@ private:
 private:
     std::string roomId_;
     std::string uid_;
-    std::shared_ptr<protoo_event_callback> ev_cb_ptr_;
+    std::shared_ptr<room_service> ev_cb_ptr_;
     websocket_session* ws_session_ = nullptr;
 };
 
