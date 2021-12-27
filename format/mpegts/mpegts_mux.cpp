@@ -60,20 +60,40 @@ static uint32_t mpeg_crc32(uint32_t crc, const uint8_t *buffer, uint32_t size)
     return crc ;  
 }
 
+/*
+sync_byte 8 
+transport_error_indicator 1 
+payload_unit_start_indicator 1 
+transport_priority 1 
+PID 13 
+transport_scrambling_control 2 
+adaptation_field_control 2 
+continuity_counter 4
+
+0b 
+*/
 mpegts_mux::mpegts_mux(av_format_callback* cb):cb_(cb) {
     memset(pat_data_, 0xff, TS_PACKET_SIZE);
     memset(pmt_data_, 0xff, TS_PACKET_SIZE);
 
-    pat_data_[0] = 0x47;
-    pat_data_[1] = 0x40;
-    pat_data_[2] = 0x00;
-    pat_data_[3] = 0x10;
+    pat_data_[0] = 0x47;//sync_byte(8): 0x47
+    pat_data_[1] = 0x40;//transport_error_indicator(1): 0
+                        //payload_unit_start_indicator(1): 1
+                        //transport_priority(1): 0
+    pat_data_[2] = 0x00;//PID(13): 0
+    pat_data_[3] = 0x10;//transport_scrambling_control(2): 0
+                        //adaptation_field_control(2): 0b01, not adaptation_field and only payload
+                        //continuity_counter(4): 0
     pat_data_[4] = 0x00;
 
-    pmt_data_[0] = 0x47;
-    pmt_data_[1] = 0x50;
-    pmt_data_[2] = 0x01;
-    pmt_data_[3] = 0x10;
+    pmt_data_[0] = 0x47;//sync_byte(8): 0x47
+    pmt_data_[1] = 0x50;//transport_error_indicator(1): 0
+                        //payload_unit_start_indicator(1): 1
+                        //transport_priority(1): 0
+    pmt_data_[2] = 0x01;//PID(13): 0x1001, 4097
+    pmt_data_[3] = 0x10;//transport_scrambling_control(2): 0
+                        //adaptation_field_control(2): 0b01, not adaptation_field and only payload
+                        //continuity_counter(4): 0
     pmt_data_[4] = 0x00;
 }
 
@@ -105,13 +125,36 @@ int mpegts_mux::input_packet(MEDIA_PACKET_PTR pkt_ptr) {
     return 0;
 }
 
+/*
+table_id 8 
+section_syntax_indicator 1 
+'0' 1 
+reserved 2
+section_length 12
+transport_stream_id 16
+reserved 2
+version_number 5
+current_next_indicator 1
+section_number 8
+last_section_number 8
+for (i = 0; i < N; i++) {
+program_number 16
+reserved 3
+if (program_number == '0') {
+network_PID 13
+}
+else {
+program_map_PID 13
+} }
+CRC_32 32
+*/
 int mpegts_mux::write_pat(uint8_t* data) {
     uint32_t len = 0;
 
     len = pmt_count_ * 4 + 5 + 4; // 5 bytes remain header and 4 bytes crc32
     uint8_t* p = data;
 
-    p[0] = PAT_TID_PAS;
+    p[0] = PAT_TID_PAS;//shall be 0x00
     p++;
 
     // section_syntax_indicator = '1'
@@ -150,6 +193,37 @@ int mpegts_mux::write_pat(uint8_t* data) {
     return 0;
 }
 
+/*
+table_id 8 
+section_syntax_indicator 1 
+'0' 1 
+reserved 2
+section_length 12
+program_number 16
+reserved 2
+version_number 5
+current_next_indicator 1
+section_number 8
+last_section_number 8
+reserved 3
+PCR_PID 13
+reserved 4
+program_info_length 12
+for (i = 0; i < N; i++) {
+    descriptor() 
+}
+for (i = 0; i < N1; i++) { 
+    stream_type 8
+    reserved 3
+    elementary_PID 13
+    reserved 4
+    ES_info_length 12
+    for (i = 0; i < N2; i++) {
+        descriptor() 
+    }
+}
+CRC_32 32
+*/
 int mpegts_mux::write_pmt(uint8_t* data) {
     uint8_t* p = data;
 
@@ -184,7 +258,7 @@ int mpegts_mux::write_pmt(uint8_t* data) {
     //TODO: set pminfo, there is no pm infor usually.
 
     //video
-    if (1) {
+    if (has_video_) {
         // stream_type
         *p++ = video_stream_type_;
 
@@ -201,7 +275,7 @@ int mpegts_mux::write_pmt(uint8_t* data) {
     }
 
     //audio
-    if (1) {
+    if (has_audio_) {
         // stream_type
         *p++ = audio_stream_type_;
 

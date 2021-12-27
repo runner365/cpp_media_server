@@ -14,6 +14,10 @@ public:
 
 public:
     int input_packet(MEDIA_PACKET_PTR pkt_ptr);
+    void set_video_flag(bool flag) { has_video_ = flag;}
+    bool has_video() { return has_video_; }
+    void set_audio_flag(bool flag) { has_audio_ = flag;}
+    bool has_audio() { return has_audio_; }
 
 private:
     int write_pat(uint8_t* data);
@@ -43,6 +47,8 @@ private://about pat
     uint16_t program_number_ = 1;
 
 private://about pmt
+    bool has_video_ = true;
+    bool has_audio_ = true;
     uint16_t pmt_pid_    = 0x1001;
     uint16_t pmt_pn      = 0x01;
     uint8_t  pmt_ver_    = 0;
