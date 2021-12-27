@@ -6,6 +6,8 @@
 #include <string>
 #include <memory>
 
+class muxer_callback;
+
 std::string flv_filename;
 std::string ts_filename;
 muxer_callback* muxer_cb_p = nullptr;
@@ -23,6 +25,10 @@ public:
         int ret = 0;
         if (pkt_ptr->av_type_ == MEDIA_VIDEO_TYPE) {
             ret = handle_video(pkt_ptr);
+        } else if (pkt_ptr->av_type_ == MEDIA_AUDIO_TYPE) {
+            ret = handle_audio(pkt_ptr);
+        } else {
+            log_errorf("packet av type(%d) is unkown", pkt_ptr->av_type_);
         }
         return 0;
     }
@@ -31,18 +37,18 @@ private:
     int handle_video(MEDIA_PACKET_PTR pkt_ptr) {
         std::vector<data_buffer> nalus;
 
-        bool ret = AnnexbToNalus((uint8_t*)pkt_ptr->buffer_ptr_->data(),
+        bool ret = annexb_to_nalus((uint8_t*)pkt_ptr->buffer_ptr_->data(),
                         pkt_ptr->buffer_ptr_->data_len(), nalus);
         if (!ret) {
             return -1;
         }
 
-        for (data_buffer item : nalus) {
+        for (data_buffer& item : nalus) {
             MEDIA_PACKET_PTR nalu_pkt_ptr = std::make_shared<MEDIA_PACKET>();
             uint8_t* data = (uint8_t*)item.data();
             size_t data_len = (size_t)item.data_len();
 
-            nalu_pkt_ptr->av_type_ = pkt_ptr->av_type_;
+            nalu_pkt_ptr->copy_properties(pkt_ptr);
             
             uint8_t nalu_type = data[4];
 
@@ -50,14 +56,15 @@ private:
                 memcpy(pps_, data, data_len);
             } else if (H264_IS_SPS(nalu_type)) {
                 memcpy(sps_, data, data_len);
-            } else if (H264_IS_KEYFRAME(nalu_type) || H264_IS_AUD(nalu_type)) {
-                
-            } else {
-                //
             }
-
+            muxer_.input_packet(nalu_pkt_ptr);
         }
-        //muxer_.input_packet(pkt_ptr);
+        
+        return 0;
+    }
+
+    int handle_audio(MEDIA_PACKET_PTR pkt_ptr) {
+
         return 0;
     }
 public:

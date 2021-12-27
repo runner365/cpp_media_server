@@ -87,6 +87,20 @@ ELSEIF (UNIX)
 target_link_libraries(mpegts_demux_demo pthread rt dl z m boost_thread boost_system)
 ENDIF ()
 
+add_executable(mpegts_mux_demo
+            format/mpegts/mpegts_mux_demo.cpp
+            format/mpegts/mpegts_mux.cpp
+            format/flv/flv_demux.cpp
+            utils/logger.cpp
+            utils/data_buffer.cpp
+            utils/byte_stream.cpp)
+IF (APPLE)
+target_link_libraries(mpegts_mux_demo pthread dl z m boost_thread boost_system)
+ELSEIF (UNIX)
+target_link_libraries(mpegts_mux_demo pthread rt dl z m boost_thread boost_system)
+ENDIF ()
+
+
 add_executable(http_server_demo
             net/http/http_server_demo.cpp
             net/http/http_server.cpp

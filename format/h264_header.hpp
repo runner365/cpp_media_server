@@ -48,7 +48,7 @@ inline bool Is_Nalu_Header(uint8_t* data, size_t len) {
     return false;
 }
 
-inline bool AnnexbToNalus(uint8_t* data, size_t len, std::vector<data_buffer> nalus) {
+inline bool annexb_to_nalus(uint8_t* data, size_t len, std::vector<data_buffer>& nalus) {
     if (len < 4) {
         return false;
     }
@@ -60,8 +60,6 @@ inline bool AnnexbToNalus(uint8_t* data, size_t len, std::vector<data_buffer> na
         uint32_t nalu_len = read_4bytes(p);
         p += 4;
         data_len -= 4;
-
-        uint8_t nalu_type = *p;
 
         data_buffer nalu;
         uint8_t nalu_data[4];

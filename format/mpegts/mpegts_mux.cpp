@@ -60,21 +60,41 @@ static uint32_t mpeg_crc32(uint32_t crc, const uint8_t *buffer, uint32_t size)
     return crc ;  
 }
 
+/*
+sync_byte 8 
+transport_error_indicator 1 
+payload_unit_start_indicator 1 
+transport_priority 1 
+PID 13 
+transport_scrambling_control 2 
+adaptation_field_control 2 
+continuity_counter 4
+
+0b 
+*/
 mpegts_mux::mpegts_mux(av_format_callback* cb):cb_(cb) {
     memset(pat_data_, 0xff, TS_PACKET_SIZE);
     memset(pmt_data_, 0xff, TS_PACKET_SIZE);
 
-    pat_data_[0] = 0x47;
-    pat_data_[1] = 0x40;
-    pat_data_[2] = 0x00;
-    pat_data_[3] = 0x10;
-    pat_data_[4] = 0x00;
+    pat_data_[0] = 0x47;//sync_byte(8): 0x47
+    pat_data_[1] = 0x40;//transport_error_indicator(1): 0
+                        //payload_unit_start_indicator(1): 1
+                        //transport_priority(1): 0
+    pat_data_[2] = 0x00;//PID(13): 0
+    pat_data_[3] = 0x10;//transport_scrambling_control(2): 0
+                        //adaptation_field_control(2): 0b01, not adaptation_field and only payload
+                        //continuity_counter(4): 0
+    pat_data_[4] = 0x00;//adaptation_field_length(8):0
 
-    pmt_data_[0] = 0x47;
-    pmt_data_[1] = 0x50;
-    pmt_data_[2] = 0x01;
-    pmt_data_[3] = 0x10;
-    pmt_data_[4] = 0x00;
+    pmt_data_[0] = 0x47;//sync_byte(8): 0x47
+    pmt_data_[1] = 0x50;//transport_error_indicator(1): 0
+                        //payload_unit_start_indicator(1): 1
+                        //transport_priority(1): 0
+    pmt_data_[2] = 0x01;//PID(13): 0x1001, 4097
+    pmt_data_[3] = 0x10;//transport_scrambling_control(2): 0
+                        //adaptation_field_control(2): 0b01, not adaptation_field and only payload
+                        //continuity_counter(4): 0
+    pmt_data_[4] = 0x00;//adaptation_field_length(8):0
 }
 
 mpegts_mux::~mpegts_mux() {
@@ -84,34 +104,59 @@ mpegts_mux::~mpegts_mux() {
 int mpegts_mux::input_packet(MEDIA_PACKET_PTR pkt_ptr) {
     int ret = -1;
 
-    if ((last_pat_dts_ < 0) || ((last_pat_dts_ + pat_interval_) < pkt_ptr->dts_)) {
+    if ((last_pat_dts_ < 0) || ((last_pat_dts_ + pat_interval_) < pkt_ptr->dts_)
+        || ((pkt_ptr->av_type_ == MEDIA_VIDEO_TYPE) && (pkt_ptr->is_key_frame_))) {
         last_pat_dts_ = pkt_ptr->dts_;
-        ret = write_pat(pat_data_ + 5);
+        ret = write_pat();
         if (ret < 0) {
             return ret;
         }
-        ret = write_pmt(pmt_data_);
+        ts_callback(pkt_ptr, pat_data_);
+        ret = write_pmt();
         if (ret < 0) {
             return ret;
         }
+        ts_callback(pkt_ptr, pmt_data_);
     }
 
-    ret = write_pes((uint8_t*)pkt_ptr->buffer_ptr_->data(), pkt_ptr->buffer_ptr_->data_len(),
-                (pkt_ptr->av_type_ == MEDIA_VIDEO_TYPE), pkt_ptr->is_key_frame_,
-                pkt_ptr->dts_, pkt_ptr->pts_);
+    ret = write_pes(pkt_ptr);
     if (ret < 0) {
         return ret;
     }
     return 0;
 }
 
-int mpegts_mux::write_pat(uint8_t* data) {
+/*
+PAT:
+table_id 8 
+section_syntax_indicator 1 
+'0' 1 
+reserved 2
+section_length 12
+transport_stream_id 16
+reserved 2
+version_number 5
+current_next_indicator 1
+section_number 8
+last_section_number 8
+for (i = 0; i < N; i++) {
+program_number 16
+reserved 3
+if (program_number == '0') {
+network_PID 13
+}
+else {
+program_map_PID 13
+} }
+CRC_32 32
+*/
+int mpegts_mux::write_pat() {
     uint32_t len = 0;
 
-    len = pmt_count_ * 4 + 5 + 4; // 5 bytes remain header and 4 bytes crc32
-    uint8_t* p = data;
+    len = pmt_count_ * 4 + 5 + 3;//12bytes
+    uint8_t* p = pat_data_ + 5;
 
-    p[0] = PAT_TID_PAS;
+    p[0] = PAT_TID_PAS;//shall be 0x00
     p++;
 
     // section_syntax_indicator = '1'
@@ -142,15 +187,49 @@ int mpegts_mux::write_pat(uint8_t* data) {
     p += 4 * pmt_count_;
 
     // crc32
-    uint32_t crc = mpeg_crc32(0xffffffff, data, len-1);
+    uint32_t crc = mpeg_crc32(0xffffffff, pat_data_ + 6, len);
     
     write_4bytes(p, crc);
     p += 4;
 
-    return 0;
+    memset(p, 0xff, pat_data_ + TS_PACKET_SIZE - p);
+    return (int)(p - pat_data_);
 }
 
-int mpegts_mux::write_pmt(uint8_t* data) {
+/*
+PMT:
+table_id 8 
+section_syntax_indicator 1 
+'0' 1 
+reserved 2
+section_length 12
+program_number 16
+reserved 2
+version_number 5
+current_next_indicator 1
+section_number 8
+last_section_number 8
+reserved 3
+PCR_PID 13
+reserved 4
+program_info_length 12
+for (i = 0; i < N; i++) {
+    descriptor() 
+}
+for (i = 0; i < N1; i++) { 
+    stream_type 8
+    reserved 3
+    elementary_PID 13
+    reserved 4
+    ES_info_length 12
+    for (i = 0; i < N2; i++) {
+        descriptor() 
+    }
+}
+CRC_32 32
+*/
+int mpegts_mux::write_pmt() {
+    uint8_t* data = pmt_data_ + 5;
     uint8_t* p = data;
 
     p[0] = PAT_TID_PMS;
@@ -184,7 +263,7 @@ int mpegts_mux::write_pmt(uint8_t* data) {
     //TODO: set pminfo, there is no pm infor usually.
 
     //video
-    if (1) {
+    if (has_video_) {
         // stream_type
         *p++ = video_stream_type_;
 
@@ -201,7 +280,7 @@ int mpegts_mux::write_pmt(uint8_t* data) {
     }
 
     //audio
-    if (1) {
+    if (has_audio_) {
         // stream_type
         *p++ = audio_stream_type_;
 
@@ -216,9 +295,17 @@ int mpegts_mux::write_pmt(uint8_t* data) {
         p += 2;
     }
 
-    uint32_t len = p + 4 - (data + 3); // 4 bytes crc32
+    uint16_t len = (uint16_t)(p + 4 - (data + 3)); // 4 bytes crc32
 
+    /*
+    section_syntax_indicator 1 
+    '0' 1 
+    reserved 2
+    section_length 12
+    */
+    //update section_length...
     write_2bytes(data + 1, (uint16_t)(0xb000 | len));
+
     // crc32
     uint32_t crc = mpeg_crc32(0xffffffff, data, (uint32_t)(p-data));
     //put32(p, crc);
@@ -226,57 +313,66 @@ int mpegts_mux::write_pmt(uint8_t* data) {
     p[2] = (crc >> 16) & 0xFF;
     p[1] = (crc >> 8) & 0xFF;
     p[0] = crc & 0xFF;
+    p += 4;
 
-    return (p - data) + 4; // total length
+    memset(p, 0xff, TS_PACKET_SIZE - (p - pmt_data_));
+    return (int)(p - pmt_data_);
 }
 
 int mpegts_mux::write_pes_header(int64_t data_size,
         bool is_video, int64_t dts, int64_t pts) {
     uint8_t* p = pes_header_;
-    uint16_t size = 0;
+    uint8_t pts_pts_flag = 0x80;//default enable pts
+    uint8_t ptsdts_header_len  = 5;
+    uint16_t pes_packet_length = 0;
 
     *p++ = 0x00;
     *p++ = 0x00;
     *p++ = 0x01;
 
     if (is_video) {
-        *p++ = video_sid_;
+        *p++ = PES_SID_VIDEO +  video_sid_;
     } else {
-        *p++ = audio_sid_;
+        *p++ = PES_SID_AUDIO + audio_sid_;
     }
 
-    uint8_t flag = 0x80;
-    uint8_t ptslen = 5;
-    uint8_t dtslen = 5;
-
-    uint8_t header_size = ptslen;
-    if (is_video && (pts != dts)) {
-        flag |= 0x40;
-        header_size += 5; //add dts
+    if (is_video && (dts != pts)) {
+        pts_pts_flag |= 0x40;
+        ptsdts_header_len += 5;
     }
-    size = data_size + header_size + 3;
-    if (size > 0xffff) {
-        size = 0;
-    }
+    pes_packet_length = (uint16_t)data_size + ptsdts_header_len + 3;
 
-    write_2bytes(p, size);
-    p += 2;
-
+	
+	*p++ = (uint8_t)(pes_packet_length >> 8) & 0xff;
+	*p++ = pes_packet_length & 0xff;
+	
+    // '10'
+	// PES_scrambling_control '00'
+	// PES_priority '0'
+	// data_alignment_indicator '0'
+	// copyright '0'
+	// original_or_copy '0'
     *p++ = 0x80;
 
-    *p++ = flag;
+    // PTS_DTS_flags:             2bits
+    // ESCR_flag:                 1bit
+    // ES_rate_flag:              1bit
+    // DSM_trick_mode_flag:       1bit
+    // additional_copy_info_flag: 1bit
+    // PES_CRC_flag:              1bit
+    // PES_extension_flag:        1bit
+    *p++ = pts_pts_flag;
+    *p++ = ptsdts_header_len;
 
-    *p++ = header_size;
-
-    write_ts(p, flag>>6, pts);
+    write_ts(p, pts_pts_flag >> 6, pts);
     p += 5;
     if (is_video && (pts != dts)) {
-        write_ts(p, 1, dts);
+        write_ts(p, 0x01, dts);
         p += 5;
     }
 
     pes_header_size_ = p - pes_header_;
-    return 0;
+    return pes_header_size_;
 }
 
 int mpegts_mux::write_pcr(uint8_t* data, int64_t pcr) {
@@ -327,8 +423,14 @@ int mpegts_mux::adaptation_bufinit(uint8_t* data, uint8_t data_size, uint8_t rem
     return 0;
 }
 
-int mpegts_mux::write_pes(uint8_t* data, int64_t data_size,
-                bool is_video, bool is_keyframe, int64_t dts, int64_t pts) {
+int mpegts_mux::write_pes(MEDIA_PACKET_PTR pkt_ptr) {
+    uint8_t* data = (uint8_t*)pkt_ptr->buffer_ptr_->data();
+    int64_t data_size = pkt_ptr->buffer_ptr_->data_len();
+    bool is_video = (pkt_ptr->av_type_ == MEDIA_VIDEO_TYPE);
+    bool is_keyframe = pkt_ptr->is_key_frame_;
+    int64_t dts = pkt_ptr->dts_ * 90;
+    int64_t pts = pkt_ptr->pts_ * 90;
+
     const int TS_DEF_DATALEN = 184;
     bool first = true;
     uint8_t data_len = 0;
@@ -364,10 +466,11 @@ int mpegts_mux::write_pes(uint8_t* data, int64_t data_size,
         ts_packet[i++] = 0x47;
 
         //error indicator, unit start indicator,ts priority,pid
-        ts_packet[i++] = (uint8_t)(pid >> 8); //pid high 5 bits
+        ts_packet[i] = (uint8_t)(pid >> 8); //pid high 5 bits
         if (first) {
             ts_packet[i] = ts_packet[i] | 0x40; //unit start indicator
         }
+        i++;
 
         //pid low 8 bits
         ts_packet[i++] = pid;
@@ -430,7 +533,19 @@ int mpegts_mux::write_pes(uint8_t* data, int64_t data_size,
             wBytes += data_len;
             packet_bytes_len -= data_len;
         }
+        ts_callback(pkt_ptr, ts_packet);
         first = false;
     }
     return 0;
+}
+
+void mpegts_mux::ts_callback(MEDIA_PACKET_PTR pkt_ptr, uint8_t* data) {
+    if (cb_) {
+        MEDIA_PACKET_PTR ts_pkt_ptr = std::make_shared<MEDIA_PACKET>(256);
+        ts_pkt_ptr->copy_properties(pkt_ptr);
+        ts_pkt_ptr->fmt_type_ = MEDIA_FORMAT_MPEGTS;
+        ts_pkt_ptr->buffer_ptr_->append_data((char*)data, (size_t)TS_PACKET_SIZE);
+        cb_->output_packet(ts_pkt_ptr);
+    }
+    return;
 }

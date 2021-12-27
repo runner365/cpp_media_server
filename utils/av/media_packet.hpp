@@ -120,7 +120,8 @@ typedef enum {
 typedef enum {
     MEDIA_FORMAT_UNKOWN = 0,
     MEDIA_FORMAT_RAW,
-    MEDIA_FORMAT_FLV
+    MEDIA_FORMAT_FLV,
+    MEDIA_FORMAT_MPEGTS,
 } MEDIA_FORMAT_TYPE;
 
 class MEDIA_PACKET
@@ -129,6 +130,10 @@ public:
     MEDIA_PACKET()
     {
         buffer_ptr_ = std::make_shared<data_buffer>();
+    }
+    MEDIA_PACKET(size_t len)
+    {
+        buffer_ptr_ = std::make_shared<data_buffer>(len);
     }
     ~MEDIA_PACKET()
     {
