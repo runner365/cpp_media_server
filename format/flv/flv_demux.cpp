@@ -125,7 +125,7 @@ int flv_demuxer::handle_packet() {
     }
 
     int ret = 0;
-    if (is_ready) {
+    if (is_ready && (tag_data_size_ > header_len)) {
         output_pkt_ptr->dts_ = tag_timestamp_;
         output_pkt_ptr->pts_ = tag_timestamp_ + ts_delta;
         output_pkt_ptr->buffer_ptr_->append_data((char*)p + header_len, tag_data_size_ - header_len);

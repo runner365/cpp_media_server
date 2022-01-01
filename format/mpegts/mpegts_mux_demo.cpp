@@ -12,6 +12,8 @@ std::string flv_filename;
 std::string ts_filename;
 muxer_callback* muxer_cb_p = nullptr;
 
+static const uint8_t H264_AUD_DATA[] = {0x00, 0x00, 0x00, 0x01, 0x09, 0xff};
+
 class muxer_callback : public av_format_callback
 {
 public:
@@ -35,28 +37,55 @@ public:
 
 private:
     int handle_video(MEDIA_PACKET_PTR pkt_ptr) {
-        std::vector<data_buffer> nalus;
+        if (pkt_ptr->is_seq_hdr_) {
+            uint8_t* data   = (uint8_t*)pkt_ptr->buffer_ptr_->data();
+            size_t data_len = pkt_ptr->buffer_ptr_->data_len();
 
+            int ret = get_sps_pps_from_extradata(pps_, pps_len_, sps_, sps_len_, 
+                                data, data_len);
+            if (ret == 0) {
+                log_info_data(sps_, sps_len_, "sps data");
+                log_info_data(pps_, pps_len_, "pps data");
+            }
+            return 0;
+        }
+
+        std::vector<std::shared_ptr<data_buffer>> nalus;
         bool ret = annexb_to_nalus((uint8_t*)pkt_ptr->buffer_ptr_->data(),
                         pkt_ptr->buffer_ptr_->data_len(), nalus);
         if (!ret) {
             return -1;
         }
 
-        for (data_buffer& item : nalus) {
-            MEDIA_PACKET_PTR nalu_pkt_ptr = std::make_shared<MEDIA_PACKET>();
-            uint8_t* data = (uint8_t*)item.data();
-            size_t data_len = (size_t)item.data_len();
+        MEDIA_PACKET_PTR nalu_pkt_ptr = std::make_shared<MEDIA_PACKET>();
+        for (std::shared_ptr<data_buffer> item : nalus) {
+            uint8_t* data = (uint8_t*)item->data();
+            size_t data_len = (size_t)item->data_len();
 
-            nalu_pkt_ptr->copy_properties(pkt_ptr);
-            
-            uint8_t nalu_type = data[4];
-
-            if (H264_IS_PPS(nalu_type)) {
-                memcpy(pps_, data, data_len);
-            } else if (H264_IS_SPS(nalu_type)) {
-                memcpy(sps_, data, data_len);
+            uint8_t nalu_type = data[4] & 0x1f;
+            if (H264_IS_AUD(nalu_type)) {
+                continue;
             }
+            if (H264_IS_PPS(nalu_type)) {
+                pps_len_ = data_len;
+                memcpy(pps_, data, pps_len_);
+                continue;
+            }
+            if (H264_IS_SPS(nalu_type)) {
+                sps_len_ = data_len;
+                memcpy(sps_, data, sps_len_);
+                continue;
+            }
+            nalu_pkt_ptr->copy_properties(pkt_ptr);
+            nalu_pkt_ptr->buffer_ptr_->reset();
+            
+            nalu_pkt_ptr->buffer_ptr_->append_data((char*)H264_AUD_DATA, sizeof(H264_AUD_DATA));
+            if (H264_IS_KEYFRAME(nalu_type)) {
+                nalu_pkt_ptr->buffer_ptr_->append_data((char*)sps_, sps_len_);
+                nalu_pkt_ptr->buffer_ptr_->append_data((char*)pps_, pps_len_);
+            }
+            nalu_pkt_ptr->buffer_ptr_->append_data((char*)data, data_len);
+            
             muxer_.input_packet(nalu_pkt_ptr);
         }
         
@@ -64,12 +93,25 @@ private:
     }
 
     int handle_audio(MEDIA_PACKET_PTR pkt_ptr) {
-
+        //log_infof("audio is_seq:%d, len:%lu", pkt_ptr->is_seq_hdr_, pkt_ptr->buffer_ptr_->data_len());
+        //log_info_data((uint8_t*)pkt_ptr->buffer_ptr_->data(),
+        //        pkt_ptr->buffer_ptr_->data_len(), "audio data");
+        //muxer_.input_packet(pkt_ptr);
         return 0;
     }
 public:
     virtual int output_packet(MEDIA_PACKET_PTR pkt_ptr) override {
-
+        //log_info_data((uint8_t*)pkt_ptr->buffer_ptr_->data(),
+        //            pkt_ptr->buffer_ptr_->data_len(),
+        //            pkt_ptr->dump().c_str());
+        FILE* file_p = fopen(ts_filename.c_str(), "ab+");
+        if (file_p) {
+            fwrite(pkt_ptr->buffer_ptr_->data(),
+                1,
+                pkt_ptr->buffer_ptr_->data_len(),
+                file_p);
+            fclose(file_p);
+        }
         return 0;
     }
 
@@ -78,6 +120,8 @@ private:
     mpegts_mux muxer_;
     uint8_t pps_[1024];
     uint8_t sps_[1024];
+    size_t  pps_len_ = 0;
+    size_t  sps_len_ = 0;
 };
 
 class demuxer_callback : public av_format_callback
@@ -101,6 +145,8 @@ int main(int argn, char** argv) {
     if (argn < 2) {
         return -1;
     }
+
+    Logger::get_instance()->set_filename("mpegts_mux.log");
 
     flv_filename.assign(argv[1]);
     ts_filename.assign(argv[2]);

@@ -5,6 +5,7 @@
 #include <stdint.h>
 #include <string>
 #include <vector>
+#include <memory>
 
 static const uint8_t kIdr = 5;
 static const uint8_t kSps = 7;
@@ -48,7 +49,7 @@ inline bool Is_Nalu_Header(uint8_t* data, size_t len) {
     return false;
 }
 
-inline bool annexb_to_nalus(uint8_t* data, size_t len, std::vector<data_buffer>& nalus) {
+inline bool annexb_to_nalus(uint8_t* data, size_t len, std::vector<std::shared_ptr<data_buffer>>& nalus) {
     if (len < 4) {
         return false;
     }
@@ -61,29 +62,29 @@ inline bool annexb_to_nalus(uint8_t* data, size_t len, std::vector<data_buffer>&
         p += 4;
         data_len -= 4;
 
-        data_buffer nalu;
+        std::shared_ptr<data_buffer> nalu_ptr = std::make_shared<data_buffer>();
         uint8_t nalu_data[4];
         nalu_data[0] = 0x00;
         nalu_data[1] = 0x00;
         nalu_data[2] = 0x00;
         nalu_data[3] = 0x01;
 
-        nalu.append_data((char*)nalu_data, sizeof(nalu_data));
-        nalu.append_data((char*)p, nalu_len);
+        nalu_ptr->append_data((char*)nalu_data, sizeof(nalu_data));
+        nalu_ptr->append_data((char*)p, nalu_len);
 
-        nalus.push_back(nalu);
+        nalus.push_back(nalu_ptr);
         p += nalu_len;
         data_len -= nalu_len;
     }
     return true;
 }
 
-inline void get_sps_pps_from_extradata(unsigned char *pps, int& pps_len, 
-                                unsigned char *sps, int& sps_len, 
-                                const unsigned char *extra_data, int extra_len)
+inline int get_sps_pps_from_extradata(uint8_t *pps, size_t& pps_len, 
+                                uint8_t *sps, size_t& sps_len, 
+                                const uint8_t *extra_data, size_t extra_len)
 {
     if (extra_len == 0) {
-        return;
+        return -1;
     }
     const unsigned char * body= nullptr;
     int iIndex = 0;
@@ -91,19 +92,17 @@ inline void get_sps_pps_from_extradata(unsigned char *pps, int& pps_len,
     body = extra_data;
 
     if(extra_len >4){
-        if(body[3] != 0xff || body[4] != 0xe1) {
-            return;
+        if(body[4] != 0xff || body[5] != 0xe1) {
+            return -1;
         }
     }
-    sps[0] = 1;//?
-    sps[1] = body[iIndex++];
-    sps[2] = body[iIndex++];
-    sps[3] = body[iIndex++];
-    iIndex++;//0xff
+
+    iIndex += 4;//0xff
     
     /*sps*/
-    iIndex++;//0xe1
-    sps_len = body[iIndex++] << 8;
+    iIndex += 1;//0xe1
+    iIndex += 1;//sps len start
+    sps_len = (size_t)body[iIndex++] << 8;
     sps_len += body[iIndex++];
     memcpy(sps, &body[iIndex], sps_len);
     iIndex +=  sps_len;
@@ -116,7 +115,7 @@ inline void get_sps_pps_from_extradata(unsigned char *pps, int& pps_len,
     iIndex +=  pps_len;
     extra_len = iIndex;
 
-    return;
+    return 0;
 }
 
 

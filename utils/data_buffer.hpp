@@ -18,6 +18,9 @@ public:
     data_buffer(size_t data_size = EXTRA_LEN);
     ~data_buffer();
 
+    data_buffer(const data_buffer& input);//deep copy
+    data_buffer& operator=(const data_buffer& input);//deep copy
+
 public:
     int append_data(const char* input_data, size_t input_len);
     char* consume_data(int consume_len);

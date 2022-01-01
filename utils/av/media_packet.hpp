@@ -4,6 +4,7 @@
 #include <stdint.h>
 #include <string>
 #include <memory>
+#include <sstream>
 
 enum H264AvcNaluType
 {   
@@ -124,6 +125,56 @@ typedef enum {
     MEDIA_FORMAT_MPEGTS,
 } MEDIA_FORMAT_TYPE;
 
+inline std::string avtype_tostring(MEDIA_PKT_TYPE type) {
+    switch(type)
+    {
+        case MEDIA_VIDEO_TYPE:
+            return "video";
+        case MEDIA_AUDIO_TYPE:
+            return "audio";
+        case MEDIA_METADATA_TYPE:
+            return "metadata";
+        default:
+            return "unkown";
+    }
+}
+
+inline std::string codectype_tostring(MEDIA_CODEC_TYPE type) {
+    switch(type)
+    {
+        case MEDIA_CODEC_H264:
+            return "h264";
+        case MEDIA_CODEC_H265:
+            return "h265";
+        case MEDIA_CODEC_VP8:
+            return "vp8";
+        case MEDIA_CODEC_VP9:
+            return "vp9";
+        case MEDIA_CODEC_AAC:
+            return "aac";
+        case MEDIA_CODEC_OPUS:
+            return "opus";
+        case MEDIA_CODEC_MP3:
+            return "mp3";
+        default:
+            return "unkown";
+    }
+}
+
+inline std::string formattype_tostring(MEDIA_FORMAT_TYPE type) {
+    switch (type)
+    {
+        case MEDIA_FORMAT_RAW:
+            return "raw";
+        case MEDIA_FORMAT_FLV:
+            return "flv";
+        case MEDIA_FORMAT_MPEGTS:
+            return "mpegts";
+        default:
+            return "unkown";
+    }
+}
+
 class MEDIA_PACKET
 {
 public:
@@ -172,13 +223,17 @@ public:
         this->streamid_   = pkt_ptr->streamid_;
         this->typeid_     = pkt_ptr->typeid_;
     }
-//av common info: 
-//    av type;
-//    codec type;
-//    timestamp;
-//    is key frame;
-//    is seq hdr;
-//    media data in bytes;
+
+    std::string dump() {
+        std::stringstream ss;
+        
+        ss << "av type:" << avtype_tostring(av_type_) << ", codec type:" << codectype_tostring(codec_type_)
+           << ", format type:" << formattype_tostring(fmt_type_) << ", dts:" << dts_ << ", pts:" << pts_
+           << ", is key frame:" << is_key_frame_ << ", is seq frame:" << is_seq_hdr_
+           << ", data length:" << buffer_ptr_->data_len();
+        return ss.str();
+    }
+
 public:
     MEDIA_PKT_TYPE av_type_      = MEDIA_UNKOWN_TYPE;
     MEDIA_CODEC_TYPE codec_type_ = MEDIA_CODEC_UNKOWN;

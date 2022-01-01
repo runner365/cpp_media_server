@@ -104,18 +104,19 @@ mpegts_mux::~mpegts_mux() {
 int mpegts_mux::input_packet(MEDIA_PACKET_PTR pkt_ptr) {
     int ret = -1;
 
-    if ((last_pat_dts_ < 0) || ((last_pat_dts_ + pat_interval_) < pkt_ptr->dts_)
-        || ((pkt_ptr->av_type_ == MEDIA_VIDEO_TYPE) && (pkt_ptr->is_key_frame_))) {
+    if ((last_pat_dts_ < 0) || ((last_pat_dts_ + pat_interval_) < pkt_ptr->dts_)) {
         last_pat_dts_ = pkt_ptr->dts_;
         ret = write_pat();
         if (ret < 0) {
             return ret;
         }
+        log_infof("write pat len:%d", ret);
         ts_callback(pkt_ptr, pat_data_);
         ret = write_pmt();
         if (ret < 0) {
             return ret;
         }
+        log_infof("write pmt len:%d", ret);
         ts_callback(pkt_ptr, pmt_data_);
     }
 
@@ -153,7 +154,7 @@ CRC_32 32
 int mpegts_mux::write_pat() {
     uint32_t len = 0;
 
-    len = pmt_count_ * 4 + 5 + 3;//12bytes
+    len = pmt_count_ * 4 + 5 + 4;//12bytes
     uint8_t* p = pat_data_ + 5;
 
     p[0] = PAT_TID_PAS;//shall be 0x00
@@ -324,7 +325,7 @@ int mpegts_mux::write_pes_header(int64_t data_size,
     uint8_t* p = pes_header_;
     uint8_t pts_pts_flag = 0x80;//default enable pts
     uint8_t ptsdts_header_len  = 5;
-    uint16_t pes_packet_length = 0;
+    int64_t pes_packet_length = 0;
 
     *p++ = 0x00;
     *p++ = 0x00;
@@ -340,9 +341,11 @@ int mpegts_mux::write_pes_header(int64_t data_size,
         pts_pts_flag |= 0x40;
         ptsdts_header_len += 5;
     }
-    pes_packet_length = (uint16_t)data_size + ptsdts_header_len + 3;
+    pes_packet_length = data_size + ptsdts_header_len + 3;
 
-	
+	if (pes_packet_length > 0xffff) {
+        pes_packet_length = 0;
+    }
 	*p++ = (uint8_t)(pes_packet_length >> 8) & 0xff;
 	*p++ = pes_packet_length & 0xff;
 	
@@ -443,8 +446,11 @@ int mpegts_mux::write_pes(MEDIA_PACKET_PTR pkt_ptr) {
         pid = video_pid_;
     }
 
+    log_infof("data size:%lu, dts:%lu, pts:%lu, is video:%d",
+            data_size, dts, pts, is_video);
     write_pes_header(data_size, is_video, dts, pts);
-
+    log_info_data(pes_header_, pes_header_size_, "pes header");
+    
     packet_bytes_len = data_size + pes_header_size_;
 
     while (packet_bytes_len > 0) {
@@ -519,6 +525,7 @@ int mpegts_mux::write_pes(MEDIA_PACKET_PTR pkt_ptr) {
                 tmpLen = pes_header_size_;
             }
             memcpy(ts_packet + i, pes_header_, tmpLen);
+            packet_bytes_len -= tmpLen;
             i += tmpLen;
             data_len -= tmpLen;
         }
@@ -528,6 +535,8 @@ int mpegts_mux::write_pes(MEDIA_PACKET_PTR pkt_ptr) {
             if (tmpLen <= data_len) {
                 data_len = tmpLen;
             }
+            log_infof("packet offset:%d, data segment len:%d", wBytes, data_len);
+            log_info_data(data + wBytes, data_len, "data segement");
             memcpy(ts_packet + i, data + wBytes, data_len);
 
             wBytes += data_len;

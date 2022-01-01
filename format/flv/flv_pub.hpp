@@ -41,9 +41,16 @@ enum {
     FLV_SAMPLERATE_44100HZ = 3 << FLV_AUDIO_SAMPLERATE_OFFSET,
 };
 
-static const int mpeg4audio_sample_rates[16] = {
-    96000, 88200, 64000, 48000, 44100, 32000,
-    24000, 22050, 16000, 12000, 11025, 8000, 7350
-};
-
+/*
+ASC flag：xxxx xyyy yzzz z000
+x： aac type，类型2表示AAC-LC，5是SBR, 29是ps，5和29比较特殊ascflag的长度会变成4；
+y:  sample rate, 采样率, 7表示22050采样率
+z:  通道数，2是双通道
+*/
+inline void flv_audio_asc_decode(char* data, uint8_t& audio_type, uint8_t& sample_rate_index, uint8_t& channel) {
+//2    b    9    2    0    8    0    0
+//0010 1011 1001 0010 0000 1000 0000 0000
+//aac type: 5
+// samplerate index: 7
+}
 #endif
