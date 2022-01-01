@@ -331,6 +331,14 @@ void room_service::handle_publish(const std::string& id, const std::string& meth
                                                     this, RTC_DIRECTION_RECV, support_info);
     session_ptr->set_remote_finger_print(info.finger_print);
     for (auto media_item : support_info.medias) {
+        if (media_item.rtp_encodings.empty()) {
+            std::stringstream ss;
+            ss << "publish media rtp encodings is empty, mid:" << media_item.mid
+               << ", media type:" << media_item.media_type << ", protocal:" << media_item.protocol;
+            log_errorf("%s", ss.str().c_str());
+            feedback_p->reject(id, SDP_ERROR, ss.str());
+            return;
+        }
         session_ptr->create_publisher(media_item);
     }
 
