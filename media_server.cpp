@@ -38,7 +38,7 @@ int main(int argn, char** argv) {
     const uint16_t ws_webrtc_port = 9110;
     const uint16_t httpflv_port = 8080;
     const uint16_t webrtc_media_port = 7000;
-    const std::string host_ip = "172.29.78.76";
+    const std::string host_ip = "192.168.1.103";
 
     
     boost::asio::io_service::work work(io_context);

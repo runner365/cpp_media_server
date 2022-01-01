@@ -3,6 +3,7 @@
 #include "rtc_base_session.hpp"
 #include "pack_handle_h264.hpp"
 #include "pack_handle_audio.hpp"
+#include "format/audio_pub.hpp"
 #include "net/rtprtcp/rtcp_pspli.hpp"
 #include "format/flv/flv_mux.hpp"
 #include "format/flv/flv_pub.hpp"
