@@ -11,7 +11,7 @@ static const int mpeg4audio_sample_rates[16] = {
 
 inline int get_samplerate_index(int samplerate) {
     int index = 4;//default 44100
-    for (; index < sizeof(mpeg4audio_sample_rates); index++) {
+    for (; index < (int)sizeof(mpeg4audio_sample_rates); index++) {
         if (samplerate == mpeg4audio_sample_rates[index]) {
             break;
         }
