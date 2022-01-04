@@ -2,6 +2,7 @@
 #include "format/flv/flv_pub.hpp"
 #include "format/flv/flv_demux.hpp"
 #include "format/h264_header.hpp"
+#include "format/audio_pub.hpp"
 #include "logger.hpp"
 #include <string>
 #include <memory>
@@ -93,12 +94,36 @@ private:
     }
 
     int handle_audio(MEDIA_PACKET_PTR pkt_ptr) {
-        //log_infof("audio is_seq:%d, len:%lu", pkt_ptr->is_seq_hdr_, pkt_ptr->buffer_ptr_->data_len());
-        //log_info_data((uint8_t*)pkt_ptr->buffer_ptr_->data(),
-        //        pkt_ptr->buffer_ptr_->data_len(), "audio data");
-        //muxer_.input_packet(pkt_ptr);
+        if (pkt_ptr->is_seq_hdr_) {
+            log_info_data((uint8_t*)pkt_ptr->buffer_ptr_->data(),
+                pkt_ptr->buffer_ptr_->data_len(), "audio data");
+            bool ret = get_audioinfo_by_asc((uint8_t*)pkt_ptr->buffer_ptr_->data(),
+                                        pkt_ptr->buffer_ptr_->data_len(), aac_type_, sample_rate_, channel_);
+            if (!ret) {
+                log_errorf("audio asc decode error");
+                return -1;
+            }
+            log_infof("audio asc decode aac type:%d, sample rate:%d, channel:%d",
+                    aac_type_, sample_rate_, channel_);
+            return 0;
+        }
+        if ((aac_type_ == 0) || (sample_rate_ == 0) || (channel_ == 0)) {
+            log_infof("audio config is not ready");
+            return 0;
+        }
+        uint8_t adts_data[32];
+        int adts_len = make_adts(adts_data, aac_type_,
+                sample_rate_, channel_, pkt_ptr->buffer_ptr_->data_len());
+        assert(adts_len == 7);
+
+        pkt_ptr->buffer_ptr_->consume_data(0 - adts_len);
+        uint8_t* p = (uint8_t*)pkt_ptr->buffer_ptr_->data();
+        memcpy(p, adts_data, adts_len);
+
+        muxer_.input_packet(pkt_ptr);
         return 0;
     }
+
 public:
     virtual int output_packet(MEDIA_PACKET_PTR pkt_ptr) override {
         //log_info_data((uint8_t*)pkt_ptr->buffer_ptr_->data(),
@@ -122,6 +147,10 @@ private:
     uint8_t sps_[1024];
     size_t  pps_len_ = 0;
     size_t  sps_len_ = 0;
+
+    uint8_t aac_type_ = 0;
+    int sample_rate_  = 0;
+    uint8_t channel_  = 0;
 };
 
 class demuxer_callback : public av_format_callback

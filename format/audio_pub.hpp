@@ -3,6 +3,7 @@
 #include <stdint.h>
 #include <stddef.h>
 #include <string>
+#include <iostream>
 
 static const int mpeg4audio_sample_rates[16] = {
     96000, 88200, 64000, 48000, 44100, 32000,
@@ -10,19 +11,75 @@ static const int mpeg4audio_sample_rates[16] = {
 };
 
 inline int get_samplerate_index(int samplerate) {
-    int index = 4;//default 44100
-    for (; index < (int)sizeof(mpeg4audio_sample_rates); index++) {
+    int index = 0;//default 44100
+    bool found = false;
+    for (; index < (int)(sizeof(mpeg4audio_sample_rates)/sizeof(int)); index++) {
         if (samplerate == mpeg4audio_sample_rates[index]) {
+            found = true;
             break;
         }
     }
+    if (!found) {
+        index = 4;
+    }
     return index;
+}
+
+//xxxx xyyy yzzz z000
+//aac type==5(or 29): xxx xyyy yzzz zyyy yzzz z000
+inline bool get_audioinfo_by_asc(uint8_t* data, size_t data_size,
+                        uint8_t& audio_type, int& sample_rate, uint8_t& channel) {
+    uint8_t sample_rate_index = 0;
+    uint8_t* p = data;
+
+    audio_type = (*p >> 3) & 0x1F;
+    if (audio_type == 31) {
+        return false;//not supported in the version
+    }
+
+    sample_rate_index = (*p & 0x07) << 1;
+    p++;
+    sample_rate_index |= (*p & 0x80) >> 7;
+    if (sample_rate_index > sizeof(mpeg4audio_sample_rates)) {
+        return false;//not supported in the version
+    }
+
+    sample_rate = mpeg4audio_sample_rates[sample_rate_index];
+    channel = (*p >> 3) & 0x0F;
+    
+    return true;
+}
+
+inline bool get_audioinfo2_by_asc(uint8_t* data, size_t data_size,
+                        uint8_t& audio_type, int& sample_rate, uint8_t& channel) {
+    uint8_t sample_rate_index = 0;
+    uint8_t* p = data;
+
+    audio_type = (*p >> 3) & 0x1F;
+    if (audio_type == 31) {
+        return false;//not supported in the version
+    }
+
+    sample_rate_index = (*p & 0x07) << 1;
+    p++;
+    sample_rate_index |= (*p & 0x80) >> 7;
+    if (sample_rate_index > sizeof(mpeg4audio_sample_rates)) {
+        return false;//not supported in the version
+    }
+
+    sample_rate = mpeg4audio_sample_rates[sample_rate_index];
+    channel = (*p >> 3) & 0x0F;
+    
+    if ((audio_type == 5) || (audio_type == 29)) {
+        sample_rate_index = ((p[0] << 1) & 0x0E) | (p[1] >> 7);
+        sample_rate = mpeg4audio_sample_rates[sample_rate_index];
+    }
+    return true;
 }
 
 /*
     ADTS HEADER: 7 Bytes. See ISO 13818-7 (2004)
     AAAAAAAA AAAABCCD EEFFFFGH HHIJKLMM MMMMMMMM MMMOOOOO OOOOOOPP
-
     A - Sync 0xFFFx
     B   1   MPEG Version: 0 for MPEG-4, 1 for MPEG-2
     C   2   Layer: always 0
@@ -40,49 +97,39 @@ inline int get_samplerate_index(int samplerate) {
     P   2   Number of AAC frames (RDBs) in ADTS frame minus 1, for maximum compatibility always use 1 AAC frame per ADTS frame
     Q   16  CRC if protection absent is 0
 */
-
 inline int make_adts(uint8_t* data, uint8_t object_type,
                 int sample_rate, int channel, int full_frame_size) {
-    int i = 0;
+    const int ADTS_LEN = 7;
     int sample_rate_index = get_samplerate_index(sample_rate);
-
+    full_frame_size += ADTS_LEN;
     full_frame_size &= 0x1FFF;
-    //AAAAAAAA AAAABCCD EEFFFFGH HHIJKLMM MMMMMMMM MMMOOOOO OOOOOOPP
-
-    // - Sync 0xFFFx
-    data[i++] = 0xff;
-    data[i++] = 0xf1; //ID(1bit): 0, layer(2bits): 0, protection_absent(1bit): 1
-
-    data[i] = (object_type << 6) & 0xc; //profile_objecttype
-    data[i] |= (sample_rate_index << 2) & 0x3c; //sample_rate_index
-    data[i] &= 0xFD; /* private_bit */
-
-    //channel highest 1bit
-    if (channel >= 4) {
-        data[i] |= 0x01;
-    } else {
-        data[i] &= 0xFE;
-    }
-    i++;
-
-    data[i] = (channel & 0x03) << 6;//channel low 2bits
-    data[i] &= 0xc3;//clear 4bits: original_copy(1bit)
-                    //             home(1bit)
-                    //             adts_variable_header: copyright_identification_bit(1bit)
-                    //             adts_variable_header: copyright_identification_start(1bit)
-    data[i] |= (full_frame_size >> 11) & 0x03;//aac_frame_length highest 2bits
-    i++;
-
-    data[i] |= (full_frame_size >> 3) & 0xff;
-    i++;
-
-    data[i] |= (full_frame_size & 0x07) << 5;
-    data[i] |= 0x1f;
-    i++;
-
-    data[i] = 0xFC;
     
-    return i+1;
+    //AAAAAAAA AAAABCCD EEFFFFGH HHIJKLMM MMMMMMMM MMMOOOOO OOOOOOPP
+    // - Sync 0xFFFx
+
+	//first write adts header
+	data[0] = 0xff;
+	data[1] = 0xf1;
+
+	data[2] = 0x00;
+	data[2] = data[2] | ((object_type-1)<<6);
+	data[2] = data[2] | ((sample_rate_index)<<2);
+	data[2] = data[2] | ((channel >> 2));
+
+    //0x80
+	data[3] &= 0x00;
+	data[3] = data[3] | (channel << 6);
+	data[3] = data[3] | ((full_frame_size<<3)>>14);
+
+	data[4] &= 0x00;
+	data[4] = data[4] | ((full_frame_size<<5)>>8);
+
+	data[5] &= 0x00;
+	data[5] = data[5] | (((full_frame_size<<13)>>13)<<5);
+	data[5] = data[5] | ((0x7C<<1)>>3);
+	data[6] = 0xfc;
+    
+    return ADTS_LEN;
 }
 
 #endif //AUDIO_PUB_HPP

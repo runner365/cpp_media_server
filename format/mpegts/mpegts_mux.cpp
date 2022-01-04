@@ -446,10 +446,7 @@ int mpegts_mux::write_pes(MEDIA_PACKET_PTR pkt_ptr) {
         pid = video_pid_;
     }
 
-    log_infof("data size:%lu, dts:%lu, pts:%lu, is video:%d",
-            data_size, dts, pts, is_video);
     write_pes_header(data_size, is_video, dts, pts);
-    log_info_data(pes_header_, pes_header_size_, "pes header");
     
     packet_bytes_len = data_size + pes_header_size_;
 
@@ -535,8 +532,7 @@ int mpegts_mux::write_pes(MEDIA_PACKET_PTR pkt_ptr) {
             if (tmpLen <= data_len) {
                 data_len = tmpLen;
             }
-            log_infof("packet offset:%d, data segment len:%d", wBytes, data_len);
-            log_info_data(data + wBytes, data_len, "data segement");
+
             memcpy(ts_packet + i, data + wBytes, data_len);
 
             wBytes += data_len;
