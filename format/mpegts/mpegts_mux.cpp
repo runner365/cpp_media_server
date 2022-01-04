@@ -86,6 +86,7 @@ mpegts_mux::mpegts_mux(av_format_callback* cb):cb_(cb) {
                         //continuity_counter(4): 0
     pat_data_[4] = 0x00;//adaptation_field_length(8):0
 
+
     pmt_data_[0] = 0x47;//sync_byte(8): 0x47
     pmt_data_[1] = 0x50;//transport_error_indicator(1): 0
                         //payload_unit_start_indicator(1): 1
