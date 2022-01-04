@@ -2,6 +2,7 @@
 #define MPEGTS_MUX_HPP
 #include "mpegts_pub.hpp"
 #include "data_buffer.hpp"
+#include "utils/av/av.hpp"
 #include "format/av_format_interface.hpp"
 
 #define PAT_DEF_INTERVAL 3000 //3000ms
@@ -18,6 +19,10 @@ public:
     bool has_video() { return has_video_; }
     void set_audio_flag(bool flag) { has_audio_ = flag;}
     bool has_audio() { return has_audio_; }
+    void set_video_codec(MEDIA_CODEC_TYPE codec) { video_codec_type_ = codec; }
+    void set_audio_codec(MEDIA_CODEC_TYPE codec) { audio_codec_type_ = codec; }
+    MEDIA_CODEC_TYPE get_video_codec() { return video_codec_type_; }
+    MEDIA_CODEC_TYPE get_audio_codec() { return audio_codec_type_; }
 
 private:
     int write_pat();
@@ -51,6 +56,8 @@ private://about pat
 private://about pmt
     bool has_video_ = true;
     bool has_audio_ = true;
+    MEDIA_CODEC_TYPE video_codec_type_ = MEDIA_CODEC_H264;
+    MEDIA_CODEC_TYPE audio_codec_type_ = MEDIA_CODEC_AAC;
     uint16_t pmt_pid_    = 0x1001;
     uint16_t pmt_pn      = 0x01;
     uint8_t  pmt_ver_    = 0;

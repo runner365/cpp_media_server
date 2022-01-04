@@ -274,7 +274,7 @@ int mpegts_mux::write_pmt() {
         p += 2;
 
         // reserved '1111'
-        // ES_info_lengt 12-bits
+        // ES_info_length 12-bits
         
         write_2bytes(p, 0xF000 | (uint16_t)0);// | len
         p += 2;
@@ -291,7 +291,7 @@ int mpegts_mux::write_pmt() {
         p += 2;
 
         // reserved '1111'
-        // ES_info_lengt 12-bits
+        // ES_info_length 12-bits
         write_2bytes(p, 0xF000 | (uint16_t)0);// | len
         p += 2;
     }
