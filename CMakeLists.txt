@@ -26,6 +26,7 @@ include_directories(./
                     ./net/stun
                     ./net/httpflv
                     ./net/rtprtcp
+                    ./net/hls
                     ./format
                     ./format/flv
                     ./utils
