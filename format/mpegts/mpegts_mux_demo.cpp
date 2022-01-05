@@ -6,6 +6,7 @@
 #include "logger.hpp"
 #include <string>
 #include <memory>
+#include <queue>
 
 class muxer_callback;
 
@@ -25,18 +26,41 @@ public:
 
 public:
     int insert_packet(MEDIA_PACKET_PTR pkt_ptr) {
-        int ret = 0;
+        if ((!video_ready_ || !audio_ready_) && (wait_queue_.size() < 30)) {
+            if (pkt_ptr->av_type_ == MEDIA_VIDEO_TYPE) {
+                video_ready_ = true;
+                muxer_.set_video_codec(pkt_ptr->codec_type_);
+            } else if (pkt_ptr->av_type_ == MEDIA_AUDIO_TYPE) {
+                audio_ready_ = true;
+                muxer_.set_audio_codec(pkt_ptr->codec_type_);
+            }
+            wait_queue_.push(pkt_ptr);
+            return 0;
+        }
+
+        while (wait_queue_.size() > 0) {
+            auto current_pkt_ptr = wait_queue_.front();
+            wait_queue_.pop();
+            handle_packet(current_pkt_ptr);
+        }
+        handle_packet(pkt_ptr);
+
+        return 0;
+    }
+
+private:
+    int handle_packet(MEDIA_PACKET_PTR pkt_ptr) {
         if (pkt_ptr->av_type_ == MEDIA_VIDEO_TYPE) {
-            ret = handle_video(pkt_ptr);
+            muxer_.set_video_codec(pkt_ptr->codec_type_);
+            handle_video(pkt_ptr);
         } else if (pkt_ptr->av_type_ == MEDIA_AUDIO_TYPE) {
-            ret = handle_audio(pkt_ptr);
+            muxer_.set_audio_codec(pkt_ptr->codec_type_);
+            handle_audio(pkt_ptr);
         } else {
             log_errorf("packet av type(%d) is unkown", pkt_ptr->av_type_);
         }
         return 0;
     }
-
-private:
     int handle_video(MEDIA_PACKET_PTR pkt_ptr) {
         if (pkt_ptr->is_seq_hdr_) {
             uint8_t* data   = (uint8_t*)pkt_ptr->buffer_ptr_->data();
@@ -93,7 +117,7 @@ private:
         return 0;
     }
 
-    int handle_audio(MEDIA_PACKET_PTR pkt_ptr) {
+    int handle_audio_aac(MEDIA_PACKET_PTR pkt_ptr) {
         if (pkt_ptr->is_seq_hdr_) {
             log_info_data((uint8_t*)pkt_ptr->buffer_ptr_->data(),
                 pkt_ptr->buffer_ptr_->data_len(), "audio data");
@@ -111,6 +135,8 @@ private:
             log_infof("audio config is not ready");
             return 0;
         }
+        
+
         uint8_t adts_data[32];
         int adts_len = make_adts(adts_data, aac_type_,
                 sample_rate_, channel_, pkt_ptr->buffer_ptr_->data_len());
@@ -121,6 +147,20 @@ private:
         memcpy(p, adts_data, adts_len);
 
         muxer_.input_packet(pkt_ptr);
+        return 0;
+    }
+
+    int handle_audio_opus(MEDIA_PACKET_PTR pkt_ptr) {
+        muxer_.input_packet(pkt_ptr);
+        return 0;
+    }
+
+    int handle_audio(MEDIA_PACKET_PTR pkt_ptr) {
+        if (pkt_ptr->codec_type_ == MEDIA_CODEC_AAC) {
+            return handle_audio_aac(pkt_ptr);
+        } else if (pkt_ptr->codec_type_ == MEDIA_CODEC_OPUS) {
+            return handle_audio_opus(pkt_ptr);
+        }
         return 0;
     }
 
@@ -151,6 +191,11 @@ private:
     uint8_t aac_type_ = 0;
     int sample_rate_  = 0;
     uint8_t channel_  = 0;
+
+private:
+    std::queue<MEDIA_PACKET_PTR> wait_queue_;
+    bool video_ready_ = false;
+    bool audio_ready_ = false;
 };
 
 class demuxer_callback : public av_format_callback

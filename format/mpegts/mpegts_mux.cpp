@@ -283,6 +283,24 @@ int mpegts_mux::write_pmt() {
 
     //audio
     if (has_audio_) {
+        switch (audio_codec_type_)
+        {
+            case MEDIA_CODEC_AAC:
+            {
+                audio_stream_type_ = STREAM_TYPE_AUDIO_AAC;
+                break;
+            }
+            case MEDIA_CODEC_OPUS:
+            {
+                audio_stream_type_ = STREAM_TYPE_PRIVATE_DATA;
+                break;
+            }
+            default:
+            {
+                audio_stream_type_ = STREAM_TYPE_PRIVATE_DATA;
+            }
+        }
+
         // stream_type
         *p++ = audio_stream_type_;
 
@@ -293,8 +311,28 @@ int mpegts_mux::write_pmt() {
 
         // reserved '1111'
         // ES_info_length 12-bits
-        write_2bytes(p, 0xF000 | (uint16_t)0);// | len
+        uint8_t* es_info_length_p = p;
         p += 2;
+
+        if (audio_codec_type_ == MEDIA_CODEC_OPUS) {
+            *p++ = 0x05; /* MPEG-2 registration descriptor*/
+            *p++ = 4;
+            *p++ = 'O';
+            *p++ = 'p';
+            *p++ = 'u';
+            *p++ = 's';
+
+            *p++ = 0x7f; /* DVB extension descriptor */
+            *p++ = 2;
+            *p++ = 0x80;
+            *p++ = 2;// channels == 2
+        }
+        // reserved '1111'
+        // ES_info_length 12-bits
+        int val = 0xf000 | (p - es_info_length_p - 2);
+        log_infof("ES_info_length:0x%04x", val);
+        es_info_length_p[0] = val >> 8;
+        es_info_length_p[1] = val;
     }
 
     uint16_t len = (uint16_t)(p + 4 - (data + 3)); // 4 bytes crc32
