@@ -5,10 +5,10 @@ A media server is writen by C++11, and the network io is writen by Boost.Asio.
 It support rtmp/httpflv/websocket(flv)/webrtc.
 
 ## How to build
+[How to build](doc/how_to_build.md)
 
 ## What does It support
 network protocol feature:
-[webrtc sdk demo](doc/how_to_build.md)
 
 ### webrtc
 * roommanager
