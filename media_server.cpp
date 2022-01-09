@@ -4,7 +4,9 @@
 #include "net/webrtc/webrtc_pub.hpp"
 #include "net/webrtc/rtc_dtls.hpp"
 #include "net/webrtc/srtp_session.hpp"
+#include "net/hls/hls_writer.hpp"
 #include "utils/byte_crypto.hpp"
+#include "utils/av/media_stream_manager.hpp"
 #include "logger.hpp"
 #include <stdint.h>
 #include <stddef.h>
@@ -15,6 +17,7 @@ websocket_server* ws_p  = nullptr;
 const std::string ssl_pem_file = "../certs/server.key";
 const std::string cert_file = "../certs/server.crt";
 boost::asio::io_context io_context;
+boost::asio::io_context hls_io_context;
 
 void create_wss_server(boost::asio::io_context& io_context, uint16_t ws_port) {
 
@@ -38,7 +41,11 @@ int main(int argn, char** argv) {
     const uint16_t ws_webrtc_port = 9110;
     const uint16_t httpflv_port = 8080;
     const uint16_t webrtc_media_port = 7000;
-    const std::string host_ip = "192.168.1.103";
+    const std::string host_ip = "192.168.1.104";
+
+    hls_writer* hls_output = nullptr;
+    std::string hls_path = "./hls";
+    const uint16_t hls_port = 8060;
 
     
     boost::asio::io_service::work work(io_context);
@@ -56,6 +63,11 @@ int main(int argn, char** argv) {
         websocket_server ws(io_context, ws_def_port, WEBSOCKET_IMPLEMENT_FLV_TYPE);
         httpflv_server httpflv_serv(io_context, httpflv_port);
 
+        hls_output = new hls_writer(hls_io_context, hls_port, hls_path, true);//enable hls
+
+        media_stream_manager::set_hls_writer(hls_output);
+        hls_output->run();
+
         create_ws_server(io_context, ws_webrtc_port);
         log_infof("rtmp server start:%d", rtmp_def_port);
         log_infof("websocket server start:%d", ws_def_port);
@@ -64,5 +76,9 @@ int main(int argn, char** argv) {
     catch(const std::exception& e) {
         std::cerr << e.what() << '\n';
     }
+    if (hls_output) {
+        delete hls_output;
+    }
+    
     return 0;
 }

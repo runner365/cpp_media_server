@@ -41,6 +41,8 @@ public:
     static MEDIA_STREAM_PTR add_publisher(const std::string& stream_key);
     static void remove_publisher(const std::string& stream_key);
 
+    static void set_hls_writer(av_writer_base* writer);
+
 public:
     static int writer_media_packet(MEDIA_PACKET_PTR pkt_ptr);
 
@@ -55,6 +57,9 @@ private:
 private:
     static std::unordered_map<std::string, MEDIA_STREAM_PTR> media_streams_map_;//key("app/stream"), MEDIA_STREAM_PTR
     static std::vector<stream_manager_callbackI*> cb_vec_;
+
+private:
+    static av_writer_base* hls_writer_;
 };
 
 #endif //RTMP_MEDIA_STREAM_HPP

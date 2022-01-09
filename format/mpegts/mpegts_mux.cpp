@@ -111,13 +111,11 @@ int mpegts_mux::input_packet(MEDIA_PACKET_PTR pkt_ptr) {
         if (ret < 0) {
             return ret;
         }
-        log_infof("write pat len:%d", ret);
         ts_callback(pkt_ptr, pat_data_);
         ret = write_pmt();
         if (ret < 0) {
             return ret;
         }
-        log_infof("write pmt len:%d", ret);
         ts_callback(pkt_ptr, pmt_data_);
     }
 
@@ -330,7 +328,6 @@ int mpegts_mux::write_pmt() {
         // reserved '1111'
         // ES_info_length 12-bits
         int val = 0xf000 | (p - es_info_length_p - 2);
-        log_infof("ES_info_length:0x%04x", val);
         es_info_length_p[0] = val >> 8;
         es_info_length_p[1] = val;
     }

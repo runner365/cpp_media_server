@@ -157,8 +157,12 @@ add_executable(cpp_media_server
             media_server.cpp
             format/flv/flv_demux.cpp
             format/flv/flv_mux.cpp
+            format/mpegts/mpegts_mux.cpp
             net/http/http_session.cpp
             net/http/http_server.cpp
+            net/hls/hls_worker.cpp
+            net/hls/hls_writer.cpp
+            net/hls/mpegts_handle.cpp
             net/rtmp/rtmp_server.cpp
             net/rtmp/rtmp_server_session.cpp
             net/rtmp/rtmp_client_session.cpp

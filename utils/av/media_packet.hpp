@@ -63,6 +63,7 @@ public:
         ss << "av type:" << avtype_tostring(av_type_) << ", codec type:" << codectype_tostring(codec_type_)
            << ", format type:" << formattype_tostring(fmt_type_) << ", dts:" << dts_ << ", pts:" << pts_
            << ", is key frame:" << is_key_frame_ << ", is seq frame:" << is_seq_hdr_
+           << ", key:" << key_ << ", app:" << app_ << ", stream name:" << streamname_
            << ", data length:" << buffer_ptr_->data_len();
         return ss.str();
     }

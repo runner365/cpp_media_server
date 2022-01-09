@@ -26,7 +26,7 @@ public:
 
 public:
     int insert_packet(MEDIA_PACKET_PTR pkt_ptr) {
-        if ((!video_ready_ || !audio_ready_) && (wait_queue_.size() < 30)) {
+        if (!ready_ && (!video_ready_ || !audio_ready_) && (wait_queue_.size() < 30)) {
             if (pkt_ptr->av_type_ == MEDIA_VIDEO_TYPE) {
                 video_ready_ = true;
                 muxer_.set_video_codec(pkt_ptr->codec_type_);
@@ -38,6 +38,8 @@ public:
             return 0;
         }
 
+        ready_ = true;
+        
         while (wait_queue_.size() > 0) {
             auto current_pkt_ptr = wait_queue_.front();
             wait_queue_.pop();
@@ -196,6 +198,7 @@ private:
     std::queue<MEDIA_PACKET_PTR> wait_queue_;
     bool video_ready_ = false;
     bool audio_ready_ = false;
+    bool ready_       = false;
 };
 
 class demuxer_callback : public av_format_callback
