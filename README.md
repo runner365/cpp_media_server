@@ -4,18 +4,8 @@ A media server is writen by C++11, and the network io is writen by Boost.Asio.
 
 It support rtmp/httpflv/websocket(flv)/webrtc.
 
-## preinstall
-How to install boost.asio
-### Download boost
-We suggenst boost v1.76: [boost v1.76](https://boostorg.jfrog.io/ui/native/main/release/1.76.0/source/)
-
-### How to build
-Build boost asio in Mac/linux
-<pre>
-./bootstrap.sh
-./b2 -j 4 --with-system --with-thread --with-date_time --with-regex --with-serialization stage
-./b2 install
-</pre>
+## How to build
+[How to build](doc/how_to_build.md)
 
 ## What does It support
 network protocol feature:
@@ -27,7 +17,8 @@ network protocol feature:
 * publish/unpublish
 * subscribe/unsubscribe
 
-The webrtc client sdk demo: [webrtc sdk demo](https://github.com/runner365/webrtc-client-sdk)
+The webrtc client sdk demo(only support chrome browser): [webrtc sdk demo](https://github.com/runner365/webrtc-client-sdk)
+
 ### rtmp
 * rtmp publish
 * rtmp play
