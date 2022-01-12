@@ -104,8 +104,12 @@ private:
 
 private:
     int64_t seq_ = 0;
+    int64_t last_ts_ = -1;
+    bool audio_first_flag_ = false;
+    bool pat_pmt_flag_ = false;
     std::shared_ptr<ts_item_info> ts_info_ptr_;
     std::list<std::shared_ptr<ts_item_info>> ts_list_;
+    MEDIA_PACKET_PTR opus_seq_;
     std::string m3u8_header_;
 };
 

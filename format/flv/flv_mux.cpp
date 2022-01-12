@@ -154,6 +154,7 @@ int flv_muxer::mux_flv_header(MEDIA_PACKET_PTR pkt_ptr) {
 int flv_muxer::add_flv_media_header(MEDIA_PACKET_PTR pkt_ptr) {
     uint8_t* p;
 
+    pkt_ptr->fmt_type_ = MEDIA_FORMAT_FLV;
     if (pkt_ptr->av_type_ == MEDIA_AUDIO_TYPE) {
         p = (uint8_t*)pkt_ptr->buffer_ptr_->consume_data(-2);
 

@@ -13,8 +13,6 @@ int gop_cache::insert_packet(MEDIA_PACKET_PTR pkt_ptr) {
     if (pkt_ptr->av_type_ == MEDIA_VIDEO_TYPE) {
         if (pkt_ptr->is_seq_hdr_) {
             video_hdr_ = pkt_ptr;
-            log_infof("update video hdr len:%lu, this:%p",
-                video_hdr_->buffer_ptr_->data_len(), this);
             return packet_list.size();
         }
         if (pkt_ptr->is_key_frame_) {
@@ -26,7 +24,6 @@ int gop_cache::insert_packet(MEDIA_PACKET_PTR pkt_ptr) {
     } else if (pkt_ptr->av_type_ == MEDIA_AUDIO_TYPE) {
         if (pkt_ptr->is_seq_hdr_) {
             audio_hdr_ = pkt_ptr;
-            log_infof("update audio hdr len:%lu", audio_hdr_->buffer_ptr_->data_len());
             return packet_list.size();
         }
     } else if (pkt_ptr->av_type_ == MEDIA_METADATA_TYPE) {

@@ -23,6 +23,14 @@ public:
     {
     }
 
+    std::shared_ptr<MEDIA_PACKET> copy() {
+        std::shared_ptr<MEDIA_PACKET> pkt_ptr = std::make_shared<MEDIA_PACKET>(this->buffer_ptr_->data_len() + 1024);
+
+        pkt_ptr->copy_properties(*this);
+        pkt_ptr->buffer_ptr_->append_data(this->buffer_ptr_->data(), this->buffer_ptr_->data_len());
+        return pkt_ptr;
+    }
+
     void copy_properties(const MEDIA_PACKET& pkt) {
         this->av_type_      = pkt.av_type_;
         this->codec_type_   = pkt.codec_type_;

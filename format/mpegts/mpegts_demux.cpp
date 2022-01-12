@@ -266,6 +266,7 @@ int mpegts_demux::decode_unit(unsigned char* data_p, av_format_callback* callbac
                 pos += 2;
                 if( pos + pid_info._ES_info_length > _pmt._section_length + 4 - 4 + npos )
                     break;
+                log_infof("pid:0x%04x, stream type:0x%02x", pid_info._elementary_PID, pid_info._stream_type);
                 int absES_info_length = pos + pid_info._ES_info_length;
                 for (; pos< absES_info_length; ) {
                     //descriptor()
@@ -275,8 +276,11 @@ int mpegts_demux::decode_unit(unsigned char* data_p, av_format_callback* callbac
                     int descriptor_length = data_p[pos];
                     pos++;
                     memcpy(pid_info._dscr, data_p + pos, descriptor_length);
+                    pid_info._dscr[descriptor_length] = 0;
+                    log_infof("descriptor_tag:0x%02x, es info:%s", descriptor_tag, (char*)pid_info._dscr);
                     pos += descriptor_length;
                 }
+                
                 // save program_number(stream num) elementary_PID(PES PID) stream_type(stream codec)
                 //printf("pmt pid:%d, streamtype:%d, pos:%d\r\n", pid_info._elementary_PID, pid_info._stream_type, pos);
                 _pmt._stream_pid_vec.push_back(pid_info);

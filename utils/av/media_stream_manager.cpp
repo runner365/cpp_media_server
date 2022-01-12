@@ -148,7 +148,8 @@ int media_stream_manager::writer_media_packet(MEDIA_PACKET_PTR pkt_ptr) {
     }
 
     if (media_stream_manager::hls_writer_) {
-        media_stream_manager::hls_writer_->write_packet(pkt_ptr);
+        MEDIA_PACKET_PTR new_pkt_ptr = pkt_ptr->copy();
+        media_stream_manager::hls_writer_->write_packet(new_pkt_ptr);
     }
     
     for (auto write_p : remove_list) {

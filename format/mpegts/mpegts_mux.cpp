@@ -102,22 +102,30 @@ mpegts_mux::~mpegts_mux() {
 
 }
 
-int mpegts_mux::input_packet(MEDIA_PACKET_PTR pkt_ptr) {
-    int ret = -1;
-
-    if ((last_pat_dts_ < 0) || ((last_pat_dts_ + pat_interval_) < pkt_ptr->dts_)) {
-        last_pat_dts_ = pkt_ptr->dts_;
-        ret = write_pat();
-        if (ret < 0) {
-            return ret;
-        }
-        ts_callback(pkt_ptr, pat_data_);
-        ret = write_pmt();
-        if (ret < 0) {
-            return ret;
-        }
-        ts_callback(pkt_ptr, pmt_data_);
+int mpegts_mux::write_pat() {
+    int ret = generate_pat();
+    if (ret < 0) {
+        return ret;
     }
+    MEDIA_PACKET_PTR pkt_ptr;
+    log_info_data(pat_data_, sizeof(pat_data_), "pat data");
+    ts_callback(pkt_ptr, pat_data_);
+    return 0;
+}
+
+int mpegts_mux::write_pmt() {
+    int ret = generate_pmt();
+    if (ret < 0) {
+        return ret;
+    }
+    MEDIA_PACKET_PTR pkt_ptr;
+    log_info_data(pmt_data_, sizeof(pmt_data_), "pmt data");
+    ts_callback(pkt_ptr, pmt_data_);
+    return 0;
+}
+
+int mpegts_mux::input_packet(MEDIA_PACKET_PTR pkt_ptr, bool first_flag) {
+    int ret = -1;
 
     ret = write_pes(pkt_ptr);
     if (ret < 0) {
@@ -150,7 +158,7 @@ program_map_PID 13
 } }
 CRC_32 32
 */
-int mpegts_mux::write_pat() {
+int mpegts_mux::generate_pat() {
     uint32_t len = 0;
 
     len = pmt_count_ * 4 + 5 + 4;//12bytes
@@ -228,7 +236,7 @@ for (i = 0; i < N1; i++) {
 }
 CRC_32 32
 */
-int mpegts_mux::write_pmt() {
+int mpegts_mux::generate_pmt() {
     uint8_t* data = pmt_data_ + 5;
     uint8_t* p = data;
 
@@ -313,6 +321,7 @@ int mpegts_mux::write_pmt() {
         p += 2;
 
         if (audio_codec_type_ == MEDIA_CODEC_OPUS) {
+            log_infof("write opus es info....");
             *p++ = 0x05; /* MPEG-2 registration descriptor*/
             *p++ = 4;
             *p++ = 'O';
@@ -583,7 +592,10 @@ int mpegts_mux::write_pes(MEDIA_PACKET_PTR pkt_ptr) {
 void mpegts_mux::ts_callback(MEDIA_PACKET_PTR pkt_ptr, uint8_t* data) {
     if (cb_) {
         MEDIA_PACKET_PTR ts_pkt_ptr = std::make_shared<MEDIA_PACKET>(256);
-        ts_pkt_ptr->copy_properties(pkt_ptr);
+        if (pkt_ptr.get() != nullptr) {
+            ts_pkt_ptr->copy_properties(pkt_ptr);
+        }
+        
         ts_pkt_ptr->fmt_type_ = MEDIA_FORMAT_MPEGTS;
         ts_pkt_ptr->buffer_ptr_->append_data((char*)data, (size_t)TS_PACKET_SIZE);
         cb_->output_packet(ts_pkt_ptr);

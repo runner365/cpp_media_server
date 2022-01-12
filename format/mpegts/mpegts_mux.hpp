@@ -5,8 +5,6 @@
 #include "utils/av/av.hpp"
 #include "format/av_format_interface.hpp"
 
-#define PAT_DEF_INTERVAL 3000 //3000ms
-
 class mpegts_mux
 {
 public:
@@ -14,7 +12,9 @@ public:
     ~mpegts_mux();
 
 public:
-    int input_packet(MEDIA_PACKET_PTR pkt_ptr);
+    int input_packet(MEDIA_PACKET_PTR pkt_ptr, bool first_flag = false);
+    int write_pat();
+    int write_pmt();
     void set_video_flag(bool flag) { has_video_ = flag;}
     bool has_video() { return has_video_; }
     void set_audio_flag(bool flag) { has_audio_ = flag;}
@@ -27,8 +27,8 @@ public:
 
 
 private:
-    int write_pat();
-    int write_pmt();
+    int generate_pat();
+    int generate_pmt();
     int write_pes(MEDIA_PACKET_PTR pkt_ptr);
     int write_pes_header(int64_t data_size,
                     bool is_video, int64_t dts, int64_t pts);
@@ -44,8 +44,6 @@ private:
 
 private:
     uint32_t pmt_count_     = 1;
-    uint32_t pat_interval_  = PAT_DEF_INTERVAL;
-    int64_t last_pat_dts_   = -1;
     uint8_t pat_data_[TS_PACKET_SIZE];
     uint8_t pmt_data_[TS_PACKET_SIZE];
     uint8_t pes_header_[TS_PACKET_SIZE];

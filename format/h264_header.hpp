@@ -2,6 +2,7 @@
 #define H264_HEADER_HPP
 #include "byte_stream.hpp"
 #include "data_buffer.hpp"
+#include "logger.hpp"
 #include <stdint.h>
 #include <string>
 #include <vector>
@@ -50,6 +51,8 @@ inline bool Is_Nalu_Header(uint8_t* data, size_t len) {
 }
 
 inline bool annexb_to_nalus(uint8_t* data, size_t len, std::vector<std::shared_ptr<data_buffer>>& nalus) {
+    const uint32_t kMaxLen = 10*1000*1000;
+
     if (len < 4) {
         return false;
     }
@@ -59,6 +62,10 @@ inline bool annexb_to_nalus(uint8_t* data, size_t len, std::vector<std::shared_p
 
     while(data_len > 0) {
         uint32_t nalu_len = read_4bytes(p);
+        if (nalu_len > kMaxLen) {
+            log_errorf("nalu len is too large, %u", nalu_len);
+            return false;
+        }
         p += 4;
         data_len -= 4;
 

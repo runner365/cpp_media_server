@@ -191,7 +191,7 @@ void rtc_publisher::on_timer() {
     if (rtp_handler_) {
         rtp_handler_->on_timer();
     }
-    if (((++key_count_) % 6 == 0) && (media_type_ == "video")) {
+    if (((++key_count_) % 8 == 0) && (media_type_ == "video")) {
         request_keyframe(rtp_ssrc_);
     }
 }

@@ -4,6 +4,7 @@
 #include "format/h264_header.hpp"
 #include "format/audio_pub.hpp"
 #include "logger.hpp"
+#include "timeex.hpp"
 #include <string>
 #include <memory>
 #include <queue>
@@ -38,8 +39,14 @@ public:
             return 0;
         }
 
+        int64_t now_ms = now_millisec();
         ready_ = true;
         
+        if ((last_patpmt_ts_ < 0) || ((now_ms - last_patpmt_ts_) > 4000)) {
+            last_patpmt_ts_ = now_ms;
+            muxer_.write_pat();
+            muxer_.write_pmt();
+        }
         while (wait_queue_.size() > 0) {
             auto current_pkt_ptr = wait_queue_.front();
             wait_queue_.pop();
@@ -199,6 +206,7 @@ private:
     bool video_ready_ = false;
     bool audio_ready_ = false;
     bool ready_       = false;
+    int64_t last_patpmt_ts_ = -1;
 };
 
 class demuxer_callback : public av_format_callback

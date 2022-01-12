@@ -179,9 +179,7 @@ void user_info::on_rtmp_camera_callback(MEDIA_PACKET_PTR pkt_ptr) {
                 pkt_ptr->av_type_, roomId_.c_str(), uid_.c_str());
         return;
     }
-
-    //log_infof("rtmp camera write %s dts:%ld", (pkt_ptr->av_type_ == MEDIA_VIDEO_TYPE) ? "video" : "audio",
-    //        pkt_ptr->dts_);
+    
     media_stream_manager::writer_media_packet(pkt_ptr);
 }
 
