@@ -127,7 +127,9 @@ void mpegts_handle::handle_packet(MEDIA_PACKET_PTR pkt_ptr) {
         log_infof("ts_filename_:%s, seq:%ld", ts_filename_.c_str(), seq_);
         if (!ts_info_ptr_) {
             ts_info_ptr_ = std::make_shared<ts_item_info>();
+            ts_info_ptr_->reset();
         } else {
+            log_infof("ts duration:%ld", ts_info_ptr_->duration);
             ts_list_.push_back(ts_info_ptr_);
             if (ts_list_.size() > 3) {
                 ts_list_.pop_front();
@@ -136,7 +138,15 @@ void mpegts_handle::handle_packet(MEDIA_PACKET_PTR pkt_ptr) {
                 }
             }
             ts_info_ptr_ = std::make_shared<ts_item_info>();
+            ts_info_ptr_->reset();
         }
+    }
+
+    if (pat_pmt_flag_ || ((pkt_ptr->dts_ - last_patpmt_ts_) > 1000)) {
+        pat_pmt_flag_ = false;
+        last_patpmt_ts_ = pkt_ptr->dts_;
+        muxer_.write_pat();
+        muxer_.write_pmt();
     }
 
     if (pkt_ptr->fmt_type_ == MEDIA_FORMAT_FLV) {
@@ -172,12 +182,6 @@ void mpegts_handle::handle_packet(MEDIA_PACKET_PTR pkt_ptr) {
 }
 
 int mpegts_handle::handle_video_h264(MEDIA_PACKET_PTR pkt_ptr) {
-    bool first_flag = false;
-
-    if (pat_pmt_flag_) {
-        pat_pmt_flag_ = false;
-        first_flag = true;
-    }
     if (pkt_ptr->is_seq_hdr_) {
         uint8_t sps[1024];
         size_t sps_len = 0;
@@ -239,10 +243,7 @@ int mpegts_handle::handle_video_h264(MEDIA_PACKET_PTR pkt_ptr) {
         }
         nalu_pkt_ptr->buffer_ptr_->append_data((char*)data, data_len);
         
-        muxer_.input_packet(nalu_pkt_ptr, first_flag);
-        if (first_flag) {
-            first_flag = false;
-        }
+        muxer_.input_packet(nalu_pkt_ptr);
     }
     
     return 0;
@@ -267,35 +268,20 @@ int mpegts_handle::handle_audio_aac(MEDIA_PACKET_PTR pkt_ptr) {
         return 0;
     }
 
-    bool first_flag = false;
     uint8_t adts_data[32];
     int adts_len = make_adts(adts_data, aac_type_,
             sample_rate_, channel_, pkt_ptr->buffer_ptr_->data_len());
     assert(adts_len == 7);
 
-    if (pat_pmt_flag_) {
-        pat_pmt_flag_ = false;
-        first_flag = true;
-    }
     pkt_ptr->buffer_ptr_->consume_data(0 - adts_len);
     uint8_t* p = (uint8_t*)pkt_ptr->buffer_ptr_->data();
     memcpy(p, adts_data, adts_len);
 
-    muxer_.input_packet(pkt_ptr, first_flag);
+    muxer_.input_packet(pkt_ptr);
     return 0;
 }
 
 int mpegts_handle::handle_audio_opus(MEDIA_PACKET_PTR pkt_ptr) {
-    if (pkt_ptr->is_seq_hdr_) {
-        opus_seq_ = pkt_ptr->copy();
-    }
-    if (pat_pmt_flag_ && !pkt_ptr->is_seq_hdr_) {
-        log_infof("start a new packet dump:%s", pkt_ptr->dump().c_str());
-        pat_pmt_flag_ = false;
-        if (opus_seq_.get() != nullptr) {
-            muxer_.input_packet(opus_seq_, true);
-        }
-    }
     muxer_.input_packet(pkt_ptr);
     return 0;
 }

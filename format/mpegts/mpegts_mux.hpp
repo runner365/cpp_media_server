@@ -12,7 +12,7 @@ public:
     ~mpegts_mux();
 
 public:
-    int input_packet(MEDIA_PACKET_PTR pkt_ptr, bool first_flag = false);
+    int input_packet(MEDIA_PACKET_PTR pkt_ptr);
     int write_pat();
     int write_pmt();
     void set_video_flag(bool flag) { has_video_ = flag;}

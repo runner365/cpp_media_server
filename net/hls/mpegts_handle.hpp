@@ -20,7 +20,7 @@ public:
     }
 
     void write(int64_t dts, uint8_t* data, size_t data_len, const std::string& filename) {
-        if (start_dts < 0) {
+        if (start_dts <= 0) {
             start_dts = dts;
         }
         end_dts = dts;
@@ -64,6 +64,7 @@ public:
 
 public:
     void handle_media_packet(MEDIA_PACKET_PTR pkt_ptr);
+    bool gen_live_m3u8(std::string& m3u8_header);
 
 protected:
     virtual int output_packet(MEDIA_PACKET_PTR pkt_ptr) override;
@@ -74,7 +75,6 @@ private:
 
     int handle_audio_aac(MEDIA_PACKET_PTR pkt_ptr);
     int handle_audio_opus(MEDIA_PACKET_PTR pkt_ptr);
-    bool gen_live_m3u8(std::string& m3u8_header);
 
 private:
     bool rec_enable_ = false;
@@ -107,6 +107,7 @@ private:
     int64_t last_ts_ = -1;
     bool audio_first_flag_ = false;
     bool pat_pmt_flag_ = false;
+    int64_t last_patpmt_ts_ = -1;
     std::shared_ptr<ts_item_info> ts_info_ptr_;
     std::list<std::shared_ptr<ts_item_info>> ts_list_;
     MEDIA_PACKET_PTR opus_seq_;

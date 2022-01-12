@@ -39,11 +39,10 @@ public:
             return 0;
         }
 
-        int64_t now_ms = now_millisec();
         ready_ = true;
         
-        if ((last_patpmt_ts_ < 0) || ((now_ms - last_patpmt_ts_) > 4000)) {
-            last_patpmt_ts_ = now_ms;
+        if ((last_patpmt_ts_ < 0) || ((pkt_ptr->dts_ - last_patpmt_ts_) > 3000)) {
+            last_patpmt_ts_ = pkt_ptr->dts_;
             muxer_.write_pat();
             muxer_.write_pmt();
         }
@@ -175,9 +174,6 @@ private:
 
 public:
     virtual int output_packet(MEDIA_PACKET_PTR pkt_ptr) override {
-        //log_info_data((uint8_t*)pkt_ptr->buffer_ptr_->data(),
-        //            pkt_ptr->buffer_ptr_->data_len(),
-        //            pkt_ptr->dump().c_str());
         FILE* file_p = fopen(ts_filename.c_str(), "ab+");
         if (file_p) {
             fwrite(pkt_ptr->buffer_ptr_->data(),

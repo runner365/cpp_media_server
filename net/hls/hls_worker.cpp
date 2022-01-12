@@ -5,24 +5,30 @@ static hls_worker* s_worker = nullptr;
 
 void hls_handle(const http_request* request, std::shared_ptr<http_response> response) {
     auto pos = request->uri_.find(".m3u8");
-    if (pos == std::string::npos) {
-        log_errorf("hls request uri error:%s", request->uri_.c_str());
-        response->close();
-        return;
-    }
-    std::string key = request->uri_.substr(0, pos);
-    if (key[0] == '/') {
-        key = key.substr(1);
+    if (pos != std::string::npos) {
+        std::string m3u8_header;
+        std::string key = request->uri_.substr(0, pos);
+        if (key[0] == '/') {
+            key = key.substr(1);
+        }
+        log_infof("http request uri:%s, key:%s", request->uri_.c_str(), key.c_str());
+        std::shared_ptr<mpegts_handle> handle_ptr = s_worker->get_mpegts_handle(key);
+        if (!handle_ptr) {
+            log_errorf("fail to get mpegts handle by key:%s", key.c_str());
+            return;
+        }
+        bool ret = handle_ptr->gen_live_m3u8(m3u8_header);
+        if (!ret) {
+            log_infof("live m3u8 is not ready");
+            return;
+        }
+        log_infof("hls response m3u8_header:%s", m3u8_header.c_str());
+        response->write(m3u8_header.c_str(), m3u8_header.size(), false);
     }
 
-    std::shared_ptr<mpegts_handle> handle_ptr = s_worker->get_mpegts_handle(key);
-    if (!handle_ptr) {
-        log_errorf("fail to get mpegts handle by key:%s", key.c_str());
-        return;
-    }
 }
 
-hls_worker::hls_worker(boost::asio::io_context& io_context, uint16_t port):timer_interface(io_context, 30)
+hls_worker::hls_worker(boost::asio::io_context& io_context, uint16_t port):timer_interface(io_context, 20)
                         , io_context_(io_context)
                         , server_(io_context, port)
 {
@@ -41,11 +47,9 @@ void hls_worker::run() {
         return;
     }
     run_flag_ = true;
-    run_thread_ptr_ = std::make_shared<std::thread>(&hls_worker::on_work, this);
-
-    s_worker = this;
-
     server_.add_get_handle("/", hls_handle);
+    s_worker = this;
+    run_thread_ptr_ = std::make_shared<std::thread>(&hls_worker::on_work, this);
 }
 
 void hls_worker::stop() {
@@ -118,6 +122,7 @@ std::shared_ptr<mpegts_handle> hls_worker::get_mpegts_handle(const std::string& 
 }
 
 void hls_worker::on_work() {
+    log_infof("http hls is running...");
     io_context_.run();
 }
 

@@ -108,7 +108,6 @@ int mpegts_mux::write_pat() {
         return ret;
     }
     MEDIA_PACKET_PTR pkt_ptr;
-    log_info_data(pat_data_, sizeof(pat_data_), "pat data");
     ts_callback(pkt_ptr, pat_data_);
     return 0;
 }
@@ -119,12 +118,11 @@ int mpegts_mux::write_pmt() {
         return ret;
     }
     MEDIA_PACKET_PTR pkt_ptr;
-    log_info_data(pmt_data_, sizeof(pmt_data_), "pmt data");
     ts_callback(pkt_ptr, pmt_data_);
     return 0;
 }
 
-int mpegts_mux::input_packet(MEDIA_PACKET_PTR pkt_ptr, bool first_flag) {
+int mpegts_mux::input_packet(MEDIA_PACKET_PTR pkt_ptr) {
     int ret = -1;
 
     ret = write_pes(pkt_ptr);
@@ -321,7 +319,6 @@ int mpegts_mux::generate_pmt() {
         p += 2;
 
         if (audio_codec_type_ == MEDIA_CODEC_OPUS) {
-            log_infof("write opus es info....");
             *p++ = 0x05; /* MPEG-2 registration descriptor*/
             *p++ = 4;
             *p++ = 'O';
