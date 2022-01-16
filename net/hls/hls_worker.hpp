@@ -48,6 +48,7 @@ private:
     std::string path_;
     bool rec_enable_ = false;
     std::map<std::string, std::shared_ptr<mpegts_handle>> mpegts_handles_;
+    int64_t check_count_ = 0;
 
 private:
     boost::asio::io_context& io_context_;

@@ -18,6 +18,7 @@ mpegts_handle::mpegts_handle(const std::string& app, const std::string& streamna
                         , muxer_(this)
 {
     std::stringstream cmd;
+    std::string prefix_path;
 
     path_ = path;
     if (path.substr(path.size()-1) == "/") {
@@ -25,6 +26,7 @@ mpegts_handle::mpegts_handle(const std::string& app, const std::string& streamna
     }
     path_ += "/";
     path_ += app;
+    prefix_path = path_;
     path_ += "/";
     path_ += streamname;
 
@@ -33,11 +35,11 @@ mpegts_handle::mpegts_handle(const std::string& app, const std::string& streamna
         system(cmd.str().c_str());
     }
 
-    live_m3u8_filename_ = path_ + "/";
+    live_m3u8_filename_ = prefix_path + "/";
     live_m3u8_filename_ += streamname;
     live_m3u8_filename_ += ".m3u8";
 
-    rec_m3u8_filename_ = path_ + "/";
+    rec_m3u8_filename_ = prefix_path + "/";
     rec_m3u8_filename_ += streamname;
     rec_m3u8_filename_ += "_record.m3u8";
 
@@ -46,9 +48,34 @@ mpegts_handle::mpegts_handle(const std::string& app, const std::string& streamna
 
 mpegts_handle::~mpegts_handle()
 {
-
+    log_infof("mpegts_handle destruct app:%s, streamname:%s",
+            app_.c_str(), streamname_.c_str());
 }
 
+void mpegts_handle::set_ts_list_max(size_t list_max) {
+    if (list_max < 3) {
+        ts_list_max_ = 3;
+        return;
+    }
+
+    if (list_max > 6) {
+        ts_list_max_ = 6;
+        return;
+    }
+    ts_list_max_ = list_max;
+    return;
+}
+
+void mpegts_handle::set_ts_duration(size_t duration) {
+    if (duration > 30) {
+        duration = 30;
+    }
+    if (duration < 2) {
+        duration = 2;
+    }
+    mpegts_duration_ = duration;
+    return;
+}
 
 void mpegts_handle::handle_media_packet(MEDIA_PACKET_PTR pkt_ptr) {
     if (!ready_ && (!video_ready_ || !audio_ready_) && (wait_queue_.size() < 30)) {
@@ -70,6 +97,9 @@ void mpegts_handle::handle_media_packet(MEDIA_PACKET_PTR pkt_ptr) {
         wait_queue_.pop();
         handle_packet(current_pkt_ptr);
     }
+    
+    keep_alive();
+
     handle_packet(pkt_ptr);
     return;
 }
@@ -89,16 +119,24 @@ bool mpegts_handle::gen_live_m3u8(std::string& m3u8_header) {
     std::stringstream item_list_ss;
     int64_t max_duration = 0;
 
-    if (ts_list_.size() < 3) {
-        return true;
+    if (ts_list_.size() < ts_list_max_) {
+        log_infof("ts list size:%lu, ts_max:%d", ts_list_.size(), ts_list_max_);
+        return false;
     }
 
-    for (auto iter : ts_list_) {
-        if (iter->duration > max_duration) {
-            max_duration = iter->duration;
+    int index = 0;
+    for (auto iter = ts_list_.begin();
+        iter != ts_list_.end();
+        iter++) {
+        if (index++ == 0) {
+            continue;
         }
-        item_list_ss << "#EXTINF:" << iter->duration/1000.0 << ",\n";
-        item_list_ss << iter->ts_filename << "\n";
+        
+        if (iter->get()->duration > max_duration) {
+            max_duration = iter->get()->duration;
+        }
+        item_list_ss << "#EXTINF:" << iter->get()->duration/1000.0 << ",\n";
+        item_list_ss << iter->get()->ts_key << "\n";
     }
 
     header_ss << "#EXTM3U\n";
@@ -113,9 +151,84 @@ bool mpegts_handle::gen_live_m3u8(std::string& m3u8_header) {
     return true;
 }
 
+std::shared_ptr<ts_item_info> mpegts_handle::get_mpegts_item(const std::string& ts_name) {
+    std::shared_ptr<ts_item_info> ts_ptr;
+    for (auto item : ts_list_) {
+        size_t pos = item->ts_filename.find(ts_name);
+        if (pos == std::string::npos) {
+            continue;
+        }
+        ts_ptr = item;
+        break;
+    }
+
+    return ts_ptr;
+}
+
+void mpegts_handle::write_live_m3u8() {
+    std::string live_m3u8;
+    bool ok = this->gen_live_m3u8(live_m3u8);
+    if (ok) {
+        FILE* file_p = fopen(live_m3u8_filename_.c_str(), "w");
+        if (file_p) {
+            fwrite(live_m3u8.c_str(), live_m3u8.length(), 1, file_p);
+            fclose(file_p);
+        }
+    }
+}
+
+void mpegts_handle::write_record_m3u8() {
+    if (!ts_info_ptr_) {
+        return;
+    }
+
+    if (!record_init_) {
+        std::stringstream header_ss;
+        int64_t duration_max = ts_info_ptr_->duration/1000 + 2;
+
+        record_init_ = true;
+
+        header_ss << "#EXTM3U\n";
+        header_ss << "#EXT-X-VERSION:3\n";
+        header_ss << "#EXT-X-ALLOW-CACHE:NO\n";
+        header_ss << "#EXT-X-TARGETDURATION:" << duration_max << "\n";
+        header_ss << "\n";
+
+        FILE* file_p = fopen(rec_m3u8_filename_.c_str(), "ab+");
+        if (file_p) {
+            fwrite(header_ss.str().c_str(), header_ss.str().length(), 1, file_p);
+            fclose(file_p);
+        }
+    }
+
+    std::stringstream iter_ss;
+
+    iter_ss << "#EXTINF:" << ts_info_ptr_->duration/1000.0 << ",\n";
+    iter_ss << ts_info_ptr_->ts_key << "\n";
+
+    FILE* file_p = fopen(rec_m3u8_filename_.c_str(), "ab+");
+    if (file_p) {
+        fwrite(iter_ss.str().c_str(), iter_ss.str().length(), 1, file_p);
+        fclose(file_p);
+    }
+}
+
+void mpegts_handle::flush() {
+    const std::string endlist_str = "#EXT-X-ENDLIST";
+
+    if (!record_init_) {
+        return;
+    }
+    FILE* file_p = fopen(rec_m3u8_filename_.c_str(), "ab+");
+    if (file_p) {
+        fwrite(endlist_str.c_str(), endlist_str.length(), 1, file_p);
+        fclose(file_p);
+    }
+}
+
 void mpegts_handle::handle_packet(MEDIA_PACKET_PTR pkt_ptr) {
     int64_t now_sec = now_millisec()/1000;
-    if (((pkt_ptr->av_type_ == MEDIA_VIDEO_TYPE) && (pkt_ptr->is_key_frame_) && ((now_sec - last_ts_) > 8)) || (ts_filename_.empty())) {
+    if (((pkt_ptr->av_type_ == MEDIA_VIDEO_TYPE) && (pkt_ptr->is_key_frame_) && ((now_sec - last_ts_) > mpegts_duration_)) || (ts_filename_.empty())) {
         std::stringstream ss;
         last_ts_ = now_sec;
         ss << path_ << "/" << last_ts_ << ".ts";
@@ -124,22 +237,29 @@ void mpegts_handle::handle_packet(MEDIA_PACKET_PTR pkt_ptr) {
         audio_first_flag_ = true;
         pat_pmt_flag_ = true;
         seq_++;
-        log_infof("ts_filename_:%s, seq:%ld", ts_filename_.c_str(), seq_);
+        
         if (!ts_info_ptr_) {
             ts_info_ptr_ = std::make_shared<ts_item_info>();
             ts_info_ptr_->reset();
+            ts_info_ptr_->set_ts_filename(ts_filename_);
         } else {
             log_infof("ts duration:%ld", ts_info_ptr_->duration);
             ts_list_.push_back(ts_info_ptr_);
-            if (ts_list_.size() > 3) {
+            if (ts_list_.size() > ts_list_max_) {
+                log_infof("pop mpegts filename:%s, file key:%s",
+                    ts_list_.front()->ts_filename.c_str(),
+                    ts_list_.front()->ts_key.c_str());
                 ts_list_.pop_front();
-                if (gen_live_m3u8(m3u8_header_)) {
-                    log_infof("get m3u8 header:\r\n%s", m3u8_header_.c_str());
-                }
             }
+            write_live_m3u8();
+            write_record_m3u8();
+
             ts_info_ptr_ = std::make_shared<ts_item_info>();
             ts_info_ptr_->reset();
+            ts_info_ptr_->set_ts_filename(ts_filename_);
         }
+        log_infof("ts_filename_:%s, ts key:%s, seq:%ld",
+            ts_filename_.c_str(), ts_info_ptr_->ts_key.c_str(), seq_);
     }
 
     if (pat_pmt_flag_ || ((pkt_ptr->dts_ - last_patpmt_ts_) > 1000)) {

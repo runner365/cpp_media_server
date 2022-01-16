@@ -49,6 +49,10 @@ public:
     }
 
 public:
+    void set_status_code(int status_code) { status_code_ = status_code; }
+    void set_status(const std::string& status) { status_ = status; }
+    void add_header(const std::string& key, const std::string& value) { headers_[key] = value; }
+    
     int write(const char* data, size_t len, bool continue_flag = false) {
         std::stringstream ss;
 
@@ -70,7 +74,10 @@ public:
             written_header_ = true;
         }
 
-        session_->write(data, len);
+        if (data && len > 0) {
+            session_->write(data, len);
+        }
+        
         return 0;
     }
 

@@ -41,13 +41,12 @@ int main(int argn, char** argv) {
     const uint16_t ws_webrtc_port = 9110;
     const uint16_t httpflv_port = 8080;
     const uint16_t webrtc_media_port = 7000;
-    const std::string host_ip = "192.168.0.102";
+    const std::string host_ip = "192.168.0.104";
 
     hls_writer* hls_output = nullptr;
     std::string hls_path = "hls";
     const uint16_t hls_port = 8060;
 
-    
     boost::asio::io_service::work work(io_context);
 
     Logger::get_instance()->set_filename("server.log");
