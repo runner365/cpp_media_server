@@ -326,6 +326,7 @@ void room_service::handle_publish(const std::string& id, const std::string& meth
     rtc_media_info support_info;
 
     user_ptr->get_support_media_info(info, support_info);
+    log_debugf("support info sdp dump:\r\n%s", support_info.dump().c_str());
 
     std::shared_ptr<webrtc_session> session_ptr = std::make_shared<webrtc_session>(roomId_, uid,
                                                     this, RTC_DIRECTION_RECV, support_info);

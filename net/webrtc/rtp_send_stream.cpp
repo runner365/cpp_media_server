@@ -172,7 +172,7 @@ void rtp_send_stream::on_timer() {
         size_t fps;
         size_t speed = send_statics_.bytes_per_second(now_ms, fps);
     
-        log_infof("rtc send mediatype:%s, ssrc:%u, payloadtype:%d, speed(bytes/s):%lu, fps:%lu",
+        log_debugf("rtc send mediatype:%s, ssrc:%u, payloadtype:%d, speed(bytes/s):%lu, fps:%lu",
             media_type_.c_str(), rtp_ssrc_, rtp_payload_type_, speed, fps);
     }
 

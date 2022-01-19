@@ -44,8 +44,21 @@ void rtc_media_info::reset() {
 
 int rtc_media_info::parse(json& sdp_json) {
     int ret = -1;
+    FINGER_PRINT fp;
+    bool fp_ready = false;
 
     get_basic_info(sdp_json);
+
+    try
+    {
+        fp = get_finger_print(sdp_json);
+        fp_ready = true;
+    }
+    catch(const std::exception& e)
+    {
+        log_warnf("finger print is not in pub header:%s", e.what());
+    }
+    
 
     auto media_iterJson = sdp_json.find("media");
     if (media_iterJson == sdp_json.end()) {
@@ -58,7 +71,19 @@ int rtc_media_info::parse(json& sdp_json) {
 
     for (auto& media_item_json : *media_iterJson) {
         this->direction_type = get_direction_type(media_item_json);
-        this->finger_print   = get_finger_print(media_item_json);
+        try
+        {
+            this->finger_print = get_finger_print(media_item_json);
+        }
+        catch(const std::exception& e)
+        {
+            if (!fp_ready) {
+                throw e;
+            }
+            log_warnf("finger print is not in media secton:%s and use pub header fingerprint", e.what());
+            this->finger_print = fp;
+        }
+        
         this->ice            = get_ice(media_item_json);
 
         MEDIA_RTC_INFO rtc_info;
@@ -125,6 +150,8 @@ void rtc_media_info::get_basic_info(json& info_json) {
     auto extMixed_iterJson = info_json.find("extmapAllowMixed");
     if ((extMixed_iterJson != info_json.end()) && (extMixed_iterJson->is_string())) {
         this->extmap_allow_mixed = extMixed_iterJson->get<std::string>();
+    } else {
+        this->extmap_allow_mixed = "extmap-allow-mixed";
     }
     
     auto version_iterJson = info_json.find("version");
@@ -156,10 +183,12 @@ void rtc_media_info::get_basic_info(json& info_json) {
         this->msid_semantic.token = (*msid_semantic_iterJson)["token"];
     }
     
-    auto name_iterJson = info_json.find("name");
-    if ((name_iterJson != info_json.end()) && (name_iterJson->is_string())) {
-        this->name = name_iterJson->get<std::string>();
-    }
+    //auto name_iterJson = info_json.find("name");
+    //if ((name_iterJson != info_json.end()) && (name_iterJson->is_string())) {
+    //    this->name = name_iterJson->get<std::string>();
+    //}
+    this->name = "cpp_media_server";
+
     
     auto origin_iterJson = info_json.find("origin");
     if ((origin_iterJson != info_json.end()) && (origin_iterJson->is_object())) {
@@ -196,7 +225,11 @@ void rtc_media_info::get_rtcp_basic(json& info_json, RTCP_BASIC& rtcp) {
     auto rtcp_iter = info_json.find("rtcp");
 
     if ((rtcp_iter == info_json.end()) || (!rtcp_iter->is_object())) {
-        MS_THROW_ERROR("no rtcp field in json");
+        rtcp.address  = "0.0.0.0";
+        rtcp.ip_ver   = 4;
+        rtcp.net_type = "IN";
+        rtcp.port     = 9;
+        return;
     }
 
     rtcp.address  = (*rtcp_iter)["address"];
@@ -298,7 +331,11 @@ void rtc_media_info::get_payloads(json& info_json, std::vector<int>& payload_vec
 ICE_INFO rtc_media_info::get_ice(json& info_json) {
     ICE_INFO ret;
 
-    ret.ice_options = info_json["iceOptions"];
+    auto option_iterJson = info_json.find("iceOptions");
+    if ((option_iterJson != info_json.end()) && (option_iterJson->is_string())) {
+        ret.ice_options = info_json["iceOptions"];
+    }
+    
     ret.ice_pwd     = info_json["icePwd"];
     ret.ice_ufrag   = info_json["iceUfrag"];
 
@@ -329,7 +366,7 @@ void rtc_media_info::get_header_extersion(json& info_json, std::vector<HEADER_EX
 void rtc_media_info::get_rtcpfb(json& info_json, std::vector<RTCP_FB>& rtcp_fbs) {
     auto rtcp_fb_iterJson = info_json.find("rtcpFb");
     if (rtcp_fb_iterJson == info_json.end()) {
-        MS_THROW_ERROR("no rtcpFb field in json");
+        return;
     }
     
     if (!rtcp_fb_iterJson->is_array()) {

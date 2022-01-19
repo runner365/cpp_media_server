@@ -63,7 +63,7 @@ static SSRC_INFO support_ssrc_info_list[] = {
 
 static FMTP support_fmtp_list[] = {
     {
-        .config  = "minptime=10;useinbandfec=1",
+        .config  = "useinbandfec=1",
         .payload = 0
     },
     {
@@ -71,7 +71,27 @@ static FMTP support_fmtp_list[] = {
         .payload = 0
     },
     {
+        .config  = "profile-level-id=42e01f;level-asymmetry-allowed=1;packetization-mode=1",
+        .payload = 0
+    },
+    {
+        .config  = "profile-level-id=42e01f;packetization-mode=1;level-asymmetry-allowed=1",
+        .payload = 0
+    },
+    {
         .config  = "level-asymmetry-allowed=1;packetization-mode=1;profile-level-id=42e01f",
+        .payload = 0
+    },
+    {
+        .config  = "level-asymmetry-allowed=1;profile-level-id=42e01f;packetization-mode=1",
+        .payload = 0
+    },
+    {
+        .config  = "packetization-mode=1;level-asymmetry-allowed=1;profile-level-id=42e01f",
+        .payload = 0
+    },
+    {
+        .config  = "packetization-mode=1;profile-level-id=42e01f;level-asymmetry-allowed=1",
         .payload = 0
     }
 };
@@ -82,7 +102,7 @@ void get_support_fmtp(const std::vector<FMTP>& input_fmtps,
         bool found = false;
         for (size_t index = 0; index < sizeof(support_fmtp_list)/sizeof(FMTP); index++) {
             auto pos = input_fmtp.config.find(support_fmtp_list[index].config);
-            if (pos == 0) {
+            if (pos != std::string::npos) {
                 found = true;
                 break;
             }
@@ -244,6 +264,9 @@ void get_support_rtc_media(const rtc_media_info& input, rtc_media_info& support_
         support_rtc_info.msid = rtc_info.msid;
         support_rtc_info.media_type = rtc_info.media_type;
         support_rtc_info.port = rtc_info.port;
+        if (support_rtc_info.port == 0) {
+            support_rtc_info.port = 9;
+        }
         support_rtc_info.rtcp_mux = rtc_info.rtcp_mux;
         support_rtc_info.rtcp_rsize = rtc_info.rtcp_rsize;
         support_rtc_info.setup = "active";//rtc_info.setup;

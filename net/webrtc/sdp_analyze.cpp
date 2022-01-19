@@ -16,7 +16,6 @@ json sdp_analyze::parse(const std::string& sdp_str) {
 }
 
 std::string sdp_analyze::encode(json& sdp_json) {
-    log_infof("input sdp json:%s", sdp_json.dump().c_str());
     std::string sdp_str = sdptransform::write(sdp_json);
     return sdp_str;
 }
