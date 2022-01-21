@@ -7,6 +7,7 @@
 #include <sstream>
 #include <stdio.h>
 #include <stdlib.h>
+#include <assert.h>
 
 static const uint8_t H264_AUD_DATA[] = {0x00, 0x00, 0x00, 0x01, 0x09, 0xff};
 
