@@ -32,8 +32,10 @@ public:
             if (pkt_ptr->av_type_ == MEDIA_VIDEO_TYPE) {
                 video_ready_ = true;
                 muxer_.set_video_codec(pkt_ptr->codec_type_);
+                log_infof("set video codec type:%s", codectype_tostring(pkt_ptr->codec_type_).c_str());
             } else if (pkt_ptr->av_type_ == MEDIA_AUDIO_TYPE) {
                 audio_ready_ = true;
+                log_infof("set opus codec type:%s", codectype_tostring(pkt_ptr->codec_type_).c_str());
                 muxer_.set_audio_codec(pkt_ptr->codec_type_);
             }
             wait_queue_.push(pkt_ptr);
@@ -70,7 +72,13 @@ private:
         }
         return 0;
     }
-    int handle_video(MEDIA_PACKET_PTR pkt_ptr) {
+
+    int handle_vp8(MEDIA_PACKET_PTR pkt_ptr) {
+        muxer_.input_packet(pkt_ptr);
+        return 0;
+    }
+
+    int handle_h264(MEDIA_PACKET_PTR pkt_ptr) {
         if (pkt_ptr->is_seq_hdr_) {
             uint8_t* data   = (uint8_t*)pkt_ptr->buffer_ptr_->data();
             size_t data_len = pkt_ptr->buffer_ptr_->data_len();
@@ -123,6 +131,17 @@ private:
             muxer_.input_packet(nalu_pkt_ptr);
         }
         
+        return 0;
+    }
+
+    int handle_video(MEDIA_PACKET_PTR pkt_ptr) {
+        if (pkt_ptr->codec_type_ == MEDIA_CODEC_H264) {
+            return handle_h264(pkt_ptr);
+        } else if (pkt_ptr->codec_type_ == MEDIA_CODEC_VP8) {
+            return handle_vp8(pkt_ptr);
+        } else {
+            log_infof("handle video can't handle codec type:%d", pkt_ptr->codec_type_);
+        }
         return 0;
     }
 

@@ -91,6 +91,7 @@ protected:
 private:
     void handle_packet(MEDIA_PACKET_PTR pkt_ptr);
     int handle_video_h264(MEDIA_PACKET_PTR pkt_ptr);
+    int handle_video_vp8(MEDIA_PACKET_PTR pkt_ptr);
 
     int handle_audio_aac(MEDIA_PACKET_PTR pkt_ptr);
     int handle_audio_opus(MEDIA_PACKET_PTR pkt_ptr);

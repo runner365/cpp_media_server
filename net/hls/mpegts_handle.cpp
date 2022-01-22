@@ -302,6 +302,11 @@ void mpegts_handle::handle_packet(MEDIA_PACKET_PTR pkt_ptr) {
     return;
 }
 
+int mpegts_handle::handle_video_vp8(MEDIA_PACKET_PTR pkt_ptr) {
+    muxer_.input_packet(pkt_ptr);
+    return 0;
+}
+
 int mpegts_handle::handle_video_h264(MEDIA_PACKET_PTR pkt_ptr) {
     if (pkt_ptr->is_seq_hdr_) {
         uint8_t sps[1024];

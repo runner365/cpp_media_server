@@ -270,6 +270,25 @@ int mpegts_mux::generate_pmt() {
 
     //video
     if (has_video_) {
+        switch (video_codec_type_)
+        {
+            case MEDIA_CODEC_H264:
+            {
+                video_stream_type_ = STREAM_TYPE_VIDEO_H264;
+                break;
+            }
+            case MEDIA_CODEC_VP8:
+            case MEDIA_CODEC_VP9:
+            {
+                video_stream_type_ = STREAM_TYPE_PRIVATE_DATA;
+                break;
+            }
+            default:
+            {
+                video_stream_type_ = STREAM_TYPE_PRIVATE_DATA;
+            }
+        }
+
         // stream_type
         *p++ = video_stream_type_;
 
@@ -280,9 +299,39 @@ int mpegts_mux::generate_pmt() {
 
         // reserved '1111'
         // ES_info_length 12-bits
-        
-        write_2bytes(p, 0xF000 | (uint16_t)0);// | len
+        uint8_t* es_info_length_p = p;
         p += 2;
+
+        if (video_codec_type_ == MEDIA_CODEC_VP8) {
+            *p++ = 0x05; /* MPEG-2 registration descriptor*/
+            *p++ = 4;
+            *p++ = 'V';
+            *p++ = 'p';
+            *p++ = '8';
+            *p++ = '0';
+
+            *p++ = 0x7f; /* DVB extension descriptor */
+            *p++ = 2;
+            *p++ = 0x80;
+            *p++ = 2;// channels == 2
+        } else if (video_codec_type_ == MEDIA_CODEC_VP9) {
+            *p++ = 0x05; /* MPEG-2 registration descriptor*/
+            *p++ = 4;
+            *p++ = 'V';
+            *p++ = 'p';
+            *p++ = '9';
+            *p++ = '0';
+
+            *p++ = 0x7f; /* DVB extension descriptor */
+            *p++ = 2;
+            *p++ = 0x80;
+            *p++ = 2;// channels == 2
+        }
+        // reserved '1111'
+        // ES_info_length 12-bits
+        int val = 0xf000 | (p - es_info_length_p - 2);
+        es_info_length_p[0] = val >> 8;
+        es_info_length_p[1] = val;
     }
 
     //audio
