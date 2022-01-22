@@ -17,7 +17,8 @@ void hls_writer::run() {
 }
 
 int hls_writer::write_packet(MEDIA_PACKET_PTR pkt_ptr) {
-    return work_.insert_packet(pkt_ptr);
+    work_.insert_packet(pkt_ptr);
+    return 0;
 }
 
 std::string hls_writer::get_key() {

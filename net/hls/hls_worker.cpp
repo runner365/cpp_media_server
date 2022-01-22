@@ -89,9 +89,8 @@ void hls_handle(const http_request* request, std::shared_ptr<http_response> resp
 
 }
 */
-hls_worker::hls_worker(boost::asio::io_context& io_context, uint16_t port):timer_interface(io_context, 20)
+hls_worker::hls_worker(boost::asio::io_context& io_context, uint16_t port):timer_interface(io_context, 5000)
                         , io_context_(io_context)
-                        , server_(io_context, port)
 {
     run();
     start_timer();
@@ -121,40 +120,24 @@ void hls_worker::stop() {
     run_thread_ptr_->join();
 }
 
-int hls_worker::insert_packet(MEDIA_PACKET_PTR pkt_ptr) {
-    std::unique_lock<std::mutex> lock(mutex_);
-
-    const int MEDIA_QUEUE_MAX = 500;
-
-    if (!run_flag_) {
-        return -1;
-    }
-
-	while (pkt_queue_.size() > MEDIA_QUEUE_MAX) {
-        log_infof("hls media queue is overflow, queue length:%d", pkt_queue_.size());
-		pkt_queue_.pop();
-	}
-
-    pkt_queue_.push(pkt_ptr);
-    
-    return pkt_queue_.size();
+void hls_worker::insert_packet(MEDIA_PACKET_PTR pkt_ptr) {
+    io_context_.post(std::bind(&hls_worker::on_handle_packet, this, pkt_ptr));
+    return;
 }
 
-MEDIA_PACKET_PTR hls_worker::get_packet() {
-    std::unique_lock<std::mutex> lock(mutex_);
-    MEDIA_PACKET_PTR pkt_ptr;
-
-    if (!run_flag_) {
-        return pkt_ptr;
+void hls_worker::on_handle_packet(MEDIA_PACKET_PTR pkt_ptr) {
+    if (!pkt_ptr) {
+        return;
     }
-
-    if (pkt_queue_.empty()) {
-        return pkt_ptr;
+    
+    std::shared_ptr<mpegts_handle> handle = get_mpegts_handle(pkt_ptr);
+    if (!handle) {
+        log_errorf("get mpegts handle error, app:%s, streamname:%s, key:%s",
+            pkt_ptr->app_.c_str(), pkt_ptr->streamname_.c_str(), pkt_ptr->key_.c_str());
+        return;
     }
-
-    pkt_ptr = pkt_queue_.front();
-    pkt_queue_.pop();
-    return pkt_ptr;
+    handle->handle_media_packet(pkt_ptr);
+    return;
 }
 
 std::shared_ptr<mpegts_handle> hls_worker::get_mpegts_handle(MEDIA_PACKET_PTR pkt_ptr) {
@@ -188,29 +171,10 @@ void hls_worker::on_work() {
 }
 
 void hls_worker::on_timer() {
-    while (true) {
-        check_timeout();
-
-        MEDIA_PACKET_PTR pkt_ptr = get_packet();
-        if (!pkt_ptr) {
-            break;
-        }
-        
-        std::shared_ptr<mpegts_handle> handle = get_mpegts_handle(pkt_ptr);
-        if (!handle) {
-            log_errorf("get mpegts handle error, app:%s, streamname:%s, key:%s",
-                pkt_ptr->app_.c_str(), pkt_ptr->streamname_.c_str(), pkt_ptr->key_.c_str());
-            continue;
-        }
-        handle->handle_media_packet(pkt_ptr);
-    }
+    check_timeout();
 }
 
 void hls_worker::check_timeout() {
-    if ((check_count_++)%200 != 0) {
-        return;
-    }
-
     for (auto iter = mpegts_handles_.begin();
         iter != mpegts_handles_.end();
         ) {

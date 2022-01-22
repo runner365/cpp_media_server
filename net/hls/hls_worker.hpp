@@ -25,7 +25,7 @@ public:
     void stop();
     void set_path(const std::string& path) { path_ = path; }
     void set_rec_enable(bool enable) { rec_enable_ = enable; }
-    int insert_packet(MEDIA_PACKET_PTR pkt_ptr);
+    void insert_packet(MEDIA_PACKET_PTR pkt_ptr);
     std::shared_ptr<mpegts_handle> get_mpegts_handle(const std::string& key);
 
 protected:
@@ -33,26 +33,21 @@ protected:
 
 private:
     void on_work();
-    MEDIA_PACKET_PTR get_packet();
+    void on_handle_packet(MEDIA_PACKET_PTR pkt_ptr);
     void check_timeout();
     std::shared_ptr<mpegts_handle> get_mpegts_handle(MEDIA_PACKET_PTR pkt_ptr);
 
 private:
     bool run_flag_ = false;
     std::shared_ptr<std::thread> run_thread_ptr_;
-    std::queue<MEDIA_PACKET_PTR> pkt_queue_;
-
-    std::mutex mutex_;
 
 private:
     std::string path_;
     bool rec_enable_ = false;
     std::map<std::string, std::shared_ptr<mpegts_handle>> mpegts_handles_;
-    int64_t check_count_ = 0;
 
 private:
     boost::asio::io_context& io_context_;
-    http_server server_;
 };
 
 #endif
