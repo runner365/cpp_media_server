@@ -3,6 +3,7 @@
 #include <stdint.h>
 #include <stddef.h>
 #include <string>
+#include <cstring>
 
 typedef enum {
     MEDIA_UNKOWN_TYPE = 0,

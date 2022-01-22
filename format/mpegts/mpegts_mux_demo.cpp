@@ -8,6 +8,7 @@
 #include <string>
 #include <memory>
 #include <queue>
+#include <assert.h>
 
 class muxer_callback;
 
