@@ -4,7 +4,7 @@
 #include <stdint.h>
 #include <stddef.h>
 #include <vector>
-
+#include <sstream>
 
 static RTCP_FB support_rtcp_fb_list[] = {
     {
@@ -37,19 +37,28 @@ static HEADER_EXT support_header_ext_list[] = {
 
 static RTP_ENCODING support_rtp_encoding_list[] = {
     {
+        .codec = "VP8",
+        .payload = 0,
+        .clock_rate = 90000,
+        .media_type = MEDIA_VIDEO_TYPE
+    },
+    {
         .codec = "H264",
         .payload = 0,
-        .clock_rate = 90000
+        .clock_rate = 90000,
+        .media_type = MEDIA_VIDEO_TYPE
     },
     {
         .codec = "rtx",
         .payload = 0,
-        .clock_rate = 90000
+        .clock_rate = 90000,
+        .media_type = MEDIA_UNKOWN_TYPE
     },
     {
         .codec = "opus",
         .payload = 0,
-        .clock_rate = 48000
+        .clock_rate = 48000,
+        .media_type = MEDIA_AUDIO_TYPE
     }
 };
 
@@ -96,7 +105,19 @@ static FMTP support_fmtp_list[] = {
     }
 };
 
-void get_support_fmtp(const std::vector<FMTP>& input_fmtps,
+static int get_apt_payload(const std::string& apt) {
+    const std::string APT = "apt=";
+    size_t pos = apt.find(APT);
+    if (pos == std::string::npos) {
+        return 0;
+    }
+
+    std::string payload = apt.substr(APT.length());
+
+    return atoi(payload.c_str());
+}
+
+static void get_support_fmtp(const std::vector<FMTP>& input_fmtps,
         std::vector<FMTP>& support_input_fmtps) {
     for (auto input_fmtp : input_fmtps) {
         bool found = false;
@@ -111,7 +132,7 @@ void get_support_fmtp(const std::vector<FMTP>& input_fmtps,
             support_input_fmtps.push_back(input_fmtp);
         }
     }
-
+/*
     std::vector<int> payload_vec;
     for (auto fmtp : support_input_fmtps) {
         if (fmtp.config.find("apt=") != 0) {
@@ -141,9 +162,11 @@ void get_support_fmtp(const std::vector<FMTP>& input_fmtps,
         }
         fmtp_iter++;
     }
+*/
+    return;
 }
 
-void get_support_ssrc_info(const std::vector<SSRC_INFO>& input_ssrc_infos,
+static void get_support_ssrc_info(const std::vector<SSRC_INFO>& input_ssrc_infos,
         std::vector<SSRC_INFO>& support_ssrc_infos) {
     for (auto input_ssrc_info : input_ssrc_infos) {
         bool found = false;
@@ -159,7 +182,7 @@ void get_support_ssrc_info(const std::vector<SSRC_INFO>& input_ssrc_infos,
     }
 }
 
-void get_support_rtcp_fb(const std::vector<RTCP_FB>& input_rtcp_fbs,
+static void get_support_rtcp_fb(const std::vector<RTCP_FB>& input_rtcp_fbs,
         std::vector<RTCP_FB>& support_rtcp_fbs) {
 
     for (auto input_fb : input_rtcp_fbs) {
@@ -183,7 +206,7 @@ void get_support_rtcp_fb(const std::vector<RTCP_FB>& input_rtcp_fbs,
     }
 }
 
-void get_support_header_ext(const std::vector<HEADER_EXT>& input_header_exts,
+static void get_support_header_ext(const std::vector<HEADER_EXT>& input_header_exts,
             std::vector<HEADER_EXT>& support_header_ext) {
     for (auto ext : input_header_exts) {
         bool found = false;
@@ -201,24 +224,36 @@ void get_support_header_ext(const std::vector<HEADER_EXT>& input_header_exts,
     return;
 }
 
-void get_support_rtp_encoding(const std::vector<RTP_ENCODING>& input_rtp_encodings,
-            std::vector<RTP_ENCODING>& support_rtp_encodings,
-            std::vector<FMTP>& support_input_fmtps) {
+static void get_support_rtp_encoding(const std::vector<RTP_ENCODING>& input_rtp_encodings,
+            std::vector<RTP_ENCODING>& support_rtp_encodings) {
+    bool has_video = false;
+    bool has_audio = false;
+
     for (auto enc : input_rtp_encodings) {
-        bool found = false;
         for (size_t i = 0; i < sizeof(support_rtp_encoding_list)/sizeof(RTP_ENCODING); i++) {
             if ((support_rtp_encoding_list[i].codec == enc.codec) &&
                 (support_rtp_encoding_list[i].clock_rate == enc.clock_rate)) {
-                found = true;
-                break;
+                if (support_rtp_encoding_list[i].media_type == MEDIA_VIDEO_TYPE) {
+                    if (!has_video) {
+                        enc.media_type = MEDIA_VIDEO_TYPE;
+                        support_rtp_encodings.push_back(enc);
+                        has_video = true;
+                    }
+                } else if (support_rtp_encoding_list[i].media_type == MEDIA_AUDIO_TYPE) {
+                    if (!has_audio) {
+                        enc.media_type = MEDIA_AUDIO_TYPE;
+                        support_rtp_encodings.push_back(enc);
+                        has_audio = true;
+                    }
+                } else {
+                    enc.media_type = MEDIA_UNKOWN_TYPE;
+                    support_rtp_encodings.push_back(enc);
+                }
             }
-        }
-
-        if (found) {
-            support_rtp_encodings.push_back(enc);
         }
     }
 
+    /*
     auto iter = support_rtp_encodings.begin();
     while(iter != support_rtp_encodings.end()) {
         bool found = false;
@@ -228,12 +263,97 @@ void get_support_rtp_encoding(const std::vector<RTP_ENCODING>& input_rtp_encodin
                 break;
             }
         }
+
         if (!found) {
             iter = support_rtp_encodings.erase(iter);
         } else {
             iter++;
         }
     }
+    */
+    return;
+}
+
+static void filter_fmts_by_encs(std::vector<FMTP>& support_input_fmtps,
+                            std::vector<RTP_ENCODING>& support_rtp_encodings) {
+    int rtx_payload   = -1;
+    std::string codec_type;
+
+    for (auto item : support_rtp_encodings) {
+        if (item.codec == "rtx") {
+            rtx_payload = item.payload;
+        } else {
+            codec_type = item.codec;
+        }
+    }
+
+    if (rtx_payload > 0) {
+        std::vector<FMTP>::iterator iter = support_input_fmtps.begin();
+        while(iter != support_input_fmtps.end()) {
+            size_t pos = iter->config.find("apt=");
+            if (pos == std::string::npos) {
+                if (codec_type == "H264") {
+                    iter++;
+                } else {
+                    iter = support_input_fmtps.erase(iter);
+                }
+                continue;
+            }
+            if (iter->payload == rtx_payload) {
+                iter++;
+            } else {
+                iter = support_input_fmtps.erase(iter);
+            }
+        }
+    }
+    return;
+}
+
+static void filter_enc_by_fmts(std::vector<RTP_ENCODING>& support_rtp_encodings,
+                            std::vector<FMTP>& support_input_fmtps) {
+    int codec_payload = -1;
+    int apt_payload   = -1;
+
+    for (auto item : support_rtp_encodings) {
+        if (item.codec != "rtx") {
+            codec_payload = item.payload;
+            break;
+        }
+    }
+
+    for (auto item : support_rtp_encodings) {
+        if (item.codec == "rtx") {
+            for (const FMTP& fmtp_item : support_input_fmtps) {
+                size_t pos = fmtp_item.config.find("apt=");
+                if (pos == 0) {
+                    int payload = get_apt_payload(fmtp_item.config);
+                    if (codec_payload == payload) {
+                        apt_payload = fmtp_item.payload;
+                        break;
+                    }
+                }
+            }
+        }
+    }
+
+    log_infof("---- codec payload:%d, apt payload:%d", codec_payload, apt_payload);
+
+    if (codec_payload > 0) {
+        auto enc_iter = support_rtp_encodings.begin();
+        while (enc_iter != support_rtp_encodings.end()) {
+            if (enc_iter->codec != "rtx") {
+                enc_iter++;
+                continue;
+            }
+
+            if (enc_iter->payload != apt_payload) {
+                enc_iter = support_rtp_encodings.erase(enc_iter);
+            } else {
+                enc_iter++;
+            }
+        }
+    }
+
     return;
 }
 
@@ -277,10 +397,35 @@ void get_support_rtc_media(const rtc_media_info& input, rtc_media_info& support_
         get_support_header_ext(rtc_info.header_extentions, support_rtc_info.header_extentions);
         get_support_rtcp_fb(rtc_info.rtcp_fbs, support_rtc_info.rtcp_fbs);
         get_support_ssrc_info(rtc_info.ssrc_infos, support_rtc_info.ssrc_infos);
-        get_support_fmtp(rtc_info.fmtps, support_rtc_info.fmtps);
         get_support_rtp_encoding(rtc_info.rtp_encodings,
-                                support_rtc_info.rtp_encodings,
-                                support_rtc_info.fmtps);
+                                support_rtc_info.rtp_encodings);
+        std::stringstream pre_enc_ss;
+        for (auto enc_item : support_rtc_info.rtp_encodings) {
+            pre_enc_ss << "codec:" << enc_item.codec << ", encoding:" << enc_item.encoding
+                << ", payload:" << enc_item.payload << "\r\n";
+        }
+        log_infof("(pre) support rtp encodes:\r\n%s", pre_enc_ss.str().c_str());
+        get_support_fmtp(rtc_info.fmtps, support_rtc_info.fmtps);
+        std::stringstream pre_fmtp_ss;
+        for (auto item : support_rtc_info.fmtps) {
+            pre_fmtp_ss << "config:" << item.config << ", payload:" << item.payload << "\r\n";
+        }
+        log_infof("(pre)support fmtps:\r\n%s", pre_fmtp_ss.str().c_str());
+
+        filter_enc_by_fmts(support_rtc_info.rtp_encodings, support_rtc_info.fmtps);
+        filter_fmts_by_encs(support_rtc_info.fmtps, support_rtc_info.rtp_encodings);
+
+        std::stringstream enc_ss;
+        for (auto enc_item : support_rtc_info.rtp_encodings) {
+            enc_ss << "codec:" << enc_item.codec << ", encoding:" << enc_item.encoding
+                << ", payload:" << enc_item.payload << "\r\n";
+        }
+        log_infof("support rtp encodes:\r\n%s", enc_ss.str().c_str());
+        std::stringstream fmtp_ss;
+        for (auto item : support_rtc_info.fmtps) {
+            fmtp_ss << "config:" << item.config << ", payload:" << item.payload << "\r\n";
+        }
+        log_infof("support fmtps:\r\n%s", fmtp_ss.str().c_str());
 
         if (!rtc_info.ssrc_groups.empty()) {
             support_rtc_info.ssrc_groups = rtc_info.ssrc_groups;

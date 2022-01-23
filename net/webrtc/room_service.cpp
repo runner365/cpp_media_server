@@ -319,14 +319,14 @@ void room_service::handle_publish(const std::string& id, const std::string& meth
     std::string sdp = sdp_json->get<std::string>();
 
     json info_json = user_ptr->parse_remote_sdp(sdp);
-    log_debugf("publish sdp json:%s", info_json.dump().c_str());
+    //log_debugf("publish sdp json:%s", info_json.dump().c_str());
 
     rtc_media_info& info = user_ptr->parse_remote_media_info(info_json);
-    log_debugf("get input sdp dump:\r\n%s", info.dump().c_str());
+    //log_debugf("get input sdp dump:\r\n%s", info.dump().c_str());
     rtc_media_info support_info;
 
     user_ptr->get_support_media_info(info, support_info);
-    log_debugf("support info sdp dump:\r\n%s", support_info.dump().c_str());
+    //log_debugf("support info sdp dump:\r\n%s", support_info.dump().c_str());
 
     std::shared_ptr<webrtc_session> session_ptr = std::make_shared<webrtc_session>(roomId_, uid,
                                                     this, RTC_DIRECTION_RECV, support_info);
@@ -363,7 +363,6 @@ void room_service::handle_publish(const std::string& id, const std::string& meth
     support_info.candidates.push_back(candidate_data);
 
     /********* suppot publish rtc information is ready ************/
-    log_infof("publish support media info:\r\n%s", support_info.dump().c_str());
     std::string resp_sdp_str = user_ptr->rtc_media_info_2_sdp(support_info);
 
     user_ptr->publish_sessions_[session_ptr->get_id()] = session_ptr;

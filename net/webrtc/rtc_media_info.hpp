@@ -1,6 +1,7 @@
 #ifndef RTC_MEDIA_INFO_HPP
 #define RTC_MEDIA_INFO_HPP
 #include "sdptransform.hpp"
+#include "utils/av/av.hpp"
 #include <string>
 #include <stdint.h>
 #include <stddef.h>
@@ -42,6 +43,7 @@ typedef struct RTP_ENCODING_S
     int payload;
     int clock_rate;
     std::string encoding;//only for "opus", eg: "2"
+    MEDIA_PKT_TYPE media_type;
 } RTP_ENCODING;
 
 typedef struct SSRC_INFO_S

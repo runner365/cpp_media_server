@@ -44,6 +44,7 @@ public:
     bool has_rtx();
     void set_stream_type(const std::string& stream_type) { stream_type_ = stream_type; }
     std::string get_stream_type() { return stream_type_; }
+    MEDIA_CODEC_TYPE get_codec_type() { return codec_type_; }
 
     void request_keyframe(uint32_t media_ssrc);
 
@@ -74,7 +75,9 @@ private:
 private:
     std::string pid_;
     MEDIA_RTC_INFO media_info_;
-    std::string media_type_;
+    std::string media_type_str_;
+    MEDIA_PKT_TYPE media_type_ = MEDIA_UNKOWN_TYPE;
+    MEDIA_CODEC_TYPE codec_type_ = MEDIA_CODEC_UNKOWN;
     std::string stream_type_   = "camera";
     uint32_t rtp_ssrc_         = 0;
     uint32_t rtx_ssrc_         = 0;

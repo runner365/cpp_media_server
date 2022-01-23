@@ -2,6 +2,7 @@
 #include "rtc_session_pub.hpp"
 #include "rtc_base_session.hpp"
 #include "pack_handle_h264.hpp"
+#include "pack_handle_vp8.hpp"
 #include "pack_handle_audio.hpp"
 #include "format/audio_pub.hpp"
 #include "net/rtprtcp/rtcp_pspli.hpp"
@@ -28,7 +29,28 @@ rtc_publisher::rtc_publisher(const std::string& roomId, const std::string& uid,
         , media_info_(media_info)
         , jb_handler_(this, get_global_io_context()) {
     pid_ = make_uuid();
-    media_type_ = media_info_.media_type;
+
+    media_type_str_ = media_info_.media_type;
+    if (media_type_str_ == "video") {
+        media_type_ = MEDIA_VIDEO_TYPE;
+    } else if (media_type_str_ == "audio") {
+        media_type_ = MEDIA_AUDIO_TYPE;
+    } else {
+        media_type_ = MEDIA_UNKOWN_TYPE;
+    }
+
+    for (auto enc_item : media_info_.rtp_encodings) {
+        if (enc_item.codec == "H264") {
+            codec_type_ = MEDIA_CODEC_H264;
+            break;
+        } else if (enc_item.codec == "VP8") {
+            codec_type_ = MEDIA_CODEC_VP8;
+            break;
+        } else if (enc_item.codec == "opus") {
+            codec_type_ = MEDIA_CODEC_OPUS;
+            break;
+        }
+    }
 
     clock_rate_ = media_info_.rtp_encodings[0].clock_rate;
 
@@ -72,8 +94,12 @@ rtc_publisher::rtc_publisher(const std::string& roomId, const std::string& uid,
             abs_time_extension_id_ = ext_item.value;
         }
     }
-    if (media_type_ == "video") {
-        pack_handle_ = new pack_handle_h264(this, get_global_io_context());
+    if (media_type_ == MEDIA_VIDEO_TYPE) {
+        if (codec_type_ == MEDIA_CODEC_H264) {
+            pack_handle_ = new pack_handle_h264(this, get_global_io_context());
+        } else if (codec_type_ == MEDIA_CODEC_VP8) {
+            pack_handle_ = new pack_handle_vp8(this, get_global_io_context());
+        }
     } else {
         pack_handle_ = new pack_handle_audio(this);
     }
@@ -99,7 +125,7 @@ rtc_publisher::~rtc_publisher() {
 }
 
 std::string rtc_publisher::get_media_type() {
-    return media_type_;
+    return media_type_str_;
 }
 
 int rtc_publisher::get_clockrate() {
@@ -125,7 +151,7 @@ void rtc_publisher::on_handle_rtppacket(rtp_packet* pkt) {
 
     if ((pkt->get_ssrc() == rtp_ssrc_) && (pkt->get_payload_type() == payloadtype_)) {
         if (!rtp_handler_) {
-            rtp_handler_ = new rtp_recv_stream(this, media_type_, pkt->get_ssrc(), payloadtype_, false, get_clockrate());
+            rtp_handler_ = new rtp_recv_stream(this, media_type_str_, pkt->get_ssrc(), payloadtype_, false, get_clockrate());
             if (has_rtx()) {
                 rtp_handler_->set_rtx_ssrc(rtx_ssrc_);
                 rtp_handler_->set_rtx_payloadtype(rtx_payloadtype_);
@@ -137,11 +163,11 @@ void rtc_publisher::on_handle_rtppacket(rtp_packet* pkt) {
             rtp_handler_->on_handle_rtx_packet(pkt);
         } else {
             log_warnf("rtp(%s) handler is not ready for rtx, rtx_ssrc:%u, rtx_payload_type:%d",
-                media_type_.c_str(), rtx_ssrc_, rtx_payloadtype_);
+                media_type_str_.c_str(), rtx_ssrc_, rtx_payloadtype_);
         }
     } else {
         log_errorf("unkown packet payload:%d, packet ssrc:%u, media type:%s, has rtx:%d, rtp ssrc:%u, rtx ssrc:%u",
-            pkt->get_payload(), pkt->get_ssrc(), media_type_.c_str(), has_rtx_, rtp_ssrc_, rtx_ssrc_);
+            pkt->get_payload(), pkt->get_ssrc(), media_type_str_.c_str(), has_rtx_, rtp_ssrc_, rtx_ssrc_);
         return;
     }
 
@@ -152,9 +178,12 @@ void rtc_publisher::on_handle_rtppacket(rtp_packet* pkt) {
     ret_mid = pkt->read_mid(pkt_mid);
     ret_abs_time = pkt->read_abs_time(abs_time);
     log_debugf("rtp media:%s mid:%d:%d, abs_time:%u:%d",
-        media_type_.c_str(), pkt_mid, ret_mid, abs_time, ret_abs_time);
+        media_type_str_.c_str(), pkt_mid, ret_mid, abs_time, ret_abs_time);
     
-    jb_handler_.input_rtp_packet(roomId_, uid_, media_type_, stream_type_, clock_rate_, pkt);
+    if (((media_type_ == MEDIA_VIDEO_TYPE) && (codec_type_ == MEDIA_CODEC_H264))
+        || (media_type_ == MEDIA_AUDIO_TYPE)) {
+        jb_handler_.input_rtp_packet(roomId_, uid_, media_type_str_, stream_type_, clock_rate_, pkt);
+    }
     
     room_->on_rtppacket_publisher2room(session_, this, pkt);
 }
@@ -191,7 +220,7 @@ void rtc_publisher::on_timer() {
     if (rtp_handler_) {
         rtp_handler_->on_timer();
     }
-    if (((++key_count_) % 8 == 0) && (media_type_ == "video")) {
+    if (((++key_count_) % 8 == 0) && (media_type_ == MEDIA_VIDEO_TYPE)) {
         request_keyframe(rtp_ssrc_);
     }
 }
@@ -200,7 +229,7 @@ void rtc_publisher::rtp_packet_reset(std::shared_ptr<rtp_packet_info> pkt_ptr) {
     if (!pkt_ptr) {
         return;
     }
-    if (media_type_ != "video") {
+    if (media_type_ != MEDIA_VIDEO_TYPE) {
         return;
     }
     uint32_t media_ssrc = pkt_ptr->pkt->get_ssrc();
@@ -237,41 +266,45 @@ void rtc_publisher::media_packet_output(std::shared_ptr<MEDIA_PACKET> pkt_ptr) {
             pkt_ptr->av_type_, pkt_ptr->codec_type_, pkt_ptr->fmt_type_);
     
     if (pkt_ptr->av_type_ == MEDIA_VIDEO_TYPE) {
-        uint8_t nalu_len_data[4];
-        if (pkt_ptr->is_key_frame_) {
-            uint8_t extra_data[2048];
-            int extra_len = 0;
-
-            get_video_extradata((uint8_t*)pps_data_.data(), pps_data_.data_len(), 
-                                (uint8_t*)sps_data_.data(), sps_data_.data_len(), 
-                                extra_data, extra_len);
-
-            std::shared_ptr<MEDIA_PACKET> seq_pkt_ptr = std::make_shared<MEDIA_PACKET>();
-            seq_pkt_ptr->buffer_ptr_->append_data((char*)extra_data, (size_t)extra_len);
-            seq_pkt_ptr->copy_properties(pkt_ptr);
-            seq_pkt_ptr->is_key_frame_ = false;
-            seq_pkt_ptr->is_seq_hdr_   = true;
-            set_rtmp_info(seq_pkt_ptr);
-            seq_pkt_ptr->fmt_type_ = MEDIA_FORMAT_FLV;
-
-            room_->on_rtmp_callback(roomId_, uid_, stream_type_, seq_pkt_ptr);
-        } else if (pkt_ptr->is_seq_hdr_) {
-            uint8_t* p = (uint8_t*)pkt_ptr->buffer_ptr_->data();
-            uint8_t nalu_type = p[4] & 0x1f;
-            if (nalu_type == (uint8_t)kAvcNaluTypeSPS) {
-                sps_data_.reset();
-                sps_data_.append_data(pkt_ptr->buffer_ptr_->data() + 4, pkt_ptr->buffer_ptr_->data_len() - 4);
-            } else if (nalu_type == (uint8_t)kAvcNaluTypePPS) {
-                pps_data_.reset();
-                pps_data_.append_data(pkt_ptr->buffer_ptr_->data() + 4, pkt_ptr->buffer_ptr_->data_len() - 4);
-            } else {
-                log_errorf("the video nalu type:0x%02x", nalu_type);
+        if (pkt_ptr->codec_type_ == MEDIA_CODEC_H264) {
+            uint8_t nalu_len_data[4];
+            if (pkt_ptr->is_key_frame_) {
+                uint8_t extra_data[2048];
+                int extra_len = 0;
+    
+                get_video_extradata((uint8_t*)pps_data_.data(), pps_data_.data_len(), 
+                                    (uint8_t*)sps_data_.data(), sps_data_.data_len(), 
+                                    extra_data, extra_len);
+    
+                std::shared_ptr<MEDIA_PACKET> seq_pkt_ptr = std::make_shared<MEDIA_PACKET>();
+                seq_pkt_ptr->buffer_ptr_->append_data((char*)extra_data, (size_t)extra_len);
+                seq_pkt_ptr->copy_properties(pkt_ptr);
+                seq_pkt_ptr->is_key_frame_ = false;
+                seq_pkt_ptr->is_seq_hdr_   = true;
+                set_rtmp_info(seq_pkt_ptr);
+                seq_pkt_ptr->fmt_type_ = MEDIA_FORMAT_FLV;
+    
+                room_->on_rtmp_callback(roomId_, uid_, stream_type_, seq_pkt_ptr);
+            } else if (pkt_ptr->is_seq_hdr_) {
+                uint8_t* p = (uint8_t*)pkt_ptr->buffer_ptr_->data();
+                uint8_t nalu_type = p[4] & 0x1f;
+                if (nalu_type == (uint8_t)kAvcNaluTypeSPS) {
+                    sps_data_.reset();
+                    sps_data_.append_data(pkt_ptr->buffer_ptr_->data() + 4, pkt_ptr->buffer_ptr_->data_len() - 4);
+                } else if (nalu_type == (uint8_t)kAvcNaluTypePPS) {
+                    pps_data_.reset();
+                    pps_data_.append_data(pkt_ptr->buffer_ptr_->data() + 4, pkt_ptr->buffer_ptr_->data_len() - 4);
+                } else {
+                    log_errorf("the video nalu type:0x%02x", nalu_type);
+                }
+                return;
             }
-            return;
+            write_4bytes(nalu_len_data, (uint32_t)pkt_ptr->buffer_ptr_->data_len() - 4);
+            uint8_t* p = (uint8_t*)pkt_ptr->buffer_ptr_->data();
+            memcpy(p, nalu_len_data, sizeof(nalu_len_data));
+        } else if (pkt_ptr->codec_type_ == MEDIA_CODEC_VP8) {
+
         }
-        write_4bytes(nalu_len_data, (uint32_t)pkt_ptr->buffer_ptr_->data_len() - 4);
-        uint8_t* p = (uint8_t*)pkt_ptr->buffer_ptr_->data();
-        memcpy(p, nalu_len_data, sizeof(nalu_len_data));
     } else {
         uint8_t audio_flv_header[2];
 
