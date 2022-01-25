@@ -185,7 +185,7 @@ int mpegts_mux::generate_pat() {
     *p++ = 0;
     *p++ = 0;
 
-    for(int i = 0; i < pmt_count_; i++)
+    for(size_t i = 0; i < pmt_count_; i++)
     {
         write_2bytes(p + i * 4 + 0, program_number_);
         write_2bytes(p + i * 4 + 2, (uint16_t)(0xE000 | pmt_pid_));

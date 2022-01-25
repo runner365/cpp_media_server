@@ -229,7 +229,7 @@ void mpegts_handle::flush() {
 
 void mpegts_handle::handle_packet(MEDIA_PACKET_PTR pkt_ptr) {
     int64_t now_sec = now_millisec()/1000;
-    if (((pkt_ptr->av_type_ == MEDIA_VIDEO_TYPE) && (pkt_ptr->is_key_frame_) && ((now_sec - last_ts_) > mpegts_duration_)) || (ts_filename_.empty())) {
+    if (((pkt_ptr->av_type_ == MEDIA_VIDEO_TYPE) && (pkt_ptr->is_key_frame_) && ((now_sec - last_ts_) > (int64_t)mpegts_duration_)) || (ts_filename_.empty())) {
         std::stringstream ss;
         last_ts_ = now_sec;
         ss << path_ << "/" << last_ts_ << ".ts";
