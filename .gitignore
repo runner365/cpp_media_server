@@ -5,6 +5,7 @@
 
 *.obj
 *.bak
+*.swp
 media_server
 cpp_media_server
 tags
