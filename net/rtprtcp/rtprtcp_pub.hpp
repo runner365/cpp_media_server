@@ -51,6 +51,17 @@ typedef enum
     FB_PS_EXT   = 31
 } RTCP_FB_PS_FMT;
 
+typedef enum
+{
+    XR_LRLE = 1,
+    XR_DRLE = 2,
+    XR_PRT  = 3,
+    XR_RRT  = 4,
+    XR_DLRR = 5,
+    XR_SS   = 6,
+    XR_VM   = 7
+} XR_BLOCK_TYPE;
+
 /*
         0                   1                   2                   3
         0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
@@ -82,6 +93,13 @@ typedef struct rtcp_fb_common_header_s
     uint8_t packet_type : 8;
     uint16_t length : 16;
 } rtcp_fb_common_header;
+
+typedef struct rtcp_xr_header_s
+{
+    uint8_t  bt;
+    uint8_t  reserver;
+    uint16_t block_length;
+} rtcp_xr_header;
 
 /**
     0                   1                   2                   3

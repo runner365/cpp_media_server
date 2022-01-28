@@ -3,6 +3,8 @@
 #include "rtc_media_info.hpp"
 #include "net/rtprtcp/rtp_packet.hpp"
 #include "net/rtprtcp/rtcp_sr.hpp"
+#include "net/rtprtcp/rtcp_xr_dlrr.hpp"
+#include "net/rtprtcp/rtcp_xr_rrt.hpp"
 #include "utils/timer.hpp"
 #include "utils/timeex.hpp"
 #include "rtp_recv_stream.hpp"
@@ -46,7 +48,10 @@ public:
     std::string get_stream_type() { return stream_type_; }
     MEDIA_CODEC_TYPE get_codec_type() { return codec_type_; }
 
+public:
     void request_keyframe(uint32_t media_ssrc);
+    void get_xr_rrt(xr_rrt& rrt, int64_t now_ms);
+    void handle_xr_dlrr(xr_dlrr_data* dlrr_block);
 
 public://implement timer_interface
     virtual void on_timer() override;
@@ -87,7 +92,7 @@ private:
     bool has_rtx_              = false;
     int mid_extension_id_      = 0;
     int abs_time_extension_id_ = 0;
-    int64_t key_count_         = 0;
+    int64_t timer_count_       = 0;
 
 private:
     rtp_recv_stream* rtp_handler_  = nullptr;
@@ -97,6 +102,10 @@ private:
     data_buffer pps_data_;
     std::queue<std::shared_ptr<MEDIA_PACKET>> flv_queue_;
     bool first_flv_audio_ = true;
+
+private:
+    int64_t last_rrt_ = 0;
+    float   rtt_      = 0;
 };
 
 #endif

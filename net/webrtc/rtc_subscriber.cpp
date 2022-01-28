@@ -72,6 +72,7 @@ payload:%d, has rtx:%d, rtx payload:%d, mid:%d, id:%s",
 }
 
 rtc_subscriber::~rtc_subscriber() {
+    stop_timer();
     log_infof("rtc_subscriber destruct media type:%s, rtp ssrc:%u, rtx ssrc:%u, clock rate:%d, \
 payload:%d, has rtx:%d, rtx payload:%d, mid:%d, id:%s",
         media_type_.c_str(), rtp_ssrc_, rtx_ssrc_, clock_rate_, payloadtype_,

@@ -21,6 +21,7 @@ rtc_base_session::rtc_base_session(const std::string& roomId, const std::string&
                             , direction_(session_direction)
                             , media_info_(media_info) {
     id_ = make_uuid();
+
     log_infof("rtc_base_session construct id:%s direction:%s, roomId:%s, uid:%s",
             id_.c_str(), (direction_ == RTC_DIRECTION_SEND) ? "send" : "receive",
             roomId.c_str(), uid.c_str());
@@ -38,6 +39,7 @@ rtc_base_session::~rtc_base_session() {
             room_->on_unpublish(item.second->get_publisher_id());
         }
     }
+    
     log_infof("rtc_base_session destruct id:%s, direction:%s, roomId:%s, uid:%s",
             id_.c_str(), (direction_ == RTC_DIRECTION_SEND) ? "send" : "receive",
             roomId_.c_str(), uid_.c_str());

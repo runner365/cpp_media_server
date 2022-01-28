@@ -83,8 +83,12 @@ int64_t rtp_recv_stream::get_expected_packets() {
 }
 
 void rtp_recv_stream::on_timer() {
-    int64_t ret = ++statics_count_;
-    if ((ret%12) == 0) {
+    const int64_t STATICS_TIMER_COUNT = 12;
+    const int64_t RTCP_RR_AUDIO_COUNT = 4;
+
+    timer_count_++;
+
+    if ((timer_count_ % STATICS_TIMER_COUNT) == 0) {
         size_t fps;
         size_t speed = recv_statics_.bytes_per_second((int64_t)now_millisec(), fps);
     
@@ -95,7 +99,7 @@ void rtp_recv_stream::on_timer() {
     if (media_type_ == "video") {
         send_rtcp_rr();
     } else {
-        if ((ret%4) == 0) {
+        if ((timer_count_ % RTCP_RR_AUDIO_COUNT) == 0) {
             send_rtcp_rr();
         }
     }
@@ -223,6 +227,13 @@ void rtp_recv_stream::on_handle_rtx_packet(rtp_packet* pkt) {
         nack_handle_->update_nacklist(pkt);
     }
     return;
+}
+
+void rtp_recv_stream::update_rtt(int64_t rtt) {
+    rtt_ = rtt;
+    if (nack_handle_) {
+        nack_handle_->update_rtt(rtt);
+    }
 }
 
 void rtp_recv_stream::generate_nacklist(const std::vector<uint16_t>& seq_vec) {

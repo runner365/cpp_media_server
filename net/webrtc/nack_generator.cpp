@@ -17,6 +17,10 @@ nack_generator::~nack_generator()
     stop_timer();
 }
 
+void nack_generator::update_rtt(int64_t rtt) {
+    rtt_ = rtt;
+}
+
 void nack_generator::update_nacklist(rtp_packet* pkt) {
     uint16_t seq = pkt->get_seq();
 

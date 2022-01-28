@@ -216,11 +216,54 @@ void rtc_publisher::request_keyframe(uint32_t media_ssrc) {
     delete pspli_pkt;
 }
 
+void rtc_publisher::get_xr_rrt(xr_rrt& rrt, int64_t now_ms) {
+    NTP_TIMESTAMP ntp_now = millisec_to_ntp(now_ms);
+    rrt.set_ssrc(rtp_ssrc_);
+    rrt.set_ntp(ntp_now.ntp_sec, ntp_now.ntp_frac);
+
+    last_rrt_ = now_ms;    
+}
+
+void rtc_publisher::handle_xr_dlrr(xr_dlrr_data* dlrr_block) {
+    uint32_t dlrr  = ntohl(dlrr_block->dlrr);
+    uint32_t lrr   = ntohl(dlrr_block->lrr);
+    int64_t now_ms = now_millisec();
+    NTP_TIMESTAMP ntp = millisec_to_ntp(now_ms);
+    uint32_t compound_now = 0;
+
+    compound_now |= (ntp.ntp_sec & 0xffff) << 16;
+    compound_now |= (ntp.ntp_frac & 0xffff0000) >> 16;
+    
+    if (compound_now < (dlrr + lrr)) {
+        log_errorf("handle xr dlrr error, compound_now:%u, dlrr:%u, lrr:%u",
+                compound_now, dlrr, lrr);
+        return;
+    }
+    uint32_t rtt = compound_now - dlrr - lrr;
+    float rtt_float = ((rtt & 0xffff0000) >> 16) * 1000.0;
+    rtt_float += ((rtt & 0xffff) / 65536.0) * 1000.0;
+
+    if (rtt_ == 0) {
+        rtt_ = rtt_float;
+        return;
+    }
+
+    rtt_ += (rtt_float - rtt_)/5;
+
+    if (rtp_handler_) {
+        int64_t new_rtt = (rtt_ > 100.0) ? 100 : (int64_t)rtt_;
+        new_rtt = (rtt_ < 5) ? 5 : rtt_;
+        rtp_handler_->update_rtt(new_rtt);
+    }
+    return;
+}
+
 void rtc_publisher::on_timer() {
+    timer_count_++;
     if (rtp_handler_) {
         rtp_handler_->on_timer();
     }
-    if (((++key_count_) % 8 == 0) && (media_type_ == MEDIA_VIDEO_TYPE)) {
+    if ((timer_count_ % 8 == 0) && (media_type_ == MEDIA_VIDEO_TYPE)) {
         request_keyframe(rtp_ssrc_);
     }
 }

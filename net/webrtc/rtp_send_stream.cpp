@@ -165,10 +165,13 @@ void rtp_send_stream::handle_rtcp_rr(rtcp_rr_packet* rr_pkt) {
 }
 
 void rtp_send_stream::on_timer() {
-    int64_t now_ms = (int64_t)now_millisec();
-    int64_t ret = ++statics_count_;
+    const int64_t STATICS_TIMER_COUNT = 12;
+    const int64_t RTCP_SR_COUNT       = 2;
 
-    if ((ret%12) == 0) {
+    int64_t now_ms = (int64_t)now_millisec();
+    time_count_++;
+
+    if ((time_count_ % STATICS_TIMER_COUNT) == 0) {
         size_t fps;
         size_t speed = send_statics_.bytes_per_second(now_ms, fps);
     
@@ -176,7 +179,7 @@ void rtp_send_stream::on_timer() {
             media_type_.c_str(), rtp_ssrc_, rtp_payload_type_, speed, fps);
     }
 
-    if ((ret%2) == 0) {
+    if ((time_count_ % RTCP_SR_COUNT) == 0) {
         rtcp_sr_packet* sr_pkt = get_rtcp_sr(now_ms);
 
         log_debugf("rtcp sr ssrc:%u, ntp sec:%u, ntp frac:%u, rtp ts:%u, pkt count:%u, bytes count:%u, data len:%lu, data:%p",

@@ -72,7 +72,7 @@ private:
 
 private:
     stream_statics send_statics_;
-    int64_t statics_count_ = 0;
+    int64_t time_count_ = 0;
 
 private:
     uint32_t last_sr_rtp_ts_ = 0;

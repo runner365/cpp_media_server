@@ -46,7 +46,7 @@ public:
     ~nack_generator();
 
     void update_nacklist(rtp_packet* pkt);
-    void update_rtt(int64_t rtt) {rtt_ = rtt;};
+    void update_rtt(int64_t rtt);
 
 protected:
     virtual void on_timer() override;

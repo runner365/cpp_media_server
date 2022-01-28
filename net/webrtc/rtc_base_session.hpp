@@ -4,6 +4,7 @@
 #include "rtc_base_session.hpp"
 #include "rtc_media_info.hpp"
 #include "net/udp/udp_server.hpp"
+#include "utils/timer.hpp"
 #include <vector>
 
 class rtc_publisher;
@@ -42,7 +43,7 @@ public:
 public:
     virtual void send_rtp_data_in_dtls(uint8_t* data, size_t data_len) {};
     virtual void send_rtcp_data_in_dtls(uint8_t* data, size_t data_len) {};
-
+    
 public:
     std::string id_;
     std::string roomId_;
@@ -56,12 +57,12 @@ protected:
 protected:
     udp_tuple remote_address_;
 
-private:
+protected:
     std::map<std::string, std::shared_ptr<rtc_publisher>> pid2publishers_;//key: pid, value: rtc_publisher
     std::map<uint32_t, std::shared_ptr<rtc_publisher>> ssrc2publishers_;//key: ssrc, value: rtc_publisher
     std::map<int, std::shared_ptr<rtc_publisher>> mid2publishers_;//key: mid, value: rtc_publisher
 
-private:
+protected:
     std::map<int, std::shared_ptr<rtc_subscriber>> mid2subscribers_;         //key: mid, value: rtc_subscriber
     std::map<uint32_t, std::shared_ptr<rtc_subscriber>> ssrc2subscribers_;   //key: ssrc, value: rtc_subscriber
     std::map<std::string, std::shared_ptr<rtc_subscriber>> pid2subscribers_; //key: publisher_id, value: rtc_subscriber

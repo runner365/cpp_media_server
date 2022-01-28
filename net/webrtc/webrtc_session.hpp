@@ -32,7 +32,7 @@ protected:
     virtual void on_read(const char* data, size_t data_size, udp_tuple address) override;
 };
 
-class webrtc_session : public rtc_base_session
+class webrtc_session : public rtc_base_session, public timer_interface
 {
 public:
     webrtc_session(const std::string& roomId, const std::string& uid,
@@ -62,6 +62,9 @@ public:
                         uint8_t* srtpRemoteKey, size_t srtpRemoteKeyLen,
                         std::string& remoteCert);
 
+public://implement timer_interface
+    virtual void on_timer() override;
+
 private:
     virtual void send_rtp_data_in_dtls(uint8_t* data, size_t data_len) override;
     virtual void send_rtcp_data_in_dtls(uint8_t* data, size_t data_len) override;
@@ -75,7 +78,11 @@ private:
     void handle_rtcp_rr(uint8_t* data, size_t data_len);
     void handle_rtcp_rtpfb(uint8_t* data, size_t data_len);
     void handle_rtcp_psfb(uint8_t* data, size_t data_len);
-
+    void handle_rtcp_xr(uint8_t* data, size_t data_len);
+    void handle_xr_dlrr(xr_dlrr_data* dlrr_block);
+    
+    void send_xr_rrt(int64_t now_ms);
+    
 private://for ice
     std::string username_fragment_;
     std::string user_pwd_;
@@ -88,6 +95,9 @@ private://for dtls
 
 private:
     bool close_session_ = false;
+
+private:
+    int64_t timer_count_ = 0;
 };
 
 #endif

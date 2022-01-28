@@ -11,11 +11,14 @@
 #include "net/rtprtcp/rtcp_fb_pub.hpp"
 #include "net/rtprtcp/rtcpfb_nack.hpp"
 #include "net/rtprtcp/rtcp_pspli.hpp"
+#include "net/rtprtcp/rtcp_xr_dlrr.hpp"
+#include "net/rtprtcp/rtcp_xr_rrt.hpp"
 #include "rtc_dtls.hpp"
 #include "rtc_subscriber.hpp"
 #include "srtp_session.hpp"
 #include "utils/ipaddress.hpp"
 #include "utils/byte_crypto.hpp"
+#include "utils/timeex.hpp"
 #include <unordered_map>
 #include <map>
 #include <vector>
@@ -154,10 +157,12 @@ void single_udp_session_callback::on_read(const char* data, size_t data_size, ud
     log_warnf("fail to find session to handle packet, data len:%lu, remote address:%s",
         data_size, address.to_string().c_str());
 }
-//rtc_base_session(const std::string& roomId, const std::string& uid, room_callback_interface* room, int session_direction, const rtc_media_info& media_info);
+extern boost::asio::io_context& get_global_io_context();
+
 webrtc_session::webrtc_session(const std::string& roomId, const std::string& uid,
                 room_callback_interface* room, int session_direction,
-                const rtc_media_info& media_info):rtc_base_session(roomId, uid, room, session_direction, media_info) {
+                const rtc_media_info& media_info):timer_interface(get_global_io_context(), 500)
+            , rtc_base_session(roomId, uid, room, session_direction, media_info) {
     username_fragment_ = byte_crypto::get_random_string(16);
     user_pwd_          = byte_crypto::get_random_string(32);
 
@@ -166,6 +171,8 @@ webrtc_session::webrtc_session(const std::string& roomId, const std::string& uid
     dtls_trans_ = new rtc_dtls(this, single_udp_server_ptr->get_io_context());
 
     close_session_ = false;
+    start_timer();
+
     log_infof("webrtc_session construct username fragement:%s, user password:%s, roomid:%s, uid:%s, direction:%s",
         username_fragment_.c_str(), user_pwd_.c_str(), roomId_.c_str(), uid_.c_str(),
         (direction_ == RTC_DIRECTION_SEND) ? "send" : "receive");
@@ -173,6 +180,7 @@ webrtc_session::webrtc_session(const std::string& roomId, const std::string& uid
 
 webrtc_session::~webrtc_session() {
     close_session();
+    stop_timer();
     if (write_srtp_) {
         delete write_srtp_;
         write_srtp_ = nullptr;
@@ -207,6 +215,27 @@ void webrtc_session::close_session() {
     int ret = remove_webrtc_session(this);
     if (ret > 0) {
         log_infof("close webrtc session remove %d item from the global map", ret);
+    }
+}
+
+void webrtc_session::on_timer() {
+    const int64_t XR_RRT_COUNT = 2;
+    int64_t now_ms = now_millisec();
+    timer_count_++;
+
+    if ((timer_count_ % XR_RRT_COUNT) == 0) {
+        send_xr_rrt(now_ms);//for publisher
+    }
+    return;
+}
+
+void webrtc_session::send_xr_rrt(int64_t now_ms) {
+    for (auto& item : ssrc2publishers_) {
+        std::shared_ptr<rtc_publisher> publisher_ptr = item.second;
+        xr_rrt rrt;
+
+        publisher_ptr->get_xr_rrt(rrt, now_ms);
+        send_rtcp_data_in_dtls(rrt.get_data(), rrt.get_data_len());
     }
 }
 
@@ -378,8 +407,6 @@ void webrtc_session::on_handle_rtcp_data(const uint8_t* data, size_t data_len, c
         uint16_t payload_length = get_rtcp_length(header);
         size_t item_total = sizeof(rtcp_common_header) + payload_length;
 
-        log_debugf("handle rtcp payload len:%d, item len:%lu, type:%d, rtcp header len:%d",
-                payload_length, item_total, header->packet_type, ntohs(header->length));
         switch (header->packet_type)
         {
             case RTCP_SR:
@@ -417,6 +444,7 @@ void webrtc_session::on_handle_rtcp_data(const uint8_t* data, size_t data_len, c
             }
             case RTCP_XR:
             {
+                handle_rtcp_xr(p, item_total);
                 break;
             }
             default:
@@ -428,6 +456,48 @@ void webrtc_session::on_handle_rtcp_data(const uint8_t* data, size_t data_len, c
         left_len -= item_total;
     }
 
+    return;
+}
+
+void webrtc_session::handle_rtcp_xr(uint8_t* data, size_t data_len) {
+    rtcp_common_header* header = (rtcp_common_header*)data;
+    uint32_t* ssrc_p          = (uint32_t*)(header + 1);
+    rtcp_xr_header* xr_hdr    = (rtcp_xr_header*)(ssrc_p + 1);
+    int64_t xr_len            = data_len - sizeof(rtcp_common_header) - 4;
+
+    while(xr_len > 0) {
+        switch(xr_hdr->bt)
+        {
+            case XR_DLRR:
+            {
+                xr_dlrr_data* dlrr_block = (xr_dlrr_data*)xr_hdr;
+                handle_xr_dlrr(dlrr_block);
+                break;
+            }
+            default:
+            {
+                log_errorf("handle unkown xr type:%d", xr_hdr->bt);
+            }
+        }
+        int64_t offset = 4 + ntohs(xr_hdr->block_length)*4;
+        xr_len -= offset;
+        data   += offset;
+        xr_hdr = (rtcp_xr_header*)data;
+    }
+    return;
+}
+
+
+void webrtc_session::handle_xr_dlrr(xr_dlrr_data* dlrr_block) {
+    uint32_t media_ssrc = ntohl(dlrr_block->ssrc);
+    std::shared_ptr<rtc_publisher> publisher_ptr = get_publisher(media_ssrc);
+    
+    if (!publisher_ptr) {
+        log_errorf("fail to get publisher by ssrc:%u", media_ssrc);
+        return;
+    }
+
+    publisher_ptr->handle_xr_dlrr(dlrr_block);
     return;
 }
 

@@ -154,7 +154,7 @@ public:
         rtcp_header->padding     = 0;
         rtcp_header->count       = 0;
         rtcp_header->packet_type = RTCP_RR;
-        rtcp_header->length      = (uint32_t)htonl(data_len/4) - 1;
+        rtcp_header->length      = (uint32_t)htons(data_len/4) - 1;
         
         return (uint8_t*)this->data;
     }

@@ -31,6 +31,7 @@ public:
     void set_rtx_payloadtype(uint8_t type) {rtx_payloadtype_ = type;}
     int64_t get_expected_packets();
     int64_t get_packet_lost();
+    void update_rtt(int64_t rtt);
 
 private:
     void init_seq(uint16_t seq);
@@ -56,12 +57,15 @@ private:
     double jitter_         = 0;
     uint32_t lsr_          = 0;
     int64_t last_sr_ms_    = 0;
-    int64_t statics_count_ = 0;
+    int64_t timer_count_   = 0;
     int64_t discard_count_ = 0;
     int64_t total_lost_    = 0;
     int64_t expect_recv_   = 0;
     int64_t last_recv_     = 0;
     uint8_t frac_lost_     = 0;
+
+private:
+    int64_t rtt_ = 0;
 
 private:
     bool first_pkt_    = true;
