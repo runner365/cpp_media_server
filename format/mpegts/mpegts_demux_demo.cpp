@@ -2,6 +2,7 @@
 #include "av_format_interface.hpp"
 #include <string>
 #include <memory>
+#include <sstream>
 
 #define TS_MAX 188
 
@@ -12,16 +13,17 @@ public:
 
 public:
     virtual int output_packet(MEDIA_PACKET_PTR pkt_ptr) {
-        char desc[256];
-        snprintf(desc, sizeof(desc), "key:%s, av type:%d, codec type:%d, fmt type:%d, \
-dts:%ld, pts:%ld, keyframe:%d, seqframe:%d, data len:%lu",
-            pkt_ptr->key_.c_str(),
-            pkt_ptr->av_type_, pkt_ptr->codec_type_, pkt_ptr->fmt_type_,
-            pkt_ptr->dts_, pkt_ptr->pts_,
-            pkt_ptr->is_key_frame_, pkt_ptr->is_seq_hdr_,
-            pkt_ptr->buffer_ptr_->data_len());
+        std::stringstream desc;
+        desc << "key:" <<  pkt_ptr->key_
+            << ", av type:" << avtype_tostring(pkt_ptr->av_type_)
+            << ", codec type:" << codectype_tostring(pkt_ptr->codec_type_)
+            << ", fmt type:" << formattype_tostring(pkt_ptr->fmt_type_)
+            << ", dts" << pkt_ptr->dts_ << ", pts:" << pkt_ptr->pts_
+            << ", is key:" << pkt_ptr->is_key_frame_
+            << ", is seq hdr:" << pkt_ptr->is_seq_hdr_
+            << ", data len:" << pkt_ptr->buffer_ptr_->data_len();
         
-        log_info_data((uint8_t*)pkt_ptr->buffer_ptr_->data(), pkt_ptr->buffer_ptr_->data_len(), desc);
+        log_info_data((uint8_t*)pkt_ptr->buffer_ptr_->data(), pkt_ptr->buffer_ptr_->data_len(), desc.str().c_str());
         return 0;
     }
 };
