@@ -19,6 +19,11 @@ static RTCP_FB support_rtcp_fb_list[] = {
     },
     {
         .payload = 0,
+        .type = "rrtr",
+        .subtype = ""
+    },
+    {
+        .payload = 0,
         .type = "nack",
         .subtype = "pli"
     },
