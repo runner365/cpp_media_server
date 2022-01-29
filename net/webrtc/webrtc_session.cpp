@@ -173,6 +173,8 @@ webrtc_session::webrtc_session(const std::string& roomId, const std::string& uid
     close_session_ = false;
     start_timer();
 
+    last_xr_ntp_.ntp_sec  = 0;
+    last_xr_ntp_.ntp_frac = 0;
     log_infof("webrtc_session construct username fragement:%s, user password:%s, roomid:%s, uid:%s, direction:%s",
         username_fragment_.c_str(), user_pwd_.c_str(), roomId_.c_str(), uid_.c_str(),
         (direction_ == RTC_DIRECTION_SEND) ? "send" : "receive");
@@ -220,13 +222,47 @@ void webrtc_session::close_session() {
 
 void webrtc_session::on_timer() {
     const int64_t XR_RRT_COUNT = 2;
+    const int64_t XR_DLRR_COUNT = 2;
     int64_t now_ms = now_millisec();
     timer_count_++;
 
     if ((timer_count_ % XR_RRT_COUNT) == 0) {
         send_xr_rrt(now_ms);//for publisher
     }
+
+    if ((timer_count_ % XR_DLRR_COUNT) == 0) {
+        send_xr_dlrr(now_ms);//for subscriber
+    }
+
     return;
+}
+
+void webrtc_session::send_xr_dlrr(int64_t now_ms) {
+    xr_dlrr dlrr_obj;
+
+    if (last_xr_ms_ <= 0) {
+        return;
+    }
+
+    if ((now_ms - last_xr_ms_) > 5000) {
+        return;
+    }
+
+    dlrr_obj.set_ssrc(0x01);
+    for (auto& item : ssrc2subscribers_) {
+        std::shared_ptr<rtc_subscriber> subscriber_ptr = item.second;
+        uint32_t rtp_ssrc = subscriber_ptr->get_rtp_ssrc();
+
+        uint32_t lrr = (last_xr_ntp_.ntp_sec & 0xffff) << 16;
+        lrr |= (last_xr_ntp_.ntp_frac & 0xffff0000) >> 16;
+
+        int64_t diff_ms = now_ms - last_xr_ms_;
+        uint32_t dlrr = (uint32_t)(diff_ms / 1000) << 16;
+        dlrr |= (uint32_t)((diff_ms % 1000) * 65536 / 1000);
+        dlrr_obj.addr_dlrr_block(rtp_ssrc, lrr, dlrr);
+    }
+
+    send_rtcp_data_in_dtls(dlrr_obj.get_data(), dlrr_obj.get_data_len());
 }
 
 void webrtc_session::send_xr_rrt(int64_t now_ms) {
@@ -472,6 +508,14 @@ void webrtc_session::handle_rtcp_xr(uint8_t* data, size_t data_len) {
             {
                 xr_dlrr_data* dlrr_block = (xr_dlrr_data*)xr_hdr;
                 handle_xr_dlrr(dlrr_block);
+                break;
+            }
+            case XR_RRT:
+            {
+                xr_rrt_data* rrt_block = (xr_rrt_data*)xr_hdr;
+                last_xr_ntp_.ntp_sec  = ntohl(rrt_block->ntp_sec);
+                last_xr_ntp_.ntp_frac = ntohl(rrt_block->ntp_frac);
+                last_xr_ms_ = now_millisec();
                 break;
             }
             default:

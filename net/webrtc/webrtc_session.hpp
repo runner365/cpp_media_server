@@ -6,6 +6,7 @@
 #include "rtc_media_info.hpp"
 #include "rtc_publisher.hpp"
 #include "net/udp/udp_server.hpp"
+#include "utils/timeex.hpp"
 #include <openssl/asn1.h>
 #include <openssl/bn.h>
 #include <openssl/err.h>
@@ -82,6 +83,7 @@ private:
     void handle_xr_dlrr(xr_dlrr_data* dlrr_block);
     
     void send_xr_rrt(int64_t now_ms);
+    void send_xr_dlrr(int64_t now_ms);
     
 private://for ice
     std::string username_fragment_;
@@ -98,6 +100,8 @@ private:
 
 private:
     int64_t timer_count_ = 0;
+    NTP_TIMESTAMP last_xr_ntp_;
+    int64_t last_xr_ms_  = 0;//last xr rrt systime
 };
 
 #endif
