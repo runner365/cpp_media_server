@@ -1,6 +1,6 @@
 # cpp_media_server
 
-A media server is writen by C++11, and the network io is writen by Boost.Asio.
+A media server is written by C++11, and the network io is written by Boost.Asio.
 
 It support rtmp/hls/httpflv/websocket(flv)/webrtc.
 
