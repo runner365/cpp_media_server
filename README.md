@@ -39,10 +39,11 @@ webcodec encode media in flv(h264+opus) over websocket, we suggest webclient dem
 [webcodecpush](https://github.com/runner365/webcodecpush)
 
 ## codec help
-I profile the ffmpeg to support
+I provide the customized ffmpeg to support
 * h264/vp8, aac/opus in flv
 * h264/vp8, aac/opus in hls
-[my_ffmpeg](https://github.com/runner365/my_ffmpeg)
+
+the customized ffmpeg: [my_ffmpeg](https://github.com/runner365/my_ffmpeg)
 
 
 
