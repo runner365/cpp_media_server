@@ -117,6 +117,32 @@ static int get_apt_payload(const std::string& apt) {
     return atoi(payload.c_str());
 }
 
+static bool fmtp_has_h264profile(const std::vector<FMTP>& input_fmtps, int& payload, int& apt_payload) {
+    bool found = false;
+
+    for (auto input_fmtp : input_fmtps) {
+        size_t pos = input_fmtp.config.find("profile-level-id=");
+        if (pos != std::string::npos) {
+            payload = input_fmtp.payload;
+            found = true;
+            break;
+        }
+    }
+
+    if (!found) {
+        return false;
+    }
+
+    for (auto input_fmtp : input_fmtps) {
+        int current_apt_payload = get_apt_payload(input_fmtp.config);
+        if (current_apt_payload == payload) {
+            apt_payload = input_fmtp.payload;
+            return true;
+        }
+    }
+    return false;
+}
+
 static void get_support_fmtp(const std::vector<FMTP>& input_fmtps,
         std::vector<FMTP>& support_input_fmtps) {
     for (auto input_fmtp : input_fmtps) {
@@ -226,25 +252,16 @@ static void get_support_header_ext(const std::vector<HEADER_EXT>& input_header_e
 
 static void get_support_rtp_encoding(const std::vector<RTP_ENCODING>& input_rtp_encodings,
             std::vector<RTP_ENCODING>& support_rtp_encodings) {
-    bool has_video = false;
-    bool has_audio = false;
-
     for (auto enc : input_rtp_encodings) {
         for (size_t i = 0; i < sizeof(support_rtp_encoding_list)/sizeof(RTP_ENCODING); i++) {
             if ((support_rtp_encoding_list[i].codec == enc.codec) &&
                 (support_rtp_encoding_list[i].clock_rate == enc.clock_rate)) {
                 if (support_rtp_encoding_list[i].media_type == MEDIA_VIDEO_TYPE) {
-                    if (!has_video) {
-                        enc.media_type = MEDIA_VIDEO_TYPE;
-                        support_rtp_encodings.push_back(enc);
-                        has_video = true;
-                    }
+                    enc.media_type = MEDIA_VIDEO_TYPE;
+                    support_rtp_encodings.push_back(enc);
                 } else if (support_rtp_encoding_list[i].media_type == MEDIA_AUDIO_TYPE) {
-                    if (!has_audio) {
-                        enc.media_type = MEDIA_AUDIO_TYPE;
-                        support_rtp_encodings.push_back(enc);
-                        has_audio = true;
-                    }
+                    enc.media_type = MEDIA_AUDIO_TYPE;
+                    support_rtp_encodings.push_back(enc);
                 } else {
                     enc.media_type = MEDIA_UNKOWN_TYPE;
                     support_rtp_encodings.push_back(enc);
@@ -274,6 +291,78 @@ static void get_support_rtp_encoding(const std::vector<RTP_ENCODING>& input_rtp_
     return;
 }
 
+static void filter_fmts_and_encs_by_h264payload(std::vector<FMTP>& support_input_fmtps,
+                            std::vector<RTP_ENCODING>& support_rtp_encodings,
+                            int h264_payload, int h264_apt_payload) {
+    for (std::vector<FMTP>::iterator iter = support_input_fmtps.begin();
+        iter != support_input_fmtps.end();) {
+        if ((iter->payload != h264_payload) && (iter->payload != h264_apt_payload)) {
+            log_infof("remove payload:%d frome fmtps", iter->payload);
+            iter = support_input_fmtps.erase(iter);
+        } else {
+            iter++;
+        }
+    }
+
+    for (std::vector<RTP_ENCODING>::iterator iter = support_rtp_encodings.begin();
+        iter != support_rtp_encodings.end();) {
+        if ((iter->payload != h264_payload) && (iter->payload != h264_apt_payload)) {
+            log_infof("remove payload:%d frome rtp encodings", iter->payload);
+            iter = support_rtp_encodings.erase(iter);
+        } else {
+            iter++;
+        }
+    }
+    return;
+}
+
+static bool filter_fmts_and_encs_by_vp8(std::vector<FMTP>& support_input_fmtps,
+                            std::vector<RTP_ENCODING>& support_rtp_encodings) {
+    int vp8_payload = 0;
+    for (const auto& enc_item : support_rtp_encodings) {
+        size_t pos = enc_item.codec.find("VP8");
+        if (pos != std::string::npos) {
+            vp8_payload = enc_item.payload;
+            break;
+        }
+    }
+    if (vp8_payload == 0) {
+        return false;
+    }
+
+    int apt_payload = 0;
+    for (const auto& fmtp_item : support_input_fmtps) {
+        int config_payload = get_apt_payload(fmtp_item.config);
+        if (config_payload == vp8_payload) {
+            apt_payload = fmtp_item.payload;
+            break;
+        }
+    }
+    if (apt_payload == 0) {
+        return false;
+    }
+
+    for (std::vector<FMTP>::iterator iter = support_input_fmtps.begin();
+        iter != support_input_fmtps.end();) {
+        if (iter->payload != apt_payload) {
+            iter = support_input_fmtps.erase(iter);
+        } else {
+            iter++;
+        }
+    }
+
+    for (std::vector<RTP_ENCODING>::iterator iter = support_rtp_encodings.begin();
+        iter != support_rtp_encodings.end();) {
+        if ((iter->payload != vp8_payload) && (iter->payload == apt_payload)) {
+            iter = support_rtp_encodings.erase(iter);
+        } else {
+            iter++;
+        }
+    }
+
+    return true;
+}
+/*
 static void filter_fmts_by_encs(std::vector<FMTP>& support_input_fmtps,
                             std::vector<RTP_ENCODING>& support_rtp_encodings) {
     int rtx_payload   = -1;
@@ -356,6 +445,7 @@ static void filter_enc_by_fmts(std::vector<RTP_ENCODING>& support_rtp_encodings,
 
     return;
 }
+*/
 
 void get_support_rtc_media(const rtc_media_info& input, rtc_media_info& support_rtc_media) {
     support_rtc_media.version = input.version;
@@ -412,8 +502,21 @@ void get_support_rtc_media(const rtc_media_info& input, rtc_media_info& support_
         }
         log_infof("(pre)support fmtps:\r\n%s", pre_fmtp_ss.str().c_str());
 
-        filter_enc_by_fmts(support_rtc_info.rtp_encodings, support_rtc_info.fmtps);
-        filter_fmts_by_encs(support_rtc_info.fmtps, support_rtc_info.rtp_encodings);
+        if (support_rtc_info.media_type == "video") {
+            int h264_payload     = 0;
+            int h264_apt_payload = 0;
+            bool has_h264profile = fmtp_has_h264profile(support_rtc_info.fmtps,
+                                                h264_payload, h264_apt_payload);
+            if (has_h264profile && (h264_payload > 0) && (h264_apt_payload > 0)) {
+                log_infof("h264 payload:%d, apt payload:%d", h264_payload, h264_apt_payload);
+                filter_fmts_and_encs_by_h264payload(support_rtc_info.fmtps,
+                                                support_rtc_info.rtp_encodings,
+                                                h264_payload, h264_apt_payload);
+            } else {
+                filter_fmts_and_encs_by_vp8(support_rtc_info.fmtps,
+                                        support_rtc_info.rtp_encodings);
+            }
+        }
 
         std::stringstream enc_ss;
         for (auto enc_item : support_rtc_info.rtp_encodings) {

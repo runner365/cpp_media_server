@@ -18,6 +18,7 @@ const std::string ssl_pem_file = "../certs/server.key";
 const std::string cert_file = "../certs/server.crt";
 boost::asio::io_context io_context;
 boost::asio::io_context hls_io_context;
+static const bool webrtc_record_enable = false;
 
 void create_wss_server(boost::asio::io_context& io_context, uint16_t ws_port) {
 
@@ -35,6 +36,9 @@ boost::asio::io_context& get_global_io_context() {
     return io_context;
 }
 
+bool is_rtc_record_enable() {
+    return webrtc_record_enable;
+}
 int main(int argn, char** argv) {
     const uint16_t rtmp_def_port = 1935;
     const uint16_t ws_def_port = 1900;

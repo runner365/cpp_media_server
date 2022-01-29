@@ -19,6 +19,7 @@
 #include <cstring>
 
 extern boost::asio::io_context& get_global_io_context();
+extern bool is_rtc_record_enable();
 
 rtc_publisher::rtc_publisher(const std::string& roomId, const std::string& uid,
         room_callback_interface* room, rtc_base_session* session, const MEDIA_RTC_INFO& media_info):timer_interface(get_global_io_context(), 500)
@@ -180,8 +181,10 @@ void rtc_publisher::on_handle_rtppacket(rtp_packet* pkt) {
     log_debugf("rtp media:%s mid:%d:%d, abs_time:%u:%d",
         media_type_str_.c_str(), pkt_mid, ret_mid, abs_time, ret_abs_time);
     
-    if (((media_type_ == MEDIA_VIDEO_TYPE) && (codec_type_ == MEDIA_CODEC_H264))
-        || (media_type_ == MEDIA_AUDIO_TYPE)) {
+    if ( is_rtc_record_enable()
+        && ( ((media_type_ == MEDIA_VIDEO_TYPE) 
+            && (codec_type_ == MEDIA_CODEC_H264))
+            || (media_type_ == MEDIA_AUDIO_TYPE)) ) {
         jb_handler_.input_rtp_packet(roomId_, uid_, media_type_str_, stream_type_, clock_rate_, pkt);
     }
     
@@ -235,8 +238,6 @@ void rtc_publisher::handle_xr_dlrr(xr_dlrr_data* dlrr_block) {
     compound_now |= (ntp.ntp_frac & 0xffff0000) >> 16;
     
     if (compound_now < (dlrr + lrr)) {
-        log_errorf("handle xr dlrr error, compound_now:%u, dlrr:%u, lrr:%u",
-                compound_now, dlrr, lrr);
         return;
     }
     uint32_t rtt = compound_now - dlrr - lrr;

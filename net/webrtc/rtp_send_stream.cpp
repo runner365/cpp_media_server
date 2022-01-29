@@ -54,6 +54,9 @@ void rtp_send_stream::save_buffer(rtp_packet* input_pkt) {
 void rtp_send_stream::on_send_rtp_packet(rtp_packet* pkt) {
     send_statics_.update(pkt->get_data_length(),  pkt->get_local_ms());
 
+    pkt->set_payload_type(rtp_payload_type_);
+    pkt->set_ssrc(rtp_ssrc_);
+
     if (nack_enable_) {
         save_buffer(pkt);
     }
@@ -76,7 +79,7 @@ void rtp_send_stream::handle_fb_rtp_nack(rtcp_fb_nack* nack_pkt) {
     for (auto seq : lost_seqs) {
         auto pkt_iter = rtp_buffer_map_.find(seq);
         if (pkt_iter == rtp_buffer_map_.end()) {
-            log_errorf("the lost sequence(%d) is missed", seq);
+            //log_errorf("the lost sequence(%d) is missed", seq);
             continue;
         }
         if (pkt_iter->second.last_sent_timestamp == 0) {

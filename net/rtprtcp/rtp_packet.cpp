@@ -90,6 +90,9 @@ rtp_packet* rtp_packet::clone() {
     rtp_packet* new_pkt = rtp_packet::parse(new_data, this->get_data_length());
 
     new_pkt->is_clone_ = true;
+    new_pkt->mid_extension_id_ = this->mid_extension_id_;
+    new_pkt->abs_time_extension_id_ = this->abs_time_extension_id_;
+
     return new_pkt;
 }
 

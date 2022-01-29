@@ -188,7 +188,7 @@ bool srtp_session::encrypt_rtp(uint8_t** data, size_t* len) {
 bool srtp_session::decrypt_srtp(uint8_t* data, size_t* len) {
     srtp_err_status_t err = srtp_unprotect(session_, (void*)(data), (int*)(len));
     if (err != srtp_err_status_ok) {
-        log_errorf("srtp_unprotect error: <%s>, data len:%lu", srtp_session::errors.at(err), *len);
+        //log_errorf("srtp_unprotect error: <%s>, data len:%lu", srtp_session::errors.at(err), *len);
         return false;
     }
     return true;
@@ -218,7 +218,7 @@ bool srtp_session::encrypt_rtcp(uint8_t** data, size_t* len) {
 bool srtp_session::decrypt_srtcp(uint8_t* data, size_t* len) {
     srtp_err_status_t err = srtp_unprotect_rtcp(session_, (void*)(data), (int*)(len));
     if (err != srtp_err_status_ok) {
-        log_errorf("srtp_unprotect_rtcp error: %s", srtp_session::errors.at(err));
+        //log_errorf("srtp_unprotect_rtcp error: %s", srtp_session::errors.at(err));
         return false;
     }
     return true;

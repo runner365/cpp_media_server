@@ -58,21 +58,6 @@ public:
 public:
     boost::asio::io_context& get_io_context() {return io_ctx_;}
 
-    void try_read() {
-        socket_.async_receive_from(
-            boost::asio::buffer(buffer_, UDP_DATA_BUFFER_MAX), remote_ep_,
-            [this](boost::system::error_code ec, std::size_t bytes_recvd)
-            {
-                if (ec) {
-                    log_errorf("udp receive error:%s", ec.message().c_str());
-                    return;
-                }
-                udp_tuple recv_address(remote_ep_.address().to_string(), remote_ep_.port());
-                cb_->on_read(buffer_, bytes_recvd, recv_address);
-                this->try_read();
-            });
-    }
-
     void write(char* data, size_t len, udp_tuple remote_address) {
         std::shared_ptr<data_buffer> buffer_ptr = std::make_shared<data_buffer>();
         buffer_ptr->append_data(data, len);
@@ -86,6 +71,24 @@ public:
     }
 
 private:
+    void try_read() {
+        socket_.async_receive_from(
+            boost::asio::buffer(buffer_, UDP_DATA_BUFFER_MAX), remote_ep_,
+            [this](boost::system::error_code ec, std::size_t bytes_recvd)
+            {
+                if (ec) {
+                    log_errorf("udp receive error:%s", ec.message().c_str());
+                    return;
+                }
+                udp_tuple recv_address(remote_ep_.address().to_string(), remote_ep_.port());
+                char* cb_data = new char[bytes_recvd + 1];
+                memcpy(cb_data, buffer_, bytes_recvd);
+                cb_->on_read(cb_data, bytes_recvd, recv_address);
+                delete[] cb_data;
+                this->try_read();
+            });
+    }
+
     void do_write() {
         if (send_buffer_queue_.empty()) {
             return;
