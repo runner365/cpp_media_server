@@ -128,7 +128,7 @@ std::string rtp_packet::dump() {
                     ss << "      mid:" << mid_str << "\r\n";
                 } else if (item.first == abs_time_extension_id_) {
                     uint32_t abs_time_24bits = read_3bytes(item_ext->value);
-                    int64_t send_ms = abs_time_to_ms(abs_time_24bits);
+                    double send_ms = abs_time_to_ms(abs_time_24bits);
                     ss << "      abs time:" << send_ms << "\r\n";
                 }
             }

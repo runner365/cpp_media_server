@@ -40,9 +40,15 @@ char* Logger::get_buffer() {
 
 void Logger::logf(const char* level, const char* buffer, const char* filename, int line) {
     std::stringstream ss;
+    std::string name(filename);
+
+    size_t pos = name.rfind("/");
+    if (pos != name.npos) {
+        name = name.substr(pos + 1);
+    }
 
     ss << "[" << level << "]" << "[" << get_now_str() << "]"
-       << "[" << filename << ":" << line << "]"
+       << "[" << name << ":" << line << "]"
        << buffer << "\r\n";
     
     if (filename_.empty()) {

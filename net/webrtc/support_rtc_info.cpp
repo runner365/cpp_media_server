@@ -85,6 +85,10 @@ static FMTP support_fmtp_list[] = {
         .payload = 0
     },
     {
+        .config  = "x-google-start-bitrate",
+        .payload = 0
+    },
+    {
         .config  = "profile-level-id=42e01f;level-asymmetry-allowed=1;packetization-mode=1",
         .payload = 0
     },

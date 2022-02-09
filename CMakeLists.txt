@@ -27,6 +27,8 @@ include_directories(./
                     ./net/httpflv
                     ./net/rtprtcp
                     ./net/hls
+                    ./net/webrtc
+                    ./net/webrtc/libwebrtc
                     ./format
                     ./format/flv
                     ./utils
@@ -195,6 +197,11 @@ add_executable(cpp_media_server
             net/webrtc/jitterbuffer.cpp
             net/webrtc/pack_handle_h264.cpp
             net/webrtc/pack_handle_vp8.cpp
+            net/webrtc/libwebrtc/modules/remote_bitrate_estimator/bwe_defines.cc
+            net/webrtc/libwebrtc/modules/remote_bitrate_estimator/inter_arrival.cc
+            net/webrtc/libwebrtc/modules/remote_bitrate_estimator/overuse_detector.cc
+            net/webrtc/libwebrtc/modules/remote_bitrate_estimator/overuse_estimator.cc
+            net/webrtc/libwebrtc/modules/remote_bitrate_estimator/remote_bitrate_estimator_abs_send_time.cc
             net/httpflv/httpflv_server.cpp
             net/httpflv/httpflv_writer.cpp
             utils/logger.cpp

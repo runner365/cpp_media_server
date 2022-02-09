@@ -55,14 +55,14 @@ inline int64_t ntp_to_millisec(const NTP_TIMESTAMP& ntp) {
     return (int64_t)(ntp.ntp_sec) * 1000 + (int64_t)(std::round(((double)(ntp.ntp_frac) * 1000) / NTP_FRACT_UNIT));
 }
 
-inline int64_t abs_time_to_ms(uint32_t abs_time_24bits) {
+inline double abs_time_to_ms(uint32_t abs_time_24bits) {
     const int kAbsSendTimeInterArrivalUpshift = 8;
     const int kAbsSendTimeFraction = 18;
     const int kInterArrivalShift = kAbsSendTimeFraction + kAbsSendTimeInterArrivalUpshift;
     const double kTimestampToMs = 1000.0 / static_cast<double>(1 << kInterArrivalShift);
     
     uint32_t timestamp = abs_time_24bits << kAbsSendTimeInterArrivalUpshift;
-    int64_t send_time_ms = static_cast<int64_t>(timestamp) * kTimestampToMs;
+    double send_time_ms = static_cast<int64_t>(timestamp) * kTimestampToMs;
     
     return send_time_ms;
 }

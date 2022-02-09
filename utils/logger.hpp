@@ -55,7 +55,7 @@ inline void snprintbuffer(char* buffer, size_t size, const char* fmt, ...) {
     {                                                                      \
         char* buffer = Logger::get_instance()->get_buffer();               \
         snprintbuffer(buffer, LOGGER_BUFFER_SIZE, __VA_ARGS__);            \
-        Logger::get_instance()->logf("ERROR", buffer, __FILE__, __LINE__); \
+        Logger::get_instance()->logf("E", buffer, __FILE__, __LINE__); \
     }
 
 #define log_warnf(...) \
@@ -63,7 +63,7 @@ inline void snprintbuffer(char* buffer, size_t size, const char* fmt, ...) {
     {                                                                      \
         char* buffer = Logger::get_instance()->get_buffer();               \
         snprintbuffer(buffer, LOGGER_BUFFER_SIZE, __VA_ARGS__);            \
-        Logger::get_instance()->logf("ERROR", buffer, __FILE__, __LINE__); \
+        Logger::get_instance()->logf("W", buffer, __FILE__, __LINE__); \
     }
 
 #define log_infof(...)                                                     \
@@ -71,7 +71,7 @@ inline void snprintbuffer(char* buffer, size_t size, const char* fmt, ...) {
     {                                                                      \
         char* buffer = Logger::get_instance()->get_buffer();               \
         snprintbuffer(buffer, LOGGER_BUFFER_SIZE, __VA_ARGS__);            \
-        Logger::get_instance()->logf("INFO", buffer, __FILE__, __LINE__);  \
+        Logger::get_instance()->logf("I", buffer, __FILE__, __LINE__);  \
     }
 
 #define log_debugf(...) \
@@ -79,7 +79,7 @@ inline void snprintbuffer(char* buffer, size_t size, const char* fmt, ...) {
     {                                                                      \
         char* buffer = Logger::get_instance()->get_buffer();               \
         snprintbuffer(buffer, LOGGER_BUFFER_SIZE, __VA_ARGS__);            \
-        Logger::get_instance()->logf("DEBUG", buffer, __FILE__, __LINE__); \
+        Logger::get_instance()->logf("D", buffer, __FILE__, __LINE__); \
     }
 
 inline void log_info_data(const uint8_t* data, int len, const char* dscr) {
