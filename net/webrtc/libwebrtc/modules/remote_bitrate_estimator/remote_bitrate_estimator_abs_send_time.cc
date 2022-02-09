@@ -68,7 +68,7 @@ void RemoteBitrateEstimatorAbsSendTime::IncomingPacketInfo(
   // Shift up send time to use the full 32 bits that inter_arrival works with,
   // so wrapping works properly.
   uint32_t timestamp = send_time_24bits << kAbsSendTimeInterArrivalUpshift;
-  int64_t send_time_ms = static_cast<int64_t>(timestamp) * kTimestampToMs;
+  //int64_t send_time_ms = static_cast<int64_t>(timestamp) * kTimestampToMs;
 
   int64_t now_ms = now_millisec();
   // TODO(holmer): SSRCs are only needed for REMB, should be broken out from
@@ -95,23 +95,37 @@ void RemoteBitrateEstimatorAbsSendTime::IncomingPacketInfo(
       detector_.Detect(estimator_->offset(), ts_delta_ms,
                        estimator_->num_of_deltas(), arrival_time_ms);
     }
-#if 0
+
+    if (last_update_ms_ <= 0) {
+        last_update_ms_ = now_ms;
+    } else if ((now_ms - last_update_ms_) > 1000) {
+        update_estimate = true;
+        last_update_ms_ = now_ms;
+    }
+    int64_t incoming_rate = -1;
+
     if (!update_estimate) {
       // Check if it's time for a periodic update or if we should update because
       // of an over-use.
       if (detector_.State() == BandwidthUsage::kBwOverusing) {
         size_t count_per_second = 0;
-        int64_t incoming_rate = 8 * incoming_bitrate_.bytes_per_second(arrival_time_ms, count_per_second);
+        incoming_rate = 8 * incoming_bitrate_.bytes_per_second(arrival_time_ms, count_per_second);
 
+        update_estimate = true;
+        last_update_ms_ = now_ms;
         (void)count_per_second;
-        if (incoming_rate &&
-            remote_rate_.TimeToReduceFurther(Timestamp::ms(now_ms),
-                                             DataRate::bps(*incoming_rate))) {
-          update_estimate = true;
-        }
       }
     }
 
+    if (update_estimate) {
+        log_infof("detector state:%d, slope:%.02f, offset:%.02f, var_noise:%.02f",
+                detector_.State(), estimator_->slope(), estimator_->offset(), estimator_->var_noise());
+        if (detector_.State() == BandwidthUsage::kBwOverusing) {
+            constexpr double kDefaultBackoffFactor = 0.90;
+            uint32_t target_bitrate_bps = incoming_rate * 0.90;
+        }
+    }
+#if 0
     if (update_estimate) {
       // The first overuse should immediately trigger a new estimate.
       // We also have to update the estimate immediately if we are overusing

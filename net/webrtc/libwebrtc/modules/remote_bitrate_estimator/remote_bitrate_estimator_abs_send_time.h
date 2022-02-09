@@ -59,6 +59,7 @@ class RemoteBitrateEstimatorAbsSendTime : public RemoteBitrateEstimator {
   stream_statics incoming_bitrate_;
 
   Ssrcs ssrcs_;
+  int64_t last_update_ms_ = -1;
   //AimdRateControl remote_rate_;
 };
 

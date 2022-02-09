@@ -28,7 +28,8 @@ rtc_publisher::rtc_publisher(const std::string& roomId, const std::string& uid,
         , room_(room)
         , session_(session)
         , media_info_(media_info)
-        , jb_handler_(this, get_global_io_context()) {
+        , jb_handler_(this, get_global_io_context())
+        , bitrate_estimate_(this) {
     pid_ = make_uuid();
 
     media_type_str_ = media_info_.media_type;
@@ -178,8 +179,12 @@ void rtc_publisher::on_handle_rtppacket(rtp_packet* pkt) {
     bool ret_abs_time = false;
     ret_mid = pkt->read_mid(pkt_mid);
     ret_abs_time = pkt->read_abs_time(abs_time);
-    log_debugf("rtp media:%s mid:%d:%d, abs_time:%u:%d",
-        media_type_str_.c_str(), pkt_mid, ret_mid, abs_time, ret_abs_time);
+    if (ret_abs_time) {
+        int64_t arrivalTimeMs = now_millisec();
+        bitrate_estimate_.IncomingPacket(arrivalTimeMs, pkt->get_payload_length(), pkt->get_ssrc(), abs_time);
+        log_debugf("rtp media:%s mid:%d:%d, abs_time:%u:%d",
+            media_type_str_.c_str(), pkt_mid, ret_mid, abs_time, ret_abs_time);
+    }
     
     if ( is_rtc_record_enable()
         && ( ((media_type_ == MEDIA_VIDEO_TYPE) 
@@ -394,6 +399,14 @@ void rtc_publisher::media_packet_output(std::shared_ptr<MEDIA_PACKET> pkt_ptr) {
     set_rtmp_info(pkt_ptr);
     room_->on_rtmp_callback(roomId_, uid_, stream_type_, pkt_ptr);
     
+    return;
+}
+
+void rtc_publisher::OnRembServerAvailableBitrate(
+       const webrtc::RemoteBitrateEstimator* remoteBitrateEstimator,
+       const std::vector<uint32_t>& ssrcs,
+       uint32_t availableBitrate) {
+
     return;
 }
 

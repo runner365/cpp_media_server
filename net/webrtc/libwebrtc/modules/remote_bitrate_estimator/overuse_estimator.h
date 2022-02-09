@@ -53,6 +53,8 @@ class OveruseEstimator {
   // Returns the estimated inter-arrival time delta offset in ms.
   double offset() const { return offset_; }
 
+  double slope() const { return slope_; }
+
   // Returns the number of deltas which the current over-use estimator state is
   // based on.
   unsigned int num_of_deltas() const { return num_of_deltas_; }

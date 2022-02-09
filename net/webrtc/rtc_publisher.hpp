@@ -13,6 +13,8 @@
 #include "jitterbuffer.hpp"
 #include "pack_handle_pub.hpp"
 #include "data_buffer.hpp"
+#include "modules/remote_bitrate_estimator/remote_bitrate_estimator_abs_send_time.h"
+
 #include <vector>
 #include <queue>
 #include <stdint.h>
@@ -22,7 +24,7 @@
 class rtc_base_session;
 class room_callback_interface;
 
-class rtc_publisher : public timer_interface, public rtc_stream_callback, public jitterbuffer_callbackI, public pack_callbackI
+class rtc_publisher : public timer_interface, public rtc_stream_callback, public jitterbuffer_callbackI, public pack_callbackI, public webrtc::RemoteBitrateObserver
 {
 public:
     rtc_publisher(const std::string& roomId, const std::string& uid,
@@ -68,6 +70,12 @@ public://implement
     virtual void pack_handle_reset(std::shared_ptr<rtp_packet_info> pkt_ptr) override;
     virtual void media_packet_output(std::shared_ptr<MEDIA_PACKET> pkt_ptr) override;
 
+public://implement webrtc::RemoteBitrateObserver
+   virtual void OnRembServerAvailableBitrate(
+       const webrtc::RemoteBitrateEstimator* remoteBitrateEstimator,
+       const std::vector<uint32_t>& ssrcs,
+       uint32_t availableBitrate) override;
+
 private:
     void set_rtmp_info(std::shared_ptr<MEDIA_PACKET> pkt_ptr);
     
@@ -106,6 +114,10 @@ private:
 private:
     int64_t last_rrt_ = 0;
     float   rtt_      = 0;
+
+private:
+    webrtc::RemoteBitrateEstimatorAbsSendTime bitrate_estimate_;
+
 };
 
 #endif
