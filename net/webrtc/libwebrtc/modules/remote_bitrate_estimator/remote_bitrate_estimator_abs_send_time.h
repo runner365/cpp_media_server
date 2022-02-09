@@ -57,6 +57,7 @@ class RemoteBitrateEstimatorAbsSendTime : public RemoteBitrateEstimator {
   std::unique_ptr<OveruseEstimator> estimator_;
   OveruseDetector detector_;
   stream_statics incoming_bitrate_;
+  int64_t avg_bitrate_ = -1;
 
   Ssrcs ssrcs_;
   int64_t last_update_ms_ = -1;

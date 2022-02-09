@@ -7,6 +7,8 @@
 #include "rtc_publisher.hpp"
 #include "net/udp/udp_server.hpp"
 #include "utils/timeex.hpp"
+#include "modules/remote_bitrate_estimator/remote_bitrate_estimator_abs_send_time.h"
+
 #include <openssl/asn1.h>
 #include <openssl/bn.h>
 #include <openssl/err.h>
@@ -33,7 +35,7 @@ protected:
     virtual void on_read(const char* data, size_t data_size, udp_tuple address) override;
 };
 
-class webrtc_session : public rtc_base_session, public timer_interface
+class webrtc_session : public rtc_base_session, public timer_interface, public webrtc::RemoteBitrateObserver
 {
 public:
     webrtc_session(const std::string& roomId, const std::string& uid,
@@ -65,6 +67,12 @@ public:
 
 public://implement timer_interface
     virtual void on_timer() override;
+
+public://implement webrtc::RemoteBitrateObserver
+   virtual void OnRembServerAvailableBitrate(
+       const webrtc::RemoteBitrateEstimator* remoteBitrateEstimator,
+       const std::vector<uint32_t>& ssrcs,
+       uint32_t availableBitrate) override;
 
 private:
     virtual void send_rtp_data_in_dtls(uint8_t* data, size_t data_len) override;
@@ -102,6 +110,9 @@ private:
     int64_t timer_count_ = 0;
     NTP_TIMESTAMP last_xr_ntp_;
     int64_t last_xr_ms_  = 0;//last xr rrt systime
+
+private:
+    webrtc::RemoteBitrateEstimatorAbsSendTime bitrate_estimate_;
 };
 
 #endif

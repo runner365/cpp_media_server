@@ -28,8 +28,7 @@ rtc_publisher::rtc_publisher(const std::string& roomId, const std::string& uid,
         , room_(room)
         , session_(session)
         , media_info_(media_info)
-        , jb_handler_(this, get_global_io_context())
-        , bitrate_estimate_(this) {
+        , jb_handler_(this, get_global_io_context()) {
     pid_ = make_uuid();
 
     media_type_str_ = media_info_.media_type;
@@ -171,19 +170,6 @@ void rtc_publisher::on_handle_rtppacket(rtp_packet* pkt) {
         log_errorf("unkown packet payload:%d, packet ssrc:%u, media type:%s, has rtx:%d, rtp ssrc:%u, rtx ssrc:%u",
             pkt->get_payload(), pkt->get_ssrc(), media_type_str_.c_str(), has_rtx_, rtp_ssrc_, rtx_ssrc_);
         return;
-    }
-
-    uint8_t pkt_mid = 0;
-    bool ret_mid = false;
-    uint32_t abs_time = 0;
-    bool ret_abs_time = false;
-    ret_mid = pkt->read_mid(pkt_mid);
-    ret_abs_time = pkt->read_abs_time(abs_time);
-    if (ret_abs_time) {
-        int64_t arrivalTimeMs = now_millisec();
-        bitrate_estimate_.IncomingPacket(arrivalTimeMs, pkt->get_payload_length(), pkt->get_ssrc(), abs_time);
-        log_debugf("rtp media:%s mid:%d:%d, abs_time:%u:%d",
-            media_type_str_.c_str(), pkt_mid, ret_mid, abs_time, ret_abs_time);
     }
     
     if ( is_rtc_record_enable()
@@ -402,13 +388,6 @@ void rtc_publisher::media_packet_output(std::shared_ptr<MEDIA_PACKET> pkt_ptr) {
     return;
 }
 
-void rtc_publisher::OnRembServerAvailableBitrate(
-       const webrtc::RemoteBitrateEstimator* remoteBitrateEstimator,
-       const std::vector<uint32_t>& ssrcs,
-       uint32_t availableBitrate) {
-
-    return;
-}
 
 void rtc_publisher::set_rtmp_info(std::shared_ptr<MEDIA_PACKET> pkt_ptr) {
     pkt_ptr->app_ = roomId_;

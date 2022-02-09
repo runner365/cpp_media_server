@@ -162,7 +162,8 @@ extern boost::asio::io_context& get_global_io_context();
 webrtc_session::webrtc_session(const std::string& roomId, const std::string& uid,
                 room_callback_interface* room, int session_direction,
                 const rtc_media_info& media_info):rtc_base_session(roomId, uid, room, session_direction, media_info)
-            , timer_interface(get_global_io_context(), 500) {
+            , timer_interface(get_global_io_context(), 500)
+            , bitrate_estimate_(this) {
     username_fragment_ = byte_crypto::get_random_string(16);
     user_pwd_          = byte_crypto::get_random_string(32);
 
@@ -405,13 +406,35 @@ void webrtc_session::on_handle_rtp_data(const uint8_t* data, size_t data_len, co
         return;
     }
 
-    auto publisher_ptr = rtc_base_session::get_publisher(pkt->get_ssrc());
+    uint32_t ssrc = pkt->get_ssrc();
+    auto publisher_ptr = rtc_base_session::get_publisher(ssrc);
     if (!publisher_ptr) {
         log_errorf("fail to get publisher object by ssrc:%u", pkt->get_ssrc());
         return;
     }
 
+    uint32_t abs_time = 0;
+    bool ret_abs_time = false;
+    int abstime_id = publisher_ptr->get_abstime_id();
+    pkt->set_abs_time_extension_id((uint8_t)abstime_id);
+    ret_abs_time = pkt->read_abs_time(abs_time);
     publisher_ptr->on_handle_rtppacket(pkt);
+    
+    if (ret_abs_time) {
+        int64_t arrivalTimeMs = now_millisec();
+        bitrate_estimate_.IncomingPacket(arrivalTimeMs, pkt->get_payload_length(), ssrc, abs_time);
+        log_debugf("rtp media:%s abs_time:%u, ssrc:%u",
+            publisher_ptr->get_media_type().c_str(), abs_time, ssrc);
+    }
+
+    return;
+}
+
+void webrtc_session::OnRembServerAvailableBitrate(
+       const webrtc::RemoteBitrateEstimator* remoteBitrateEstimator,
+       const std::vector<uint32_t>& ssrcs,
+       uint32_t availableBitrate) {
+
     return;
 }
 

@@ -96,34 +96,44 @@ void RemoteBitrateEstimatorAbsSendTime::IncomingPacketInfo(
                        estimator_->num_of_deltas(), arrival_time_ms);
     }
 
+    int64_t incoming_rate = -1;
     if (last_update_ms_ <= 0) {
         last_update_ms_ = now_ms;
-    } else if ((now_ms - last_update_ms_) > 1000) {
-        update_estimate = true;
+    } else if ((now_ms - last_update_ms_) > 2000) {
         last_update_ms_ = now_ms;
+        update_estimate = true;
+
+        size_t count_per_second = 0;
+        incoming_rate = 8 * incoming_bitrate_.bytes_per_second(arrival_time_ms, count_per_second);
+        if (avg_bitrate_ <= 0) {
+            avg_bitrate_ = incoming_rate;
+        } else {
+            avg_bitrate_ += (incoming_rate - avg_bitrate_)/5;
+        }
     }
-    int64_t incoming_rate = -1;
 
     if (!update_estimate) {
       // Check if it's time for a periodic update or if we should update because
       // of an over-use.
       if (detector_.State() == BandwidthUsage::kBwOverusing) {
-        size_t count_per_second = 0;
-        incoming_rate = 8 * incoming_bitrate_.bytes_per_second(arrival_time_ms, count_per_second);
-
         update_estimate = true;
-        last_update_ms_ = now_ms;
-        (void)count_per_second;
       }
     }
 
     if (update_estimate) {
-        log_infof("detector state:%d, slope:%.02f, offset:%.02f, var_noise:%.02f",
-                detector_.State(), estimator_->slope(), estimator_->offset(), estimator_->var_noise());
+        uint32_t target_bitrate_bps = 0;
+
         if (detector_.State() == BandwidthUsage::kBwOverusing) {
             constexpr double kDefaultBackoffFactor = 0.90;
-            uint32_t target_bitrate_bps = incoming_rate * 0.90;
+            target_bitrate_bps = avg_bitrate_ * kDefaultBackoffFactor;
+        } else if (detector_.State() == BandwidthUsage::kBwUnderusing) {
+            constexpr double kDefaultForwardoffFactor = 1.05;
+            target_bitrate_bps = avg_bitrate_ * kDefaultForwardoffFactor;
+        } else {
+            target_bitrate_bps = avg_bitrate_;
         }
+        log_infof("detector state:%d, slope:%.02f, offset:%.02f, var_noise:%.02f, target_bitrate_bps:%u, avg_bitrate:%ld, incoming_rate:%ld",
+                detector_.State(), estimator_->slope(), estimator_->offset(), estimator_->var_noise(), target_bitrate_bps, avg_bitrate_, incoming_rate);
     }
 #if 0
     if (update_estimate) {

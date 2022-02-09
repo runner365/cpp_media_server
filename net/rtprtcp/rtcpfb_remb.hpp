@@ -92,7 +92,7 @@ public:
         return data_;
     }
 
-    void set_ssrcs(const std::vector<uint32_t> ssrcs) {
+    void set_ssrcs(const std::vector<uint32_t>& ssrcs) {
         ssrcs_ = ssrcs;
     }
 
