@@ -121,17 +121,31 @@ void RemoteBitrateEstimatorAbsSendTime::IncomingPacketInfo(
     }
 
     if (update_estimate) {
-        uint32_t target_bitrate_bps = 0;
-
         if (detector_.State() == BandwidthUsage::kBwOverusing) {
             constexpr double kDefaultBackoffFactor = 0.90;
             target_bitrate_bps = avg_bitrate_ * kDefaultBackoffFactor;
+            stable_count_ = 0;
         } else if (detector_.State() == BandwidthUsage::kBwUnderusing) {
-            constexpr double kDefaultForwardoffFactor = 1.05;
+            constexpr double kDefaultForwardoffFactor = 1.08;
             target_bitrate_bps = avg_bitrate_ * kDefaultForwardoffFactor;
+            stable_count_ = 0;
         } else {
-            target_bitrate_bps = avg_bitrate_;
+            constexpr double kDefaultoffFactor = 1.05;
+            if (stable_count_++ > 4) {
+                ststable_count_ = 0;
+                arget_bitrate_bps = avg_bitrate_ * kDefaultoffFactor;
+            } else {
+                arget_bitrate_bps = avg_bitrate_;
+            }
         }
+        if (observer_ != nullptr) {
+            auto ssrcs = Keys(ssrcs_);
+            observer_->OnRembServerAvailableBitrate(
+                   this,
+                   ssrcs,
+                   target_bitrate_bps);
+        }
+        
         log_infof("detector state:%d, slope:%.02f, offset:%.02f, var_noise:%.02f, target_bitrate_bps:%u, avg_bitrate:%ld, incoming_rate:%ld",
                 detector_.State(), estimator_->slope(), estimator_->offset(), estimator_->var_noise(), target_bitrate_bps, avg_bitrate_, incoming_rate);
     }

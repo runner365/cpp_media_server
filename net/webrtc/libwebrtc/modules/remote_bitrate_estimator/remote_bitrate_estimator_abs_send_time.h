@@ -58,6 +58,7 @@ class RemoteBitrateEstimatorAbsSendTime : public RemoteBitrateEstimator {
   OveruseDetector detector_;
   stream_statics incoming_bitrate_;
   int64_t avg_bitrate_ = -1;
+  int stable_count_ = 0;
 
   Ssrcs ssrcs_;
   int64_t last_update_ms_ = -1;

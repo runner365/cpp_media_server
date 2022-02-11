@@ -13,6 +13,7 @@
 #include "net/rtprtcp/rtcp_pspli.hpp"
 #include "net/rtprtcp/rtcp_xr_dlrr.hpp"
 #include "net/rtprtcp/rtcp_xr_rrt.hpp"
+#include "net/rtprtcp/rtcpfb_remb.hpp"
 #include "rtc_dtls.hpp"
 #include "rtc_subscriber.hpp"
 #include "srtp_session.hpp"
@@ -434,6 +435,27 @@ void webrtc_session::OnRembServerAvailableBitrate(
        const webrtc::RemoteBitrateEstimator* remoteBitrateEstimator,
        const std::vector<uint32_t>& ssrcs,
        uint32_t availableBitrate) {
+    rtcpfb_remb remb_pkt(0, 0);
+    remb_pkt.set_ssrcs(ssrcs);
+    remb_pkt.set_bitrate((int64_t)availableBitrate);
+
+    size_t data_len = 0;
+    uint8_t* remb_data = remb_pkt.serial(data_len);
+
+    if (remb_data && (data_len > 0)) {
+        //std::stringstream ss;
+
+        //ss << "ssrcs:[";
+        //for (auto& ssrc : ssrcs) {
+        //    ss << " " << ssrc;
+        //}
+        //ss << " ]";
+        //ss << ", bitrate:" << availableBitrate;
+        //ss << ", datalen:" << data_len;
+        //log_infof("send remb %s", ss.str().c_str());
+        //log_info_data(remb_data, data_len, "remb data");
+        send_rtcp_data_in_dtls(remb_data, data_len);
+    }
 
     return;
 }
