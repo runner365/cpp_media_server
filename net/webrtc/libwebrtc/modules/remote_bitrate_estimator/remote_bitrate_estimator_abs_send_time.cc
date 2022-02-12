@@ -126,11 +126,11 @@ void RemoteBitrateEstimatorAbsSendTime::IncomingPacketInfo(
         target_bitrate_bps = avg_bitrate_ * kDefaultBackoffFactor;
         stable_count_ = 0;
       } else if (detector_.State() == BandwidthUsage::kBwUnderusing) {
-        constexpr double kDefaultForwardoffFactor = 1.08;
+        constexpr double kDefaultForwardoffFactor = 1.10;
         target_bitrate_bps = avg_bitrate_ * kDefaultForwardoffFactor;
         stable_count_ = 0;
       } else {
-        constexpr double kDefaultoffFactor = 1.05;
+        constexpr double kDefaultoffFactor = 1.08;
         if (stable_count_++ > 4) {
           stable_count_ = 0;
           target_bitrate_bps = avg_bitrate_ * kDefaultoffFactor;
