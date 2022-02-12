@@ -106,9 +106,9 @@ void RemoteBitrateEstimatorAbsSendTime::IncomingPacketInfo(
         size_t count_per_second = 0;
         incoming_rate = 8 * incoming_bitrate_.bytes_per_second(arrival_time_ms, count_per_second);
         if (avg_bitrate_ <= 0) {
-            avg_bitrate_ = incoming_rate;
+          avg_bitrate_ = incoming_rate;
         } else {
-            avg_bitrate_ += (incoming_rate - avg_bitrate_)/5;
+          avg_bitrate_ += (incoming_rate - avg_bitrate_)/5;
         }
     }
 
@@ -121,54 +121,36 @@ void RemoteBitrateEstimatorAbsSendTime::IncomingPacketInfo(
     }
 
     if (update_estimate) {
-        if (detector_.State() == BandwidthUsage::kBwOverusing) {
-            constexpr double kDefaultBackoffFactor = 0.90;
-            target_bitrate_bps = avg_bitrate_ * kDefaultBackoffFactor;
-            stable_count_ = 0;
-        } else if (detector_.State() == BandwidthUsage::kBwUnderusing) {
-            constexpr double kDefaultForwardoffFactor = 1.08;
-            target_bitrate_bps = avg_bitrate_ * kDefaultForwardoffFactor;
-            stable_count_ = 0;
+      if (detector_.State() == BandwidthUsage::kBwOverusing) {
+        constexpr double kDefaultBackoffFactor = 0.90;
+        target_bitrate_bps = avg_bitrate_ * kDefaultBackoffFactor;
+        stable_count_ = 0;
+      } else if (detector_.State() == BandwidthUsage::kBwUnderusing) {
+        constexpr double kDefaultForwardoffFactor = 1.08;
+        target_bitrate_bps = avg_bitrate_ * kDefaultForwardoffFactor;
+        stable_count_ = 0;
+      } else {
+        constexpr double kDefaultoffFactor = 1.05;
+        if (stable_count_++ > 4) {
+          stable_count_ = 0;
+          target_bitrate_bps = avg_bitrate_ * kDefaultoffFactor;
         } else {
-            constexpr double kDefaultoffFactor = 1.05;
-            if (stable_count_++ > 4) {
-                ststable_count_ = 0;
-                arget_bitrate_bps = avg_bitrate_ * kDefaultoffFactor;
-            } else {
-                arget_bitrate_bps = avg_bitrate_;
-            }
+          target_bitrate_bps = avg_bitrate_;
         }
-        if (observer_ != nullptr) {
-            auto ssrcs = Keys(ssrcs_);
-            observer_->OnRembServerAvailableBitrate(
-                   this,
-                   ssrcs,
-                   target_bitrate_bps);
-        }
-        
-        log_infof("detector state:%d, slope:%.02f, offset:%.02f, var_noise:%.02f, target_bitrate_bps:%u, avg_bitrate:%ld, incoming_rate:%ld",
-                detector_.State(), estimator_->slope(), estimator_->offset(), estimator_->var_noise(), target_bitrate_bps, avg_bitrate_, incoming_rate);
+      }
+      if (observer_ != nullptr) {
+        auto ssrcs = Keys(ssrcs_);
+        observer_->OnRembServerAvailableBitrate(
+               this,
+               ssrcs,
+               target_bitrate_bps);
+      }
+      
+      log_debugf("detector state:%d, slope:%.02f, offset:%.02f, var_noise:%.02f, target_bitrate_bps:%u, avg_bitrate:%ld, incoming_rate:%ld",
+              detector_.State(), estimator_->slope(), estimator_->offset(), estimator_->var_noise(), target_bitrate_bps, avg_bitrate_, incoming_rate);
     }
-#if 0
-    if (update_estimate) {
-      // The first overuse should immediately trigger a new estimate.
-      // We also have to update the estimate immediately if we are overusing
-      // and the target bitrate is too high compared to what we are receiving.
-      const RateControlInput input(
-          detector_.State(),
-          OptionalRateFromOptionalBps(incoming_bitrate_.Rate(arrival_time_ms)));
-      target_bitrate_bps =
-          remote_rate_.Update(&input, Timestamp::ms(now_ms)).bps<uint32_t>();
-      update_estimate = remote_rate_.ValidEstimate();
-      ssrcs = Keys(ssrcs_);
-    }
-#endif
   }
-
-  //if (update_estimate) {
-  //  available_bitrate = target_bitrate_bps;
-  //  observer_->OnRembServerAvailableBitrate(this, ssrcs, target_bitrate_bps);
-  //}
+  return;
 }
 
 void RemoteBitrateEstimatorAbsSendTime::TimeoutStreams(int64_t now_ms) {

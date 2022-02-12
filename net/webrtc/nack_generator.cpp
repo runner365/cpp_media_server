@@ -3,6 +3,7 @@
 #include "logger.hpp"
 #include "timeex.hpp"
 #include <algorithm>
+#include <sstream>
 
 extern boost::asio::io_context& get_global_io_context();
 
@@ -41,10 +42,19 @@ void nack_generator::update_nacklist(rtp_packet* pkt) {
         //the seq has been in the nack list, remove it.
         if (iter != nack_map_.end()) {
             nack_map_.erase(iter);
+            log_debugf("remove from nack map, ssrc:%u, seq:%d, last seq:%d, payloadtype:%d",
+                pkt->get_ssrc(), seq, last_seq_, pkt->get_payload_type());
             return;
         }
-        log_infof("receive the old packet which is not in nack list, ssrc:%u, seq:%d, payloadtype:%d",
-            pkt->get_ssrc(), seq, pkt->get_payload_type());
+        std::stringstream ss;
+
+        ss << "[";
+        for (auto item : nack_map_) {
+            ss << " " << item.first;
+        }
+        ss << " ]";
+        log_debugf("receive the old packet which is not in nack list, ssrc:%u, seq:%d, last seq:%d, payloadtype:%d, nack list:%s",
+            pkt->get_ssrc(), seq, last_seq_, pkt->get_payload_type(), ss.str().c_str());
         return;
     }
 
