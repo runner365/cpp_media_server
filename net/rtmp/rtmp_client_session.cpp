@@ -9,6 +9,7 @@ rtmp_client_session::rtmp_client_session(boost::asio::io_context& io_context, rt
     , cb_(callback)
     , hs_(this)
     , ctrl_handler_(this)
+    , io_ctx_(io_context)
 {
 
 }
@@ -34,8 +35,10 @@ int rtmp_client_session::start(const std::string& url, bool is_publish) {
     log_infof("get rtmp info host:%s, port:%d, tcurl:%s, app:%s, streamname:%s, key:%s, method:%s",
         host_.c_str(), port_, req_.tcurl_.c_str(), req_.app_.c_str(), req_.stream_name_.c_str(),
         req_.key_.c_str(), is_publish_desc());
-    
-    conn_.connect(host_, port_);
+   
+    io_ctx_.post([this](){
+        this->conn_.connect(this->host_, this->port_);
+    });
 
     return 0;
 }
@@ -61,10 +64,13 @@ int rtmp_client_session::rtmp_write(MEDIA_PACKET_PTR pkt_ptr) {
         log_errorf("doesn't support av type:%d", (int)pkt_ptr->av_type_);
         return -1;
     }
-    write_data_by_chunk_stream(this, csid,
+    
+    io_ctx_.post([this, csid, type_id, pkt_ptr](){
+        write_data_by_chunk_stream(this, csid,
                     pkt_ptr->dts_, type_id,
-                    pkt_ptr->streamid_, get_chunk_size(),
+                    pkt_ptr->streamid_, this->get_chunk_size(),
                     pkt_ptr->buffer_ptr_);
+    });
     return RTMP_OK;
 }
 
@@ -119,13 +125,23 @@ void rtmp_client_session::on_write(int ret_code, size_t sent_size) {
 void rtmp_client_session::on_read(int ret_code, const char* data, size_t data_size) {
     if (ret_code != 0) {
         log_errorf("rtmp on read error:%d", ret_code);
-        close();
+        //close();
+        cb_->on_close(ret_code);
         return;
     }
 
     recv_buffer_.append_data(data, data_size);
 
-    (void)handle_message();
+    int ret = handle_message();
+    if (ret < 0) {
+        close();
+        cb_->on_close(ret);
+        return;
+    } else if (ret == RTMP_NEED_READ_MORE) {
+        try_read();
+        return;
+    }
+    log_infof("handle message unkown return:%d", ret);
 }
 
 int rtmp_client_session::handle_message() {
@@ -133,28 +149,32 @@ int rtmp_client_session::handle_message() {
 
     if (client_phase_ == client_c0c1_phase) {
         if (!recv_buffer_.require(rtmp_client_handshake::s0s1s2_size)) {
-            try_read();
             return RTMP_NEED_READ_MORE;
         }
         uint8_t* p = (uint8_t*)recv_buffer_.data();
-        uint8_t* c2 = p + 1;
-        size_t c2_len = 1536;
-        uint8_t ver = read_4bytes(c2 + 4);
-        log_debugf("rtmp server version:%u", ver);
-        
+        ret = hs_.parse_s0s1s2(p, rtmp_client_handshake::s0s1s2_size);
+        if (ret < 0) {
+            log_errorf("rtmp handshake parse s0s1s3 error:%d", ret);
+            return ret;
+        }
+        ret = hs_.send_c2();
+        if (ret < 0) {
+            log_errorf("rtmp handshake send c2 error:%d", ret);
+            return ret;
+        }
+        log_infof("rtmp client handshake is done");
+
         client_phase_ = client_connect_phase;
-        conn_.send((char*)c2, c2_len);
 
         //send rtmp connect
         ret = rtmp_connect();
         if (ret < 0) {
             log_errorf("rtmp connect error:%d", ret);
-            close();
             return -1;
         }
+        log_infof("rtmp client connect...");
         client_phase_ = client_connect_resp_phase;
         recv_buffer_.reset();
-        try_read();
         return RTMP_NEED_READ_MORE;
     }
     
@@ -162,17 +182,13 @@ int rtmp_client_session::handle_message() {
         ret = receive_resp_message();
         if (ret < 0) {
             log_errorf("rtmp connect resp error:%d", ret);
-            close();
             return -1;
         } else if (ret == RTMP_NEED_READ_MORE) {
             return RTMP_NEED_READ_MORE;
         } else if (ret == 0) {
-            if (client_phase_ == client_connect_resp_phase) {
-                try_read();
-            }
+            client_phase_ = client_create_stream_phase;
         } else {
             log_errorf("rtmp connect resp unkown return:%d", ret);
-            close();
             return -1;
         }
     }
@@ -183,27 +199,19 @@ int rtmp_client_session::handle_message() {
         ret = rtmp_createstream();
         if (ret < 0) {
             log_errorf("rtmp create stream error:%d", ret);
-            close();
             return ret;
         }
         recv_buffer_.reset();
-        log_infof("client phase change [%s] to [%s]",
-            get_client_phase_desc(client_phase_),
-            get_client_phase_desc(client_create_stream_resp_phase));
         client_phase_ = client_create_stream_resp_phase;
-        try_read();
         return RTMP_NEED_READ_MORE;
     }
 
     if (client_phase_ == client_create_stream_resp_phase) {
-        log_infof("client phase create_stream_resp receiving messages...");
         ret = receive_resp_message();
         if (ret < 0) {
             log_errorf("rtmp receive resp message error:%d", ret);
-            close();
             return ret;
         } else if (ret == RTMP_NEED_READ_MORE) {
-            try_read();
             return RTMP_NEED_READ_MORE;
         } else if (ret == 0) {
             if (req_.publish_flag_) {
@@ -211,10 +219,10 @@ int rtmp_client_session::handle_message() {
             } else {
                 client_phase_ = client_create_play_phase;
             }
+            log_infof("change to rtmp phase:%s", get_client_phase_desc(client_phase_));
             recv_buffer_.reset();
         } else {
             log_errorf("rtmp connect unkown return:%d", ret);
-            close();
             return -1;
         }
     }
@@ -223,37 +231,32 @@ int rtmp_client_session::handle_message() {
         ret = rtmp_play();
         if (ret < 0) {
             log_errorf("rtmp play error:%d", ret);
-            close();
             return ret;
         }
         recv_buffer_.reset();
-        try_read();
         client_phase_ = client_media_handle_phase;
-        return 0;
+        return RTMP_NEED_READ_MORE;
     }
 
     if (client_phase_ == client_create_publish_phase) {
         ret = rtmp_publish();
         if (ret < 0) {
             log_errorf("rtmp publish error:%d", ret);
-            close();
             return ret;
         }
         recv_buffer_.reset();
-        try_read();
         client_phase_ = client_media_handle_phase;
         log_infof("client publish send done.");
-        return 0;
+        return RTMP_NEED_READ_MORE;
     }
 
     if (client_phase_ == client_media_handle_phase) {
         log_debugf("rtmp client start media %s", is_publish_desc());
         ret = receive_resp_message();
         if (ret < 0) {
-            close();
             return ret;
         }
-        try_read();
+        return RTMP_NEED_READ_MORE;
     }
     return ret;
 }
@@ -278,7 +281,7 @@ int rtmp_client_session::receive_resp_message() {
         }
 
         if ((cs_ptr->type_id_ >= RTMP_CONTROL_SET_CHUNK_SIZE) && (cs_ptr->type_id_ <= RTMP_CONTROL_SET_PEER_BANDWIDTH)) {
-            ret = ctrl_handler_.handle_rtmp_control_message(cs_ptr);
+            ret = ctrl_handler_.handle_rtmp_control_message(cs_ptr, false);
             if (ret < RTMP_OK) {
                 return ret;
             }

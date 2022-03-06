@@ -183,6 +183,7 @@ int rtmp_session_base::read_chunk_stream(CHUNK_STREAM_PTR& cs_ptr) {
     if (!fmt_ready_) {
         ret = read_fmt_csid();
         if (ret != 0) {
+            log_errorf("read_fmt_csid return:%d", ret);
             return ret;
         }
         fmt_ready_ = true;
@@ -194,14 +195,16 @@ int rtmp_session_base::read_chunk_stream(CHUNK_STREAM_PTR& cs_ptr) {
         cs_map_.insert(std::make_pair(csid_, cs_ptr));
     } else {
         cs_ptr =iter->second;
+        cs_ptr->chunk_size_ = chunk_size_;
     }
 
     ret = cs_ptr->read_message_header(fmt_, csid_);
     if ((ret < RTMP_OK) || (ret == RTMP_NEED_READ_MORE)) {
+        log_errorf("read_message_header return:%d", ret);
         return ret;
     } else {
-        //cs_ptr->dump_header();
         ret = cs_ptr->read_message_payload();
+        //cs_ptr->dump_header();
         if (ret == RTMP_OK) {
             fmt_ready_ = false;
             //cs_ptr->dump_payload();

@@ -39,6 +39,7 @@ httpflv_server::httpflv_server(boost::asio::io_context& io_ctx, uint16_t port):t
 {
     run();
     start_timer();
+    log_infof("http flv server is listen:%d", port);
 }
 
 httpflv_server::~httpflv_server()

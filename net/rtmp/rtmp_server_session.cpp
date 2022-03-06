@@ -186,7 +186,7 @@ int rtmp_server_session::handle_request() {
     if (server_phase_ == initial_phase) {
         ret = hs_.handle_c0c1();
         if ((ret < 0) || (ret == RTMP_NEED_READ_MORE)) {
-            return ret;
+	    log_infof("try to rtmp handshake in simple mode");
         }
         recv_buffer_.reset();//be ready to receive c2;
         log_infof("rtmp session phase become c0c1.");

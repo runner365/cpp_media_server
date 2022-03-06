@@ -6,10 +6,10 @@
 #include <string>
 #include <stdint.h>
 
-#define RTMP_OK             0
-#define RTMP_NEED_READ_MORE 1
-
-#define CHUNK_DEF_SIZE      128
+#define RTMP_OK               0
+#define RTMP_NEED_READ_MORE   1
+#define RTMP_SIMPLE_HANDSHAKE 2
+#define CHUNK_DEF_SIZE        128
 
 typedef enum {
     RTMP_CONTROL_SET_CHUNK_SIZE = 1,//idSetChunkSize = 1,

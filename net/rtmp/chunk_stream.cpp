@@ -359,9 +359,9 @@ int chunk_stream::read_message_payload() {
 void chunk_stream::dump_header() {
     data_buffer* buffer_p = session_->get_recv_buffer();
     log_infof("basic header: fmt=%d, csid:%d; message header: timestamp=%lu, \
-msglen=%u, typeid:%d, msg streamid:%u, remain:%ld, recv buffer len:%lu",
+msglen=%u, typeid:%d, msg streamid:%u, remain:%ld, recv buffer len:%lu, chunk_size_:%u",
         fmt_, csid_, timestamp32_, msg_len_, type_id_, msg_stream_id_, remain_,
-        buffer_p->data_len());
+        buffer_p->data_len(), chunk_size_);
 }
 
 void chunk_stream::dump_payload() {

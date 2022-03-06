@@ -17,6 +17,7 @@ class rtmp_client_callbackI
 {
 public:
     virtual void on_message(int ret_code, MEDIA_PACKET_PTR pkt_ptr) = 0;
+    virtual void on_close(int ret_code) = 0;
 };
 
 class rtmp_control_handler;
@@ -73,6 +74,7 @@ private:
 
 private:
     rtmp_control_handler ctrl_handler_;
+    boost::asio::io_context& io_ctx_;
 };
 
 #endif

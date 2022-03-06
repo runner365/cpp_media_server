@@ -14,7 +14,6 @@ http_session::http_session(boost::asio::ip::tcp::socket socket, http_callbackI* 
 
 http_session::~http_session() {
     close();
-    log_infof("http session destruct......")
 }
 
 void http_session::try_read() {
@@ -22,7 +21,6 @@ void http_session::try_read() {
 }
 
 void http_session::write(const char* data, size_t len) {
-    log_infof("http session send len:%lu", len);
     session_ptr_->async_write(data, len);
 }
 
@@ -32,11 +30,12 @@ void http_session::close() {
         return;
     }
     is_closed_ = true;
-    log_infof("http session close....");
     
     if (response_ptr_.get()) {
         response_ptr_->set_close(true);
     }
+    log_infof("http session is closed...");
+    session_ptr_->close();
     return;
 }
 
@@ -45,14 +44,12 @@ void http_session::on_write(int ret_code, size_t sent_size) {
         log_warnf("http session write callback return code:%d", ret_code);
         close();
     }
-    log_infof("http session on write data len:%lu", sent_size);
     keep_alive();
     return;
 }
 
 void http_session::on_read(int ret_code, const char* data, size_t data_size) {
     if (ret_code != 0) {
-        log_warnf("http session read callback return code:%d", ret_code);
         close();
     }
 

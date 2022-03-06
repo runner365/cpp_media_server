@@ -9,6 +9,7 @@
 #include <assert.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <assert.h>
 #include <openssl/evp.h>
 #include <openssl/hmac.h>
 #include <openssl/dh.h>
@@ -30,7 +31,7 @@ enum HANDSHAKE_SCHEMA {
     SCHEMA1
 };
 
-//SIZE = 62
+// 62bytes Flash Player key which is used to sign the client packet.
 static uint8_t GENUINE_FLASH_PLAYER_KEY[] = {
     0x47, 0x65, 0x6E, 0x75, 0x69, 0x6E, 0x65, 0x20,
     0x41, 0x64, 0x6F, 0x62, 0x65, 0x20, 0x46, 0x6C,
@@ -41,15 +42,54 @@ static uint8_t GENUINE_FLASH_PLAYER_KEY[] = {
     0x2E, 0x00, 0xD0, 0xD1, 0x02, 0x9E, 0x7E, 0x57,
     0x6E, 0xEC, 0x5D, 0x2D, 0x29, 0x80, 0x6F, 0xAB,
     0x93, 0xB8, 0xE6, 0x36, 0xCF, 0xEB, 0x31, 0xAE
-};
+};//SIZE = 62
 
-inline void rtmp_random_generate(char* bytes, int size)
-{   
+// 68bytes FMS key which is used to sign the sever packet.
+static uint8_t GENUINE_FLASH_MEDIA_SERVER[] = {
+    0x47, 0x65, 0x6e, 0x75, 0x69, 0x6e, 0x65, 0x20,
+    0x41, 0x64, 0x6f, 0x62, 0x65, 0x20, 0x46, 0x6c,
+    0x61, 0x73, 0x68, 0x20, 0x4d, 0x65, 0x64, 0x69,
+    0x61, 0x20, 0x53, 0x65, 0x72, 0x76, 0x65, 0x72,
+    0x20, 0x30, 0x30, 0x31, // Genuine Adobe Flash Media Server 001
+    0xf0, 0xee, 0xc2, 0x4a, 0x80, 0x68, 0xbe, 0xe8,
+    0x2e, 0x00, 0xd0, 0xd1, 0x02, 0x9e, 0x7e, 0x57,
+    0x6e, 0xec, 0x5d, 0x2d, 0x29, 0x80, 0x6f, 0xab,
+    0x93, 0xb8, 0xe6, 0x36, 0xcf, 0xeb, 0x31, 0xae
+}; // 68
+
+inline void rtmp_random_generate(uint8_t* bytes, int size) {   
     for (int i = 0; i < size; i++) {
         // the common value in [0x0f, 0xf0]
         bytes[i] = 0x0f + (random() % (256 - 0x0f - 0x0f));
     }
 }
+
+inline uint32_t calc_valid_digest_offset(uint32_t offset) {
+    const int MAX_OFFSET = 764 - 32 - 4;
+    
+    uint32_t valid_offset = 0;
+    uint8_t* p = (uint8_t*)&offset;
+    valid_offset += *p++;
+    valid_offset += *p++;
+    valid_offset += *p++;
+    valid_offset += *p++;
+    
+    return valid_offset % MAX_OFFSET;
+}
+
+inline uint32_t calc_valid_key_offset(uint32_t offset) {
+    const int MAX_OFFSET = 764 - 128 - 4;
+    
+    uint32_t valid_offset = 0;
+    uint8_t* p = (uint8_t*)&offset;
+    valid_offset += *p++;
+    valid_offset += *p++;
+    valid_offset += *p++;
+    valid_offset += *p++;
+    
+    return valid_offset % MAX_OFFSET;
+}
+
 #if OPENSSL_VERSION_NUMBER < 0x10100000L
 static void DH_get0_key(const DH *dh, const BIGNUM **pub_key, const BIGNUM **priv_key)
 {
@@ -345,9 +385,9 @@ class c2s2_handle
 {
 public:
     c2s2_handle() {
-        rtmp_random_generate(random_, sizeof(random_));
+        rtmp_random_generate((uint8_t*)random_, sizeof(random_));
 
-        rtmp_random_generate(digest_, 32);
+        rtmp_random_generate((uint8_t*)digest_, 32);
     }
     ~c2s2_handle() {
 
@@ -416,454 +456,33 @@ private:
 class c1s1_handle
 {
 public:
-    c1s1_handle() {
-    }
-    ~c1s1_handle() {
-        if (key_random0_) {
-            delete[] key_random0_;
-        }
-        if (key_random1_) {
-            delete[] key_random1_;
-        }
-        if (digest_random0_) {
-            delete[] digest_random0_;
-        }
-        if (digest_random1_) {
-            delete[] digest_random1_;
-        }
-    }
+    c1s1_handle();
+    ~c1s1_handle();
 
 public:
-    int parse_c1(char* c1, size_t len) {
-        int ret = 0;
-        uint8_t* p = (uint8_t*)c1;
-
-        memcpy(c1_data_, c1, sizeof(c1_data_));
-
-        c1_time_ = read_4bytes(p);
-        p += 4;
-        c1_version_ = read_4bytes(p);
-        p += 4;
-
-        //schema1 first which make ffmpeg happy
-        ret = try_schema1(p);
-        if (ret != 0) {
-            return ret;
-        }
-
-        bool is_valid = check_digest_valid(SCHEMA1);
-        if (!is_valid) {
-            log_errorf("check schema0 digest valid error...");
-            log_infof("try rtmp handshae schema1...");
-            ret = try_schema0(p);
-            if (ret != 0) {
-                return ret;
-            }
-            is_valid = check_digest_valid(SCHEMA0);
-            if (!is_valid) {
-                log_errorf("check schema0 digest valid error...");
-                return -1;
-            }
-            schema_ = SCHEMA1;
-            log_infof("check schema1 digest valid ok...");
-        } else {
-            schema_ = SCHEMA0;
-            log_infof("check schema0 digest valid ok...");
-        }
-
-        return ret;
-    }
-
-    int make_s1(char* s1_data) {
-        int ret;
-        s1_time_sec_ = get_c1_time();//use c1 time
-        s1_version_  = 0x01000504;
-
-        DH_gen_key dh;
-        ret = dh.init(true);
-        if (ret != 0) {
-            log_errorf("dh init error...");
-            return ret;
-        }
-
-        uint32_t key_size = 128;
-        ret = dh.copy_shared_key(c1_key_data_, sizeof(c1_key_data_), s1_key_data_, key_size);
-        if (ret != 0) {
-            log_errorf("dh copy shared key error...");
-            return ret;
-        }
-        char* s1_digest = nullptr;
-        ret = make_s1_digest(s1_digest);
-        if (ret != 0) {
-            log_errorf("make s1 digest error:%d", ret);
-            return ret;
-        }
-        memcpy(s1_digest_data_, s1_digest, sizeof(s1_digest_data_));
-        delete[] s1_digest;
-
-        uint8_t* p = (uint8_t*)s1_data;
-        write_4bytes(p, s1_time_sec_);
-        p += 4;
-        write_4bytes(p, s1_version_);
-        p += 4;
-
-        if (schema_ == SCHEMA0) {
-            make_schema0(p);
-        } else if (schema_ == SCHEMA1) {
-            make_schema1(p);
-        } else {
-            log_errorf("schema not init:%d", (int)schema_);
-            return -1;
-        }
-        return 0;
-    }
-
-    char* get_c1_digest() {
-        return digest_data_;
-    }
-
-    uint32_t get_c1_time() {
-        return c1_time_;
-    }
-
-    char* get_c1_data() {
-        return c1_data_;
-    }
+    int parse_c1(char* c1, size_t len);
+    int parse_s0s1s2(char* s0s1s2_data, size_t len);
+    int make_s1(char* s1_data);
+    int make_c0c1(char* c0c1_data);
+    int make_c2(char* c2_data);
+    uint32_t get_c1_time();
+    char* get_c1_digest();
+    char* get_c1_data();
 
 private:
-    int parse_key(uint8_t* data) {
-        uint8_t* p = data;
-        //key: 764bytes
-        //---- random-data: (offset)bytes
-        //---- key-data: 128bytes
-        //---- random-data: (764-offset-128-4)bytes
-        //---- offset: 4bytes
-
-        uint8_t* offset_p = p + 764 - sizeof(uint32_t);
-        c1_key_offset_ = read_4bytes(offset_p);
-
-        uint32_t real_offset = calc_valid_key_offset(c1_key_offset_);
-        assert(real_offset < (764 - sizeof(uint32_t)));
-        key_random0_size_ = real_offset;
-        assert(key_random0_size_ < (764 - sizeof(uint32_t)));
-        key_random0_ = new char[key_random0_size_];
-        memcpy(key_random0_, p, key_random0_size_);
-        p += key_random0_size_;
-
-        memcpy(c1_key_data_, p, sizeof(c1_key_data_));//128bytes key
-        p += sizeof(c1_key_data_);
-
-        key_random1_size_ = 764 - real_offset - 128 - 4;
-        assert(key_random1_size_ < (764 - sizeof(uint32_t)));
-        key_random1_ = new char[key_random1_size_];
-        memcpy(key_random1_, p, key_random1_size_);
-        p += key_random1_size_ + 4;
-
-        assert(p == (data + 764));
-
-        return 0;
-    }
-
-    int parse_digest(uint8_t* data) {
-        uint8_t* p = data;
-
-        //digest: 764bytes
-        //---- offset: 4bytes
-        //---- random-data: (offset)bytes
-        //---- digest-data: 32bytes
-        //---- random-data: (764-4-offset-32)bytes
-        c1_digest_offset_ = read_4bytes(p);
-        p += 4;
-
-        uint32_t real_offset = calc_valid_digest_offset(c1_digest_offset_);
-        digest_random0_size_ = real_offset;
-        assert(digest_random0_size_ < (764 - sizeof(uint32_t)));
-        digest_random0_ = new char[digest_random0_size_];
-        memcpy(digest_random0_, p, digest_random0_size_);
-        p += digest_random0_size_;
-
-        memcpy(digest_data_, p, sizeof(digest_data_));
-        p += sizeof(digest_data_);
-
-        digest_random1_size_ = 764 - 4 - real_offset - 32;
-        assert(digest_random1_size_ < (764 - sizeof(uint32_t)));
-        digest_random1_ = new char[digest_random1_size_];
-        memcpy(digest_random1_, p, digest_random1_size_);
-    
-        assert((p + digest_random1_size_) == (data + 764));
-        return 0;
-    }
-
-    bool check_digest_valid(enum HANDSHAKE_SCHEMA schema) {
-        size_t first_part_len = 0;
-        size_t second_part_len = 0;
-        char c1_digest[32];
-        size_t digest_len = 32;
-
-        hmac_sha256_handler hmac;
-
-        int ret = hmac.init(GENUINE_FLASH_PLAYER_KEY, 30);
-        if (ret != 0) {
-            log_errorf("hmac init error.");
-            return ret;
-        }
-
-        if (schema == SCHEMA0) {
-            // time + ver + key part(764) + digest offset(4bytes) + rand0 part
-            first_part_len  = 8 + 764 + 4 + digest_random0_size_;
-            second_part_len = sizeof(c1_data_) - first_part_len - 32;
-        } else if (schema == SCHEMA1) {
-            // time + ver + digest offset(4bytes) + rand0 part
-            first_part_len  = 8 + 4 + digest_random0_size_;
-            second_part_len = sizeof(c1_data_) - first_part_len - 32;
-        } else {
-            log_errorf("unkown handshake schema:%d", (int)schema);
-            return -1;
-        }
-        
-        ret = hmac.update((uint8_t*)c1_data_, first_part_len);
-        if (ret != 0) {
-            log_errorf("hmac update error.");
-            return ret;
-        }
-        ret = hmac.update((uint8_t*)c1_data_ + first_part_len + 32, second_part_len);
-        if (ret != 0) {
-            log_errorf("hmac update error.");
-            return ret;
-        }
-        ret = hmac.get_final((uint8_t*)c1_digest, digest_len);
-        if (ret != 0) {
-            log_errorf("hmac final error.");
-            return ret;
-        }
-        assert(digest_len == 32);
-
-        bool is_equal = bytes_is_equal(digest_data_, c1_digest, sizeof(digest_data_));
-
-        if (!is_equal) {
-            log_info_data((uint8_t*)digest_data_, sizeof(digest_data_), "digest_data");
-            log_info_data((uint8_t*)c1_digest, sizeof(digest_data_), "make c1 digest data");
-        }
-
-        return is_equal;
-    }
-
-    uint32_t calc_valid_key_offset(uint32_t offset)
-    {
-        const int MAX_OFFSET = 764 - 128 - 4;
-        
-        uint32_t valid_offset = 0;
-        uint8_t* p = (uint8_t*)&offset;
-        valid_offset += *p++;
-        valid_offset += *p++;
-        valid_offset += *p++;
-        valid_offset += *p++;
-        
-        return valid_offset % MAX_OFFSET;
-    }
-
-    uint32_t calc_valid_digest_offset(uint32_t offset)
-    {
-        const int MAX_OFFSET = 764 - 32 - 4;
-        
-        uint32_t valid_offset = 0;
-        uint8_t* p = (uint8_t*)&offset;
-        valid_offset += *p++;
-        valid_offset += *p++;
-        valid_offset += *p++;
-        valid_offset += *p++;
-        
-        return valid_offset % MAX_OFFSET;
-    }
-
-    int try_schema0(uint8_t* data) {
-        uint8_t* p = data;
-
-        //schema0: key first + digest second
-        parse_key(p);
-        p += 764;
-        parse_digest(p);
-
-        return 0;
-    }
-
-    int try_schema1(uint8_t* data) {
-        uint8_t* p = data;
-
-        //schema1: digest first + key second
-        parse_digest(p);
-        p += 764;
-        parse_key(p);
-
-        return 0;
-    }
-
-    int make_c1_digest(char*& c1_digest) {
-        /*
-         * c1s1 is splited by digest:
-         *     c1s1-part1: n bytes (time, version, key and digest-part1).
-         *     digest-data: 32bytes
-         *     c1s1-part2: (1536-n-32)bytes (digest-part2)
-         */
-        char* c1s1_joined_data = new char[1536 -32];
-        uint8_t* p = (uint8_t*)c1s1_joined_data;
-
-        /* ++++++ c1s1-part1: (time, version, key and digest-part1)++++++ */
-        write_4bytes(p, c1_time_);
-        p += 4;
-        write_4bytes(p, c1_version_);
-        p += 4;
-
-        /* +++++ key ++++ */
-        memcpy(p, key_random0_, key_random0_size_);
-        p += key_random0_size_;
-
-        memcpy(p, c1_key_data_, sizeof(c1_key_data_));
-        p += sizeof(c1_key_data_);
-
-        memcpy(p, key_random1_, key_random1_size_);
-        p += key_random1_size_;
-
-        write_4bytes(p, c1_key_offset_);
-        p += 4;
-
-        /* +++++ digest-part1 +++++ */
-        write_4bytes(p, c1_digest_offset_);
-        p += 4;
-
-        memcpy(p, digest_random0_, digest_random0_size_);
-        p += digest_random0_size_;
-
-        //skip digest-data: 32bytes
-
-        /* +++++ digest-part2 +++++ */
-        memcpy(p, digest_random1_, digest_random1_size_);
-        p += digest_random1_size_;
-        assert(p == ((uint8_t*)c1s1_joined_data + 1536 -32));
-
-        c1_digest = new char[HASH_SIZE];
-
-        int ret = hmac_sha256((const char*)GENUINE_FLASH_PLAYER_KEY, 30,
-                        c1s1_joined_data, 1536 - 32, c1_digest);
-        if (ret != 0) {
-            delete[] c1s1_joined_data;
-            return ret;
-        }
-
-        delete[] c1s1_joined_data;
-        return ret;
-    }
-
-    int make_s1_digest(char*& s1_digest) {
-        const int JOINED_BYTES_SIZE = 1536 - 32;
-        int ret = 0;
-        char joined_bytes[JOINED_BYTES_SIZE];
-        uint8_t* p = (uint8_t*)joined_bytes;
-
-        write_4bytes(p, s1_time_sec_);
-        p += 4;
-        write_4bytes(p, s1_version_);
-        p += 4;
-
-        /* ++++++ key part ++++++ */
-        memcpy(p, key_random0_, key_random0_size_);
-        p += key_random0_size_;
-        
-        memcpy(p, c1_key_data_, sizeof(c1_key_data_));
-        p += sizeof(c1_key_data_);
-
-        memcpy(p, key_random1_, key_random1_size_);
-        p += key_random1_size_;
-
-        write_4bytes(p, c1_key_offset_);
-        p += 4;
-
-        /* ++++++ digest part(no digest inside) ++++++ */
-        write_4bytes(p, c1_digest_offset_);
-        p += 4;
-
-        memcpy(p, digest_random0_, digest_random0_size_);
-        p += digest_random0_size_;
-
-        //no digest inside: less 32 bytes
-    
-        memcpy(p, digest_random1_, digest_random1_size_);
-        p += digest_random1_size_;
-
-        s1_digest = new char[HASH_SIZE];
-        ret = hmac_sha256((char*)GENUINE_FLASH_PLAYER_KEY, 36, joined_bytes, JOINED_BYTES_SIZE, s1_digest);
-        if (ret != 0) {
-            log_errorf("hmac_sha256 error:%d", ret);
-            return ret;
-        }
-
-        return ret;
-    }
-
-    int make_key(uint8_t* data) {
-        uint8_t* p = data;
-        //key: 764bytes
-        //---- random-data: (offset)bytes
-        //---- key-data: 128bytes
-        //---- random-data: (764-offset-128-4)bytes
-        //---- offset: 4bytes
-        memcpy(p, key_random0_, key_random0_size_);
-        p += key_random0_size_;
-
-        memcpy(p, s1_key_data_, sizeof(s1_key_data_));
-        p += sizeof(s1_key_data_);
-
-        memcpy(p, key_random1_, key_random1_size_);
-        p += key_random1_size_;
-
-        write_4bytes(p, c1_key_offset_);
-
-        return 0;
-    }
-
-    int make_digest(uint8_t* data) {
-        uint8_t* p = data;
-
-        //digest: 764bytes
-        //---- offset: 4bytes
-        //---- random-data: (offset)bytes
-        //---- digest-data: 32bytes
-        //---- random-data: (764-4-offset-32)bytes
-        write_4bytes(p, c1_digest_offset_);
-        p += 4;
-
-        memcpy(p, digest_random0_, digest_random0_size_);
-        p += digest_random0_size_;
-
-        memcpy(p, s1_digest_data_, sizeof(s1_digest_data_));
-        p += sizeof(s1_digest_data_);
-
-        memcpy(p, digest_random1_, digest_random1_size_);
-        p += digest_random1_size_;
-    
-        return 0;
-    }
-
-    int make_schema0(uint8_t* data) {
-        uint8_t* p = data;
-
-        //schema0: key first + digest second
-        make_key(p);
-        p += 764;
-        make_digest(p);
-
-        return 0;
-    }
-
-    int make_schema1(uint8_t* data) {
-        uint8_t* p = data;
-
-        //schema1: digest first + key second
-        make_digest(p);
-        p += 764;
-        make_key(p);
-        return 0;
-    }
+    int parse_key(uint8_t* data);
+    int parse_digest(uint8_t* data);
+    bool check_digest_valid(enum HANDSHAKE_SCHEMA schema);
+    int try_schema0(uint8_t* data);
+    int try_schema1(uint8_t* data);
+    void prepare_digest();
+    void prepare_key();
+    int make_c1_scheme1_digest(char*& c1_digest);
+    int make_s1_digest(char*& s1_digest);
+    int make_key(uint8_t* data);
+    int make_digest(uint8_t* data);
+    int make_schema0(uint8_t* data);
+    int make_schema1(uint8_t* data);
 
 private:
     enum HANDSHAKE_SCHEMA schema_ = SCHEMA_INIT;
@@ -928,13 +547,18 @@ public:
     rtmp_client_handshake(rtmp_client_session* session);
     ~rtmp_client_handshake();
 
+    int generate_c0c1_scheme1();
     int send_c0c1();
+    int send_c2();
+    int parse_s0s1s2(uint8_t* s0s1s3_data, int s0s1s3_len);
 
 public:
     static size_t s0s1s2_size;
 
 private:
     rtmp_client_session* session_;
-    uint8_t random_[(1 + 1536*2) * 2];//c0c1c2
+
+private:
+    c1s1_handle c1s1_obj_;
 };
 #endif //RTMP_HANDSHAKE_HPP

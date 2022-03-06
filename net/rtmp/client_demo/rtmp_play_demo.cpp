@@ -47,6 +47,11 @@ public:
     }
 
 public:
+    virtual void on_close(int ret_code) override {
+        log_infof("client rtmp close notify:%d", ret_code);
+        exit(0);
+    }
+
     virtual void on_message(int ret_code, MEDIA_PACKET_PTR pkt_ptr) override {
         log_debugf("return code:%d, key:%s, av type:%d, codec type:%d, fmt type:%d, \
 dts:%ld, pts:%lu, key:%d, seq:%d, data len:%lu",

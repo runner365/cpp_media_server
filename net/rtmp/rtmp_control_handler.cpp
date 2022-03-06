@@ -32,8 +32,6 @@ int rtmp_control_handler::handle_server_command_message(CHUNK_STREAM_PTR cs_ptr,
 
     for (auto item : amf_vec) {
         if (item->get_amf_type() == AMF_DATA_TYPE_STRING) {
-            log_debugf("frome server phase:[%s], desc:[%s]",
-                get_client_phase_desc(session_->client_phase_), item->desc_str_.c_str());
             if ((session_->client_phase_ == client_connect_phase) ||
                 (session_->client_phase_ == client_connect_resp_phase) ||
                 (session_->client_phase_ == client_create_stream_phase) ||
@@ -45,7 +43,7 @@ int rtmp_control_handler::handle_server_command_message(CHUNK_STREAM_PTR cs_ptr,
                 if ((session_->client_phase_ == client_connect_phase) || 
                     (session_->client_phase_ == client_connect_resp_phase)) {
                     if (item->desc_str_ == "_result") {
-                        log_debugf("rtmp client change connect to create stream.");
+                        //log_infof("rtmp client change connect to create stream.");
                         next_phase = client_create_stream_phase;
                     }
                 }
@@ -71,11 +69,12 @@ int rtmp_control_handler::handle_server_command_message(CHUNK_STREAM_PTR cs_ptr,
             log_debugf("rtmp client phase:[%s], amf number:%f",
                 get_client_phase_desc(session_->client_phase_), item->number_);
         } else if (item->get_amf_type() == AMF_DATA_TYPE_OBJECT) {
+            log_debugf("rtmp client phase:[%s], amf object", get_client_phase_desc(session_->client_phase_));
             auto iter = item->amf_obj_.find("code");
             if (iter != item->amf_obj_.end()) {
                 AMF_ITERM* obj_item = iter->second;
                 if (obj_item->get_amf_type() == AMF_DATA_TYPE_STRING) {
-                    log_infof("client phase[%s] %s", get_client_phase_desc(session_->client_phase_),
+                    log_debugf("client phase[%s] %s", get_client_phase_desc(session_->client_phase_),
                             obj_item->desc_str_.c_str());
                     if (session_->client_phase_ == client_connect_phase) {
                         if (obj_item->desc_str_ != "NetConnection.Connect.Success") {
@@ -96,8 +95,8 @@ int rtmp_control_handler::handle_server_command_message(CHUNK_STREAM_PTR cs_ptr,
     }
 
     if (session_->client_phase_ != next_phase) {
-        log_infof("rtmp client session phase change [%s] to [%s]",
-                get_client_phase_desc(session_->client_phase_), get_client_phase_desc(next_phase));
+        //log_infof("rtmp client session phase change [%s] to [%s]",
+        //        get_client_phase_desc(session_->client_phase_), get_client_phase_desc(next_phase));
         session_->client_phase_ = next_phase;
     }
     return 0;
@@ -219,14 +218,14 @@ int rtmp_control_handler::handle_rtmp_createstream_command(uint32_t stream_id, s
         {
             case AMF_DATA_TYPE_NUMBER:
             {
-                log_infof("rtmp create stream transaction id:%f", item->number_);
+                //log_infof("rtmp create stream transaction id:%f", item->number_);
                 transactionId = item->number_;
                 session_->req_.transaction_id_ = (int64_t)transactionId;
                 break;
             }
             case AMF_DATA_TYPE_OBJECT:
             {
-                log_infof("rtmp create stream object:");
+                //log_infof("rtmp create stream object:");
                 item->dump_amf();
                 break;
             }
@@ -250,14 +249,14 @@ int rtmp_control_handler::handle_rtmp_play_command(uint32_t stream_id, std::vect
         {
             case AMF_DATA_TYPE_NUMBER:
             {
-                log_infof("rtmp play transaction id:%f", item->number_);
+                //log_infof("rtmp play transaction id:%f", item->number_);
                 transactionId = item->number_;
                 session_->req_.transaction_id_ = (int64_t)transactionId;
                 break;
             }
             case AMF_DATA_TYPE_STRING:
             {
-                log_infof("rtmp play string:%s", item->desc_str_.c_str());
+                //log_infof("rtmp play string:%s", item->desc_str_.c_str());
                 if (stream_name.empty()) {
                     stream_name = item->desc_str_;
                 }
@@ -265,7 +264,7 @@ int rtmp_control_handler::handle_rtmp_play_command(uint32_t stream_id, std::vect
             }
             case AMF_DATA_TYPE_OBJECT:
             {
-                log_infof("rtmp play object:");
+                //log_infof("rtmp play object:");
                 item->dump_amf();
                 break;
             }
@@ -280,7 +279,7 @@ int rtmp_control_handler::handle_rtmp_play_command(uint32_t stream_id, std::vect
     session_->req_.key_ += "/";
     session_->req_.key_ += stream_name;
     
-    log_infof("rtmp play is ready, key:%s", session_->req_.key_.c_str());
+    //log_infof("rtmp play is ready, key:%s", session_->req_.key_.c_str());
     return send_rtmp_play_resp();
 }
 
@@ -297,7 +296,7 @@ int rtmp_control_handler::handle_rtmp_publish_command(uint32_t stream_id, std::v
         {
             case AMF_DATA_TYPE_NUMBER:
             {
-                log_infof("rtmp publish transaction id:%f", item->number_);
+                //log_infof("rtmp publish transaction id:%f", item->number_);
                 transactionId = item->number_;
                 session_->req_.transaction_id_ = (int64_t)transactionId;
                 break;
@@ -311,7 +310,7 @@ int rtmp_control_handler::handle_rtmp_publish_command(uint32_t stream_id, std::v
             }
             case AMF_DATA_TYPE_OBJECT:
             {
-                log_infof("rtmp publish object:");
+                //log_infof("rtmp publish object:");
                 item->dump_amf();
                 break;
             }
@@ -349,8 +348,11 @@ int rtmp_control_handler::send_rtmp_connect_resp(uint32_t stream_id) {
     session_->set_chunk_size(g_config_chunk_size);
 
     session_->rtmp_send(win_size_cs.chunk_all_ptr_);
+    //log_infof("rtmp send windows size");
     session_->rtmp_send(peer_bw_cs.chunk_all_ptr_);
+    //log_infof("rtmp send peer bandwidth");
     session_->rtmp_send(set_chunk_size_cs.chunk_all_ptr_);
+    //log_infof("rtmp send set chunk size");
 
     //encode resp amf
     std::unordered_map<std::string, AMF_ITERM*> resp_amf_obj;
@@ -392,6 +394,7 @@ int rtmp_control_handler::send_rtmp_connect_resp(uint32_t stream_id) {
     delete code_item;
     delete desc_item;
 
+    //log_infof("rtmp connection resp, data len:%lu", amf_buffer.data_len());
     int ret = write_data_by_chunk_stream(session_, 3, 0, RTMP_COMMAND_MESSAGES_AMF0,
                                     stream_id, session_->get_chunk_size(),
                                     amf_buffer);
@@ -399,7 +402,7 @@ int rtmp_control_handler::send_rtmp_connect_resp(uint32_t stream_id) {
         return ret;
     }
 
-    log_infof("rtmp connect done, tcurl:%s", session_->req_.tcurl_.c_str());
+    //log_infof("rtmp connect done, tcurl:%s", session_->req_.tcurl_.c_str());
     session_->server_phase_ = create_stream_phase;
     return RTMP_OK;
 }
@@ -421,7 +424,7 @@ int rtmp_control_handler::send_rtmp_create_stream_resp(double transaction_id) {
         return ret;
     }
 
-    log_infof("rtmp create stream done tcurl:%s", session_->req_.tcurl_.c_str());
+    //log_infof("rtmp create stream done tcurl:%s", session_->req_.tcurl_.c_str());
     session_->server_phase_ = create_publish_play_phase;
     return RTMP_OK;
 }
@@ -444,7 +447,7 @@ int rtmp_control_handler::send_rtmp_play_resp() {
     send_rtmp_play_data_resp();
     send_rtmp_play_notify_resp();
 
-    log_infof("rtmp play start key:%s", session_->req_.key_.c_str());
+    //log_infof("rtmp play start key:%s", session_->req_.key_.c_str());
 
     return RTMP_OK;
 }
@@ -651,7 +654,7 @@ int rtmp_control_handler::send_rtmp_publish_resp() {
         return ret;
     }
 
-    log_infof("rtmp publish start key:%s", session_->req_.key_.c_str());
+    //log_infof("rtmp publish start key:%s", session_->req_.key_.c_str());
     session_->server_phase_ = media_handle_phase;
     return RTMP_OK;
 }
@@ -669,26 +672,30 @@ int rtmp_control_handler::send_rtmp_ack(uint32_t size) {
     return RTMP_OK;
 }
 
-int rtmp_control_handler::handle_rtmp_control_message(CHUNK_STREAM_PTR cs_ptr) {
+int rtmp_control_handler::handle_rtmp_control_message(CHUNK_STREAM_PTR cs_ptr, bool is_server) {
     if (cs_ptr->type_id_ == RTMP_CONTROL_SET_CHUNK_SIZE) {
         if (cs_ptr->chunk_data_ptr_->data_len() < 4) {
             log_errorf("set chunk size control message size error:%d", cs_ptr->chunk_data_ptr_->data_len());
             return -1;
         }
         session_->set_chunk_size(read_4bytes((uint8_t*)cs_ptr->chunk_data_ptr_->data()));
-        //log_infof("update chunk size:%u", session_->get_chunk_size());
-        send_set_chunksize(session_->get_chunk_size());
+        log_infof("update chunk size:%u", session_->get_chunk_size());
+        if (is_server) {
+            send_set_chunksize(session_->get_chunk_size());
+        }
     } else if (cs_ptr->type_id_ == RTMP_CONTROL_WINDOW_ACK_SIZE) {
         if (cs_ptr->chunk_data_ptr_->data_len() < 4) {
             log_errorf("window ack size control message size error:%d", cs_ptr->chunk_data_ptr_->data_len());
             return -1;
         }
         session_->remote_window_acksize_ = read_4bytes((uint8_t*)cs_ptr->chunk_data_ptr_->data());
-        log_infof("update remote window ack size:%u", session_->remote_window_acksize_);
+        //log_infof("update remote window ack size:%u", session_->remote_window_acksize_);
+    } else if (cs_ptr->type_id_ == RTMP_CONTROL_SET_PEER_BANDWIDTH) {
+        //log_infof("update peer bandwidth:%u", read_4bytes((uint8_t*)cs_ptr->chunk_data_ptr_->data()));
     } else if (cs_ptr->type_id_ == RTMP_CONTROL_ACK) {
-        log_debugf("receive rtmp control ack...");
+        //log_infof("receive rtmp control ack...");
     } else {
-        log_infof("don't handle rtmp control message:%d", cs_ptr->type_id_);
+        //log_infof("don't handle rtmp control message:%d", cs_ptr->type_id_);
     }
     return RTMP_OK;
 }

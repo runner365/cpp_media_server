@@ -32,7 +32,7 @@ public:
     int send_set_chunksize(uint32_t chunk_size);
 
 public:
-    int handle_rtmp_control_message(CHUNK_STREAM_PTR cs_ptr);
+    int handle_rtmp_control_message(CHUNK_STREAM_PTR cs_ptr, bool is_server = true);
 
 private:
     rtmp_session_base* session_;

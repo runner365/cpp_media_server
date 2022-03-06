@@ -117,29 +117,17 @@ private:
         }
 
         auto head_ptr = send_buffer_queue_.front();
-        if (head_ptr->sent_flag_ > 0) {
+        if (head_ptr->sent_flag_) {
             return;
         }
 
         head_ptr->sent_flag_ = true;
         boost::asio::async_write(socket_, boost::asio::buffer(head_ptr->data(), head_ptr->data_len()),
             [this](boost::system::error_code ec, size_t written_size) {
-                if (!ec && this->callback_) {
-                    int64_t remain = (int64_t)written_size;
-
-                    while(remain > 0) {
-                        auto current = this->send_buffer_queue_.front();
-                        int64_t current_len = current->data_len();
-
-                        if (current_len > remain) {
-                            current->consume_data(remain);
-                            remain = 0;
-                        } else {
-                            this->send_buffer_queue_.pop();
-                            remain -= current_len;
-                        }
+                if (!ec && this->callback_ && (written_size > 0)) {
+                    if (!this->send_buffer_queue_.empty()) {
+                        this->send_buffer_queue_.pop();
                     }
-
                     this->callback_->on_write(0, written_size);
                     this->do_write();
                     return;

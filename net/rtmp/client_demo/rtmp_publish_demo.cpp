@@ -23,9 +23,15 @@ public:
     }
 
 public:
+    virtual void on_close(int ret_code) override {
+        log_infof("client rtmp close notify:%d", ret_code);
+        std::cout << "rtmp is closed. exit the rtmp publish.\r\n";
+        exit(0);
+    }
+
     virtual void on_message(int ret_code, MEDIA_PACKET_PTR pkt_ptr) override {
         if (ret_code != 0) {
-            log_infof("+++++ publish client on message return error:%d", ret_code);
+            log_infof("publish client on message return error:%d", ret_code);
             g_closed = true;
             return;
         }
