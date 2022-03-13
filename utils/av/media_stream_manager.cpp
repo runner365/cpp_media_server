@@ -7,6 +7,7 @@
 std::unordered_map<std::string, MEDIA_STREAM_PTR> media_stream_manager::media_streams_map_;
 std::vector<stream_manager_callbackI*> media_stream_manager::cb_vec_;
 av_writer_base* media_stream_manager::hls_writer_ = nullptr;
+av_writer_base* media_stream_manager::r2r_writer_ = nullptr;
 
 bool media_stream_manager::get_app_streamname(const std::string& stream_key, std::string& app, std::string& streamname) {
     size_t pos = stream_key.find("/");
@@ -118,6 +119,10 @@ void media_stream_manager::set_hls_writer(av_writer_base* writer) {
     hls_writer_ = writer;
 }
 
+void media_stream_manager::set_rtc_writer(av_writer_base* writer) {
+    r2r_writer_ = writer;
+}
+
 int media_stream_manager::writer_media_packet(MEDIA_PACKET_PTR pkt_ptr) {
     MEDIA_STREAM_PTR stream_ptr = add_publisher(pkt_ptr->key_);
 
@@ -145,6 +150,11 @@ int media_stream_manager::writer_media_packet(MEDIA_PACKET_PTR pkt_ptr) {
                 remove_list.push_back(writer);
             }
         }
+    }
+
+    if (media_stream_manager::r2r_writer_) {
+        MEDIA_PACKET_PTR new_pkt_ptr = pkt_ptr->copy();
+        media_stream_manager::r2r_writer_->write_packet(new_pkt_ptr);
     }
 
     if (media_stream_manager::hls_writer_) {

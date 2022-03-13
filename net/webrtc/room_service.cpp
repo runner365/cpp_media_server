@@ -3,12 +3,40 @@
 #include "utils/logger.hpp"
 #include "utils/av/media_stream_manager.hpp"
 #include "json.hpp"
+#include "utils/uuid.hpp"
 #include <unordered_map>
 #include <sstream>
 
 using json = nlohmann::json;
 
+extern boost::asio::io_context& get_global_io_context();
+
 static std::unordered_map<std::string, std::shared_ptr<room_service>> s_rooms;
+
+static uint32_t s_live_video_ssrc = 10000;
+static uint32_t s_live_audio_ssrc = 20000;
+
+static uint32_t make_live_video_ssrc() {
+    uint32_t ssrc = ++s_live_video_ssrc;
+
+    if ((ssrc % 10000) == 0) {
+        s_live_video_ssrc = 10000;
+        return ++s_live_video_ssrc;
+    }
+
+    return ssrc;
+}
+
+static uint32_t make_live_audio_ssrc() {
+    uint32_t ssrc = ++s_live_audio_ssrc;
+
+    if ((ssrc % 10000) == 0) {
+        s_live_audio_ssrc = 20000;
+        return ++s_live_audio_ssrc;
+    }
+
+    return ssrc;
+}
 
 std::shared_ptr<room_service> GetorCreate_room_service(const std::string& roomId) {
     auto iter = s_rooms.find(roomId);
@@ -43,7 +71,14 @@ void webrtc_stream_manager_callback::on_publish(const std::string& app, const st
 }
 
 void webrtc_stream_manager_callback::on_unpublish(const std::string& app, const std::string& streamname) {
-    log_infof("webrtc on unpublish app:%s, streamname:%s", app.c_str(), streamname.c_str());
+    log_infof("webrtc on unpublish app(roomid):%s, streamname(uid):%s",
+            app.c_str(), streamname.c_str());
+    auto room_ptr = GetorCreate_room_service(app);
+    if (!room_ptr) {
+        log_errorf("fail to get room by roomid:%s", app.c_str());
+        return;
+    }
+    room_ptr->remove_live_user(app, streamname);
 }
 
 static webrtc_stream_manager_callback s_webrtc_callback;
@@ -52,12 +87,44 @@ void init_webrtc_stream_manager_callback() {
     media_stream_manager::add_stream_callback(&s_webrtc_callback);
 }
 
-room_service::room_service(const std::string& roomId):roomId_(roomId) {
-
+room_service::room_service(const std::string& roomId):timer_interface(get_global_io_context(), 2000)
+                                                      , roomId_(roomId) {
+    start_timer();
 }
 
 room_service::~room_service() {
 
+}
+
+void room_service::on_timer() {
+    int64_t now_ms = now_millisec();
+    for(auto iter = live_users_.begin();
+        iter != live_users_.end();
+        )
+    {
+        int64_t diff_t = now_ms - iter->second->active_last_ms();
+        if (diff_t > 20*1000) {
+            notify_userout_to_others(iter->second->uid());
+            iter = live_users_.erase(iter);
+            continue;
+        }
+        iter++;
+    }
+}
+
+void room_service::remove_live_user(const std::string& roomid, const std::string& uid) {
+    notify_userout_to_others(uid);
+
+    auto iter = live_users_.find(uid);
+    if (iter != live_users_.end()) {
+        live_users_.erase(iter);
+        log_infof("remove live uid:%s in roomid:%s",
+                uid.c_str(), roomid.c_str());
+    } else {
+        log_errorf("fail to get live user by uid:%s in roomid:%s",
+                uid.c_str(), roomid.c_str());
+    }
+    return;
 }
 
 void room_service::on_open() {
@@ -119,6 +186,16 @@ void room_service::on_notification(const std::string& method, const std::string&
     }
 }
 
+std::shared_ptr<live_user_info> room_service::get_live_user_info(const std::string& uid) {
+    std::shared_ptr<live_user_info> ret_ptr;
+
+    auto iter = live_users_.find(uid);
+    if (iter != live_users_.end()) {
+        ret_ptr = iter->second; 
+    }
+    return ret_ptr;
+}
+
 std::shared_ptr<user_info> room_service::get_user_info(const std::string& uid) {
     std::shared_ptr<user_info> ret_ptr;
     auto iter = users_.find(uid);
@@ -128,7 +205,7 @@ std::shared_ptr<user_info> room_service::get_user_info(const std::string& uid) {
     return ret_ptr;
 }
 
-std::string room_service::get_uid_by_json(json& data_json) {
+std::string room_service::get_uid_by_json(const json& data_json) {
     std::string uid;
 
     auto uid_json = data_json.find("uid");
@@ -228,7 +305,7 @@ void room_service::on_rtmp_callback(const std::string& roomId, const std::string
     user_ptr->on_rtmp_callback(stream_type, pkt_ptr);
 }
 
-void room_service::on_rtppacket_publisher2room(rtc_base_session* session, rtc_publisher* publisher, rtp_packet* pkt) {
+void room_service::on_rtppacket_publisher2room(rtc_publisher* publisher, rtp_packet* pkt) {
     std::string publish_id = publisher->get_publisher_id();
     std::string mediatype = publisher->get_media_type();
 
@@ -240,6 +317,19 @@ void room_service::on_rtppacket_publisher2room(rtc_base_session* session, rtc_pu
     }
     delete pkt;
     
+    return;
+}
+
+void room_service::on_rtppacket_publisher2room(const std::string& publisher_id,
+        const std::string& media_type, rtp_packet* pkt) {
+    auto subs_map_it = pid2subscribers_.find(publisher_id);
+    if (subs_map_it != pid2subscribers_.end()) {
+        for (auto subscribe_item : subs_map_it->second) {
+            subscribe_item.second->send_rtp_packet(roomId_, media_type, publisher_id, pkt);
+        }
+    }
+    delete pkt;
+
     return;
 }
 
@@ -287,6 +377,41 @@ void room_service::on_request_keyframe(const std::string& pid, const std::string
             }
         }
     }
+}
+
+int room_service::live_publish(const std::string& uid,
+                            const std::string& publisher_id,
+                            bool has_video, bool has_audio,
+                            uint32_t video_ssrc, uint32_t audio_ssrc,
+                            uint32_t video_mid, uint32_t audio_mid) {
+    std::vector<publisher_info> publishers_vec;
+    publisher_info video_info;
+    publisher_info audio_info;
+
+    if (has_video) {
+        video_info.media_type   = "video";
+        video_info.mid          = video_mid;
+        video_info.pid          = publisher_id;
+        video_info.publish_type = PUBLISH_LIVE;
+        video_info.ssrc         = video_ssrc;
+
+        publishers_vec.push_back(video_info);
+    }
+
+    if (has_audio) {
+        audio_info.media_type   = "audio";
+        audio_info.mid          = audio_mid;
+        audio_info.pid          = publisher_id;
+        audio_info.publish_type = PUBLISH_LIVE;
+        audio_info.ssrc         = audio_ssrc;
+
+        publishers_vec.push_back(audio_info);
+    }
+
+    //notify new publish infomation to other users
+    notify_publisher_to_others(uid, "live", publisher_id, publishers_vec);
+
+    return 0;
 }
 
 void room_service::handle_publish(const std::string& id, const std::string& method,
@@ -372,7 +497,8 @@ void room_service::handle_publish(const std::string& id, const std::string& meth
 
     //notify new publish infomation to other users
     std::vector<publisher_info> publishers_vec = session_ptr->get_publishs_information();
-    notify_publisher_to_others(uid, session_ptr->get_id(), publishers_vec);
+    notify_publisher_to_others(uid, "webrtc", session_ptr->get_id(), publishers_vec);
+    
     return;
 }
 
@@ -507,13 +633,235 @@ void room_service::handle_unsubscribe(const std::string& id, const std::string& 
 
 void room_service::handle_subscribe(const std::string& id, const std::string& method,
                 const std::string& data, protoo_request_interface* feedback_p) {
-    log_infof("subscribe data: %s", data.c_str());
-    std::shared_ptr<user_info> user_ptr;
-    std::shared_ptr<user_info> remote_user_ptr;
-    std::string remote_uid;
+    //log_infof("subscribe data: %s", data.c_str());
+    std::string user_type;
     json data_json = json::parse(data);
 
+    auto user_type_json = data_json.find("user_type");
+    if (user_type_json == data_json.end()) {
+        user_type = "webrtc";
+    } else {
+        if (!user_type_json->is_string()) {
+            feedback_p->reject(id, UID_ERROR, "subscribe user_type field is not string");
+            return;
+        }
+        user_type = user_type_json->get<std::string>();
+    }
+
+    if (user_type == "webrtc") {
+        handle_webrtc_subscribe(id, data_json, feedback_p);
+    } else if (user_type == "live") {
+        handle_live_subscribe(id, data_json, feedback_p);
+    } else {
+        std::stringstream error_desc;
+        error_desc << "user type is unkown:" << user_type;
+        feedback_p->reject(id, UID_ERROR, error_desc.str());
+    }
+
+    return;
+}
+
+void room_service::handle_live_subscribe(const std::string& id, const json& data_json, protoo_request_interface* feedback_p) {
     std::string uid = get_uid_by_json(data_json);
+    std::shared_ptr<user_info> user_ptr;
+    std::shared_ptr<live_user_info> remote_user_ptr;
+
+    if (uid.empty()) {
+        feedback_p->reject(id, UID_ERROR, "live subscribe uid field does not exist");
+        return;
+    }
+
+    user_ptr = get_user_info(uid);
+    if (!user_ptr) {
+        feedback_p->reject(id, UID_ERROR, "live subscribe uid doesn't exist");
+        return;
+    }
+
+    std::string remote_uid = data_json["remoteUid"];
+    remote_user_ptr = get_live_user_info(remote_uid);
+    if (!remote_user_ptr) {
+        feedback_p->reject(id, UID_ERROR, "publisher live uid doesn't exist");
+        return;
+    }
+
+    auto publishers_iter = data_json.find("publishers");
+    if (publishers_iter == data_json.end()) {
+        feedback_p->reject(id, SUBSCRIBE_JSON_ERROR, "live publishers doesn't exist");
+        return;
+    }
+    std::vector<publisher_info> publishers = get_publishers_info_by_json(*publishers_iter);
+
+    auto sdp_iter = data_json.find("sdp");
+    if (sdp_iter == data_json.end()) {
+        feedback_p->reject(id, SUBSCRIBE_JSON_ERROR, "live subscribe sdp doesn't exist");
+        return;
+    }
+    if (!sdp_iter->is_string()) {
+        feedback_p->reject(id, SUBSCRIBE_JSON_ERROR, "live subscribe sdp isn't string");
+        return;
+    }
+    std::string sdp = sdp_iter->get<std::string>();
+
+    json info_json = user_ptr->parse_remote_sdp(sdp);
+    //log_infof("subscribe sdp json:%s", info_json.dump().c_str());
+
+    rtc_media_info& info = user_ptr->parse_remote_media_info(info_json);
+    //log_infof("live get subscribe input media info:\r\n%s", info.dump().c_str());
+
+    rtc_media_info support_info;
+    user_ptr->get_support_media_info(info, support_info);
+
+    remote_user_ptr->make_video_cname();
+    remote_user_ptr->make_audio_cname();
+
+    /******************* add ssrc info from publisher *************************/
+    for (auto& media : support_info.medias) {
+        std::string pid;
+        for (auto info : publishers) {
+            if (info.media_type == media.media_type) {
+                SSRC_INFO ssrc_group_item;
+                SSRC_INFO rtx_ssrc_group_item;
+                SSRC_GROUPS group;
+                group.semantics = "FID";
+                std::string cname;
+
+                if (media.media_type == "video") {
+                    cname = remote_user_ptr->get_video_cname();
+                } else if (media.media_type == "audio") {
+                    cname = remote_user_ptr->get_audio_cname();
+                }
+                ssrc_group_item.attribute = "cname";
+                ssrc_group_item.value = cname;
+                rtx_ssrc_group_item.attribute = "cname";
+                rtx_ssrc_group_item.value = cname;
+
+                if (info.media_type == "video") {
+                    ssrc_group_item.ssrc = remote_user_ptr->video_ssrc();
+                    rtx_ssrc_group_item.ssrc = remote_user_ptr->video_rtx_ssrc();
+                    media.ssrc_infos.push_back(ssrc_group_item);
+                    media.ssrc_infos.push_back(rtx_ssrc_group_item);
+
+                    group.ssrcs.push_back(remote_user_ptr->video_ssrc());
+                    group.ssrcs.push_back(remote_user_ptr->video_rtx_ssrc());
+                    media.msid = remote_user_ptr->video_msid();
+                } else if (info.media_type == "audio") {
+                    ssrc_group_item.ssrc = remote_user_ptr->audio_ssrc();
+                    media.ssrc_infos.push_back(ssrc_group_item);
+
+                    group.ssrcs.push_back(remote_user_ptr->audio_ssrc());
+                    media.msid = remote_user_ptr->audio_msid();
+                } else {
+                    log_errorf("media type(%s) error", info.media_type.c_str());
+                }
+
+                std::stringstream ss_debug;
+                ss_debug << "ssrc infos:" << "\r\n";
+                for (auto ssrc_info_item : media.ssrc_infos) {
+                    ss_debug << "attribute:" << ssrc_info_item.attribute
+                            << ", value:" << ssrc_info_item.value
+                            << ", ssrc:" << ssrc_info_item.ssrc
+                            << "\r\n";
+                }
+
+                media.ssrc_groups.push_back(group);
+                for (auto ssrc_group_item : media.ssrc_groups) {
+                    ss_debug << "semantics:" << ssrc_group_item.semantics << " ";
+                    ss_debug << "ssrcs: ";
+                    for (auto ssrc : ssrc_group_item.ssrcs) {
+                        ss_debug << ssrc << " ";
+                    }
+                    ss_debug << "\r\n";
+                }
+
+                media.publisher_id  = remote_user_ptr->uid();
+                media.publisher_id += "_";
+                media.publisher_id += media.media_type;
+                media.src_mid       = info.mid;
+                ss_debug << "msid: " << media.msid << "\r\n";
+                ss_debug << "publisher id: " << media.publisher_id << "\r\n";
+                ss_debug << "src mid: " << media.src_mid << "\r\n";
+
+                //log_infof("live media type:%s, debug info:%s", info.media_type.c_str(), ss_debug.str().c_str());
+                break;
+            }
+        }
+    }
+
+    std::shared_ptr<webrtc_session> session_ptr;
+    /********************** create subscribe session **************************/
+    session_ptr = std::make_shared<webrtc_session>(roomId_, uid, this,
+                                            RTC_DIRECTION_SEND, support_info);
+    session_ptr->set_remote_finger_print(info.finger_print);
+    user_ptr->subscribe_sessions_[session_ptr->get_id()] = session_ptr;
+    //log_infof("live subscribe session id:%s", session_ptr->get_id().c_str());
+
+    /***************** create subscribers for the publisher *******************/
+    for (auto& media_item : support_info.medias) {
+        media_item.header_extentions.clear();
+
+        if (media_item.media_type == "video") {
+            remote_user_ptr->set_video_mid(media_item.mid);
+        } else if (media_item.media_type == "audio") {
+            remote_user_ptr->set_audio_mid(media_item.mid);
+            media_item.fmtps.clear();
+        }
+        auto subscirber_ptr = session_ptr->create_subscriber(remote_uid, media_item, media_item.publisher_id, this);
+        insert_subscriber(media_item.publisher_id, subscirber_ptr);
+        
+        subscirber_ptr->set_stream_type(LIVE_STREAM_TYPE);
+        if (media_item.media_type == "video") {
+            //log_infof("update video payload type:%d", subscirber_ptr->get_payload());
+            remote_user_ptr->set_video_payload(subscirber_ptr->get_payload());
+            remote_user_ptr->set_video_rtx_payload(subscirber_ptr->get_rtx_payload());
+            remote_user_ptr->set_video_clock(90000);
+        } else if (media_item.media_type == "audio") {
+            //log_infof("update audio payload type:%d", subscirber_ptr->get_payload());
+            remote_user_ptr->set_audio_payload(subscirber_ptr->get_payload());
+            remote_user_ptr->set_audio_clock(48000);
+        }
+    }
+
+    /********************** add ice and finger print **************************/
+    support_info.ice.ice_pwd = session_ptr->get_user_pwd();
+    support_info.ice.ice_ufrag = session_ptr->get_username_fragment();
+
+    support_info.finger_print.type = info.finger_print.type;
+    finger_print_info fingerprint = session_ptr->get_local_finger_print(info.finger_print.type);
+    support_info.finger_print.hash = fingerprint.value;
+
+    CANDIDATE_INFO candidate_data = {
+        .foundation = "0",
+        .component  = 1,
+        .transport  = "udp",
+        .priority   = 2113667327,
+        .ip         = session_ptr->get_candidates_ip(),
+        .port       = session_ptr->get_candidates_port(),
+        .type       = "host"
+    };
+
+    support_info.candidates.push_back(candidate_data);
+    //log_infof("get live subscribe support media info:\r\n%s", support_info.dump().c_str());
+
+    std::string resp_sdp_str = user_ptr->rtc_media_info_2_sdp(support_info);
+
+    auto resp_json = json::object();
+    resp_json["code"] = 0;
+    resp_json["desc"] = "ok";
+    resp_json["pcid"] = session_ptr->get_id();
+    resp_json["sdp"]  = resp_sdp_str;
+
+    std::string resp_data = resp_json.dump();
+    //log_infof("subscirbe response data:%s", resp_data.c_str());
+    feedback_p->accept(id, resp_data);
+
+    return;
+}
+
+void room_service::handle_webrtc_subscribe(const std::string& id, const json& data_json, protoo_request_interface* feedback_p) {
+    std::string uid = get_uid_by_json(data_json);
+    std::shared_ptr<user_info> user_ptr;
+    std::shared_ptr<user_info> remote_user_ptr;
+
     if (uid.empty()) {
         feedback_p->reject(id, UID_ERROR, "subscribe uid field does not exist");
         return;
@@ -525,12 +873,13 @@ void room_service::handle_subscribe(const std::string& id, const std::string& me
         return;
     }
 
-    remote_uid = data_json["remoteUid"];
+    std::string remote_uid = data_json["remoteUid"];
     remote_user_ptr = get_user_info(remote_uid);
     if (!remote_user_ptr) {
         feedback_p->reject(id, UID_ERROR, "publisher uid doesn't exist");
         return;
     }
+
     std::string remote_pcid = data_json["remotePcId"];
     auto remote_session_iter = remote_user_ptr->publish_sessions_.find(remote_pcid);
     if (remote_session_iter == remote_user_ptr->publish_sessions_.end()) {
@@ -558,10 +907,10 @@ void room_service::handle_subscribe(const std::string& id, const std::string& me
     std::string sdp = sdp_iter->get<std::string>();
 
     json info_json = user_ptr->parse_remote_sdp(sdp);
-    log_infof("subscribe sdp json:%s", info_json.dump().c_str());
+    //log_infof("subscribe sdp json:%s", info_json.dump().c_str());
 
     rtc_media_info& info = user_ptr->parse_remote_media_info(info_json);
-    log_infof("get subscribe input media info:\r\n%s", info.dump().c_str());
+    //log_infof("get subscribe input media info:\r\n%s", info.dump().c_str());
 
     rtc_media_info support_info;
     user_ptr->get_support_media_info(info, support_info);
@@ -577,12 +926,33 @@ void room_service::handle_subscribe(const std::string& id, const std::string& me
                     feedback_p->reject(id, SUBSCRIBE_JSON_ERROR, "publishers doesn't exist");
                     return;
                 }
-                
+                std::stringstream ss_debug;
                 media.ssrc_infos    = publisher_ptr->get_media_info().ssrc_infos;
+                ss_debug << "ssrc infos:" << "\r\n";
+                for (auto ssrc_info_item : media.ssrc_infos) {
+                    ss_debug << "attribute:" << ssrc_info_item.attribute
+                    << ", value:" << ssrc_info_item.value
+                    << ", ssrc:" << ssrc_info_item.ssrc
+                    << "\r\n";
+                }
+
                 media.ssrc_groups   = publisher_ptr->get_media_info().ssrc_groups;
+                for (auto ssrc_group_item : media.ssrc_groups) {
+                    ss_debug << "semantics:" << ssrc_group_item.semantics << " ";
+                    ss_debug << "ssrcs: ";
+                    for (auto ssrc : ssrc_group_item.ssrcs) {
+                        ss_debug << ssrc << " ";
+                    }
+                    ss_debug << "\r\n";
+                }
                 media.msid          = publisher_ptr->get_media_info().msid;
                 media.publisher_id  = publisher_ptr->get_publisher_id();
                 media.src_mid       = info.mid;
+                ss_debug << "msid: " << media.msid << "\r\n";
+                ss_debug << "publisher id: " << media.publisher_id << "\r\n";
+                ss_debug << "src mid: " << media.src_mid << "\r\n";
+                
+                //log_infof("media type:%s, debug info:%s", info.media_type.c_str(), ss_debug.str().c_str());
                 break;
             }
         }
@@ -594,11 +964,12 @@ void room_service::handle_subscribe(const std::string& id, const std::string& me
                                             RTC_DIRECTION_SEND, support_info);
     session_ptr->set_remote_finger_print(info.finger_print);
     user_ptr->subscribe_sessions_[session_ptr->get_id()] = session_ptr;
-    log_infof("subscribe session id:%s", session_ptr->get_id().c_str());
+    //log_infof("subscribe session id:%s", session_ptr->get_id().c_str());
 
     /***************** create subscribers for the publisher *******************/
     for (auto media_item : support_info.medias) {
         auto subscirber_ptr = session_ptr->create_subscriber(remote_uid, media_item, media_item.publisher_id, this);
+        subscirber_ptr->set_stream_type(RTC_STREAM_TYPE);
         insert_subscriber(media_item.publisher_id, subscirber_ptr);
     }
 
@@ -621,7 +992,7 @@ void room_service::handle_subscribe(const std::string& id, const std::string& me
     };
 
     support_info.candidates.push_back(candidate_data);
-    log_infof("get subscribe support media info:\r\n%s", support_info.dump().c_str());
+    //log_infof("get subscribe support media info:\r\n%s", support_info.dump().c_str());
 
     std::string resp_sdp_str = user_ptr->rtc_media_info_2_sdp(support_info);
 
@@ -632,10 +1003,24 @@ void room_service::handle_subscribe(const std::string& id, const std::string& me
     resp_json["sdp"]  = resp_sdp_str;
     
     std::string resp_data = resp_json.dump();
-    log_infof("subscirbe response data:%s", resp_data.c_str());
+    //log_infof("subscirbe response data:%s", resp_data.c_str());
     feedback_p->accept(id, resp_data);
 
-    return;
+
+}
+std::shared_ptr<live_user_info> room_service::live_user_join(const std::string& roomId, const std::string& uid) {
+    std::shared_ptr<live_user_info> user_ptr;
+
+    user_ptr = get_live_user_info(uid);
+    if (!user_ptr) {
+        user_ptr = std::make_shared<live_user_info>(uid, roomId, this);
+        live_users_.insert(std::make_pair(uid, user_ptr));
+        log_infof("live user join uid:%s, roomId:%s", uid.c_str(), roomId.c_str());
+    }
+
+    notify_userin_to_others(uid, "live");
+
+    return user_ptr;
 }
 
 void room_service::handle_join(const std::string& id, const std::string& method, const std::string& data,
@@ -680,13 +1065,19 @@ void room_service::handle_join(const std::string& id, const std::string& method,
     auto resp_json = json::object();
     resp_json["users"] = json::array();
 
-    for (auto user_item : users_) {
+    for (auto& user_item : users_) {
         auto user_json = json::object();
         user_json["uid"] = user_item.first;
         resp_json["users"].emplace_back(user_json);
     }
-    
-    notify_userin_to_others(uid);
+
+    for (auto& user_item : live_users_) {
+        auto user_json = json::object();
+        user_json["uid"] = user_item.first;
+        resp_json["users"].emplace_back(user_json);
+    }
+
+    notify_userin_to_others(uid, "webrtc");
 
     std::string resp_data = resp_json.dump();
     log_infof("join response data:%s", resp_data.c_str());
@@ -696,7 +1087,7 @@ void room_service::handle_join(const std::string& id, const std::string& method,
     return;
 }
 
-void room_service::notify_userin_to_others(const std::string& uid) {
+void room_service::notify_userin_to_others(const std::string& uid, const std::string& user_type) {
 
     for (auto iter : users_) {
         if (uid == iter.first) {
@@ -705,6 +1096,7 @@ void room_service::notify_userin_to_others(const std::string& uid) {
         std::shared_ptr<user_info> other_user = iter.second;
         auto resp_json = json::object();
         resp_json["uid"] = uid;
+        resp_json["user_type"] = user_type;
         log_infof("send newuser message: %s", resp_json.dump().c_str());
         other_user->feedback()->notification("userin", resp_json.dump());
     }
@@ -724,7 +1116,7 @@ void room_service::notify_userout_to_others(const std::string& uid) {
 }
 
 void room_service::notify_others_publisher_to_me(const std::string& uid, std::shared_ptr<user_info> me) {
-    for (auto item : users_) {
+    for (auto& item : users_) {
         if (item.first == uid) {
             continue;
         }
@@ -734,12 +1126,12 @@ void room_service::notify_others_publisher_to_me(const std::string& uid, std::sh
         bool publish_found   = false;
         std::string pc_id;
 
-        for (auto session_item : other_user->publish_sessions_) {
+        for (auto& session_item : other_user->publish_sessions_) {
             auto session_ptr = session_item.second;
 
             std::vector<publisher_info> publisher_vec = session_ptr->get_publishs_information();
 
-            for (auto info : publisher_vec) {
+            for (auto& info : publisher_vec) {
                 publish_found = true;
                 pc_id = session_ptr->get_id();
                 auto publiser_json    = json::object();
@@ -751,19 +1143,59 @@ void room_service::notify_others_publisher_to_me(const std::string& uid, std::sh
             }
         }
 
-
         if (publish_found) {
             resp_json["publishers"] = publisher_array;
             resp_json["uid"]        = item.first;
             resp_json["pcid"]       = pc_id;
+            resp_json["user_type"]  = "webrtc";
 
             log_infof("send other publisher message: %s to me(%s)", resp_json.dump().c_str(), uid.c_str());
             me->feedback()->notification("publish", resp_json.dump());
         }
     }
+
+    for (auto& item : live_users_) {
+        auto user_ptr = item.second;
+        std::string publisher_id = roomId_;
+        publisher_id += "/";
+        publisher_id += item.first;
+
+        auto resp_json       = json::object();
+        auto publisher_array = json::array();
+        bool publish_found   = false;
+
+        if (user_ptr->has_video()) {
+            auto publiser_json    = json::object();
+            publish_found = true;
+
+            publiser_json["type"]   = "video";
+            publiser_json["mid"]    = user_ptr->video_mid();
+            publiser_json["pid"]    = publisher_id;
+            publiser_json["ssrc"]   = user_ptr->video_ssrc();
+            publisher_array.push_back(publiser_json);
+        }
+        if (user_ptr->has_audio()) {
+            auto publiser_json    = json::object();
+            publish_found = true;
+
+            publiser_json["type"]   = "audio";
+            publiser_json["mid"]    = user_ptr->audio_mid();
+            publiser_json["pid"]    = publisher_id;
+            publiser_json["ssrc"]   = user_ptr->audio_ssrc();
+            publisher_array.push_back(publiser_json);
+        }
+        if (publish_found) {
+            resp_json["publishers"] = publisher_array;
+            resp_json["uid"]        = item.first;
+            resp_json["pcid"]       = publisher_id;
+            resp_json["user_type"]  = "live";
+            log_infof("send other live publisher message: %s to me(%s)", resp_json.dump().c_str(), uid.c_str());
+            me->feedback()->notification("publish", resp_json.dump());
+        }
+    }
 }
 
-void room_service::notify_publisher_to_others(const std::string& uid, const std::string& pc_id,
+void room_service::notify_publisher_to_others(const std::string& uid, const std::string& user_type, const std::string& pc_id,
                                             const std::vector<publisher_info>& publisher_vec) {
     for (auto iter : users_) {
         if (uid == iter.first) {
@@ -784,6 +1216,7 @@ void room_service::notify_publisher_to_others(const std::string& uid, const std:
         
         resp_json["publishers"] = publisher_array;
         resp_json["uid"]        = uid;
+        resp_json["user_type"]  = user_type;
         resp_json["pcid"]       = pc_id;
 
         log_infof("send publish message: %s", resp_json.dump().c_str());
@@ -815,4 +1248,79 @@ void room_service::notify_unpublisher_to_others(const std::string& uid, const st
         log_infof("send unpublish message: %s", resp_json.dump().c_str());
         other_user->feedback()->notification("unpublish", resp_json.dump());
     }
+}
+
+void room_service::rtmp_stream_ingest(MEDIA_PACKET_PTR pkt_ptr) {
+    std::shared_ptr<live_user_info> user_ptr;
+
+    auto iter = live_users_.find(pkt_ptr->streamname_);
+    if (iter == live_users_.end()) {
+        user_ptr = live_user_join(pkt_ptr->app_, pkt_ptr->streamname_);
+    } else {
+        user_ptr = iter->second;
+    }
+
+    if (!user_ptr->media_ready()) {
+        user_ptr->pkt_queue_.push(pkt_ptr);
+        if (pkt_ptr->av_type_ == MEDIA_VIDEO_TYPE) {
+            user_ptr->set_video(true);
+        } else if (pkt_ptr->av_type_ == MEDIA_AUDIO_TYPE) {
+            user_ptr->set_audio(true);
+        }
+
+        if (user_ptr->pkt_queue_.size() > 20) {
+            user_ptr->set_media_ready(true);
+
+            //start publish stream
+            uint32_t video_ssrc = 0;
+            uint32_t video_rtx_ssrc = 0;
+            uint32_t audio_ssrc = 0;
+
+
+            if (user_ptr->has_video()) {
+                std::string video_msid = make_uuid();
+                video_ssrc = make_live_video_ssrc();
+                video_rtx_ssrc = make_live_video_ssrc();
+                user_ptr->set_video_ssrc(video_ssrc);
+                user_ptr->set_video_rtx_ssrc(video_rtx_ssrc);
+                user_ptr->set_video_msid(video_msid);
+            }
+            if (user_ptr->has_audio()) {
+                std::string audio_msid = make_uuid();
+                audio_ssrc = make_live_audio_ssrc();
+                user_ptr->set_audio_ssrc(audio_ssrc);
+                user_ptr->set_audio_msid(audio_msid);
+            }
+            std::string publisher_id = pkt_ptr->app_;
+            publisher_id += "/";
+            publisher_id += pkt_ptr->streamname_;
+            live_publish(pkt_ptr->streamname_, publisher_id,
+                       user_ptr->has_video(), user_ptr->has_audio(),
+                       user_ptr->video_ssrc(), user_ptr->audio_ssrc(),
+                       user_ptr->video_mid(), user_ptr->audio_mid());
+            //output media packet queue in room
+            while (user_ptr->pkt_queue_.size() > 0) {
+                MEDIA_PACKET_PTR temp_pkt_ptr = user_ptr->pkt_queue_.front();
+                user_ptr->pkt_queue_.pop();
+                if (temp_pkt_ptr->av_type_ == MEDIA_VIDEO_TYPE) {
+                    user_ptr->handle_video_data(temp_pkt_ptr);
+                } else if (temp_pkt_ptr->av_type_ == MEDIA_AUDIO_TYPE) {
+                    user_ptr->handle_audio_data(temp_pkt_ptr);
+                } else {
+                    log_debugf("skip packet av type:%d", temp_pkt_ptr->av_type_);
+                }
+            }
+        }
+        return;
+    }
+
+    //send media packet in room
+    if (pkt_ptr->av_type_ == MEDIA_VIDEO_TYPE) {
+        user_ptr->handle_video_data(pkt_ptr);
+    } else if (pkt_ptr->av_type_ == MEDIA_AUDIO_TYPE) {
+        user_ptr->handle_audio_data(pkt_ptr);
+    } else {
+        log_debugf("skip packet av type:%d", pkt_ptr->av_type_);
+    }
+ 
 }

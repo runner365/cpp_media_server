@@ -121,7 +121,7 @@ bool mpegts_handle::gen_live_m3u8(std::string& m3u8_header) {
     int64_t max_duration = 0;
 
     if (ts_list_.size() < ts_list_max_) {
-        log_infof("ts list size:%lu, ts_max:%d", ts_list_.size(), ts_list_max_);
+        //log_infof("ts list size:%lu, ts_max:%d", ts_list_.size(), ts_list_max_);
         return false;
     }
 
@@ -244,12 +244,12 @@ void mpegts_handle::handle_packet(MEDIA_PACKET_PTR pkt_ptr) {
             ts_info_ptr_->reset();
             ts_info_ptr_->set_ts_filename(ts_filename_);
         } else {
-            log_infof("ts duration:%ld", ts_info_ptr_->duration);
+            //log_infof("ts duration:%ld", ts_info_ptr_->duration);
             ts_list_.push_back(ts_info_ptr_);
             if (ts_list_.size() > ts_list_max_) {
-                log_infof("pop mpegts filename:%s, file key:%s",
-                    ts_list_.front()->ts_filename.c_str(),
-                    ts_list_.front()->ts_key.c_str());
+                //log_infof("pop mpegts filename:%s, file key:%s",
+                //    ts_list_.front()->ts_filename.c_str(),
+                //    ts_list_.front()->ts_key.c_str());
                 ts_list_.pop_front();
             }
             write_live_m3u8();
@@ -259,8 +259,8 @@ void mpegts_handle::handle_packet(MEDIA_PACKET_PTR pkt_ptr) {
             ts_info_ptr_->reset();
             ts_info_ptr_->set_ts_filename(ts_filename_);
         }
-        log_infof("ts_filename_:%s, ts key:%s, seq:%ld",
-            ts_filename_.c_str(), ts_info_ptr_->ts_key.c_str(), seq_);
+        //log_infof("ts_filename_:%s, ts key:%s, seq:%ld",
+        //    ts_filename_.c_str(), ts_info_ptr_->ts_key.c_str(), seq_);
     }
 
     if (pat_pmt_flag_ || ((pkt_ptr->dts_ - last_patpmt_ts_) > 1000)) {
@@ -385,8 +385,8 @@ int mpegts_handle::handle_audio_aac(MEDIA_PACKET_PTR pkt_ptr) {
             log_errorf("audio asc decode error");
             return -1;
         }
-        log_infof("audio asc decode aac type:%d, sample rate:%d, channel:%d",
-                aac_type_, sample_rate_, channel_);
+        //log_infof("audio asc decode aac type:%d, sample rate:%d, channel:%d",
+        //        aac_type_, sample_rate_, channel_);
         return 0;
     }
     if ((aac_type_ == 0) || (sample_rate_ == 0) || (channel_ == 0)) {

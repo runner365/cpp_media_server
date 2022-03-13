@@ -4,6 +4,7 @@
 #include "net/webrtc/webrtc_pub.hpp"
 #include "net/webrtc/rtc_dtls.hpp"
 #include "net/webrtc/srtp_session.hpp"
+#include "net/webrtc/rtmp2rtc.hpp"
 #include "net/hls/hls_writer.hpp"
 #include "utils/byte_crypto.hpp"
 #include "utils/av/media_stream_manager.hpp"
@@ -45,7 +46,8 @@ int main(int argn, char** argv) {
     const uint16_t ws_webrtc_port = 9110;
     const uint16_t httpflv_port = 7070;
     const uint16_t webrtc_media_port = 7000;
-    const std::string host_ip = "192.168.1.105";
+    const std::string host_ip = "192.168.1.98";
+    rtmp2rtc_writer* r2r_output = nullptr;
 
     hls_writer* hls_output = nullptr;
     std::string hls_path = "hls";
@@ -67,8 +69,10 @@ int main(int argn, char** argv) {
         httpflv_server httpflv_serv(io_context, httpflv_port);
 
         hls_output = new hls_writer(hls_io_context, hls_port, hls_path, true);//enable hls
+        r2r_output = new rtmp2rtc_writer();
 
         media_stream_manager::set_hls_writer(hls_output);
+        media_stream_manager::set_rtc_writer(r2r_output);
         hls_output->run();
 
         create_ws_server(io_context, ws_webrtc_port);
@@ -82,6 +86,5 @@ int main(int argn, char** argv) {
     if (hls_output) {
         delete hls_output;
     }
-    
     return 0;
 }

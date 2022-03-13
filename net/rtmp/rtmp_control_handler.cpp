@@ -679,7 +679,7 @@ int rtmp_control_handler::handle_rtmp_control_message(CHUNK_STREAM_PTR cs_ptr, b
             return -1;
         }
         session_->set_chunk_size(read_4bytes((uint8_t*)cs_ptr->chunk_data_ptr_->data()));
-        log_infof("update chunk size:%u", session_->get_chunk_size());
+        //log_infof("update chunk size:%u", session_->get_chunk_size());
         if (is_server) {
             send_set_chunksize(session_->get_chunk_size());
         }

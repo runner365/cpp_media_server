@@ -8,7 +8,11 @@
 #include <arpa/inet.h>  // htonl(), htons(), ntohl(), ntohs()
 
 #define RTP_PACKET_MAX_SIZE 1500
+#define RTP_PAYLOAD_MAX_SIZE 1200
+
 #define SEQUENCE_MAX 65535
+
+#define RTP_VERSION         2 // RTP Version must be 2.
 
 typedef enum
 {

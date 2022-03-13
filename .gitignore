@@ -6,6 +6,7 @@
 *.obj
 *.bak
 *.swp
+.project
 media_server
 cpp_media_server
 tags

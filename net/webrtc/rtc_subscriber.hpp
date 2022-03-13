@@ -13,6 +13,12 @@
 #include <stddef.h>
 #include <memory>
 
+typedef enum
+{
+    RTC_STREAM_TYPE,
+    LIVE_STREAM_TYPE
+} SOURCE_STREAM_TYPE;
+
 class rtc_base_session;
 class room_callback_interface;
 
@@ -32,6 +38,11 @@ public:
     uint32_t get_rtp_ssrc() { return rtp_ssrc_; }
     uint32_t get_rtx_ssrc() { return rtx_ssrc_; }
     uint8_t get_mid() { return media_info_.mid; }
+    uint8_t get_payload() { return payloadtype_; }
+    uint8_t get_rtx_payload() { return rtx_payloadtype_; }
+    int get_clockrate() { return clock_rate_; }
+    void set_stream_type(SOURCE_STREAM_TYPE stream_type) { stream_type_ = stream_type; }
+    SOURCE_STREAM_TYPE get_stream_type() { return stream_type_; }
 
 public:
     void send_rtp_packet(const std::string& roomId, const std::string& media_type,
@@ -53,6 +64,7 @@ private:
     std::string remote_uid_;
     std::string pid_;
     std::string sid_;
+    SOURCE_STREAM_TYPE stream_type_ = RTC_STREAM_TYPE;
     rtc_base_session* session_ = nullptr;
     std::shared_ptr<rtp_send_stream> stream_ptr_;
 

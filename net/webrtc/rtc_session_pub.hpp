@@ -8,6 +8,12 @@
 #define RTC_DIRECTION_SEND 1
 #define RTC_DIRECTION_RECV 2
 
+typedef enum
+{
+    PUBLISH_WEBRTC,
+    PUBLISH_LIVE,
+} PUBLISH_TYPE;
+
 class rtp_packet;
 class rtc_publisher;
 class rtc_base_session;
@@ -18,12 +24,14 @@ typedef struct publisher_info_s
     uint32_t ssrc;
     int mid;
     std::string pid;
+    PUBLISH_TYPE publish_type;
 } publisher_info;
 
 class room_callback_interface
 {
 public:
-    virtual void on_rtppacket_publisher2room(rtc_base_session* session, rtc_publisher* publisher, rtp_packet* pkt) = 0;
+    virtual void on_rtppacket_publisher2room(rtc_publisher* publisher, rtp_packet* pkt) = 0;
+    virtual void on_rtppacket_publisher2room(const std::string& publisher_id, const std::string& media_type, rtp_packet* pkt) = 0;
     virtual void on_request_keyframe(const std::string& pid, const std::string& sid, uint32_t media_ssrc) = 0;
     virtual void on_unpublish(const std::string& pid) = 0;
     virtual void on_unsubscribe(const std::string& pid, const std::string& sid) = 0;

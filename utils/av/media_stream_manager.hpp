@@ -42,6 +42,7 @@ public:
     static void remove_publisher(const std::string& stream_key);
 
     static void set_hls_writer(av_writer_base* writer);
+    static void set_rtc_writer(av_writer_base* writer);
 
 public:
     static int writer_media_packet(MEDIA_PACKET_PTR pkt_ptr);
@@ -60,6 +61,7 @@ private:
 
 private:
     static av_writer_base* hls_writer_;
+    static av_writer_base* r2r_writer_;//rtmp to webrtc
 };
 
 #endif //RTMP_MEDIA_STREAM_HPP

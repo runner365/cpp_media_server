@@ -81,15 +81,29 @@ payload:%d, has rtx:%d, rtx payload:%d, mid:%d, id:%s",
 
 void rtc_subscriber::send_rtp_packet(const std::string& roomId, const std::string& media_type,
                     const std::string& publish_id, rtp_packet* pkt) {
-    pkt->update_mid(this->get_mid());
-    //log_infof("subscriber receive rtp packet roomid:%s, media type:%s, publisher:%s, pkt dump:\r\n%s",
-    //    roomId.c_str(), media_type.c_str(), publish_id.c_str(), downlink_pkt->dump().c_str());
+    if (pkt->has_extension()) {
+        pkt->update_mid(this->get_mid());
+    }
 
+    uint32_t origin_ssrc   = pkt->get_ssrc();
+    uint8_t origin_payload_type = pkt->get_payload_type();
+
+    pkt->set_ssrc(rtp_ssrc_);
+    pkt->set_payload_type(payloadtype_);
+
+    //update timestamp only for rtmp2webrtc
+    if (stream_type_ == LIVE_STREAM_TYPE) {
+        double rtp_ts = pkt->get_timestamp();
+        rtp_ts = rtp_ts * clock_rate_ / 1000.0;
+        pkt->set_timestamp((uint32_t)rtp_ts);
+    }
     //update payload&ssrc in subscriber
     stream_ptr_->on_send_rtp_packet(pkt);
 
     session_->send_rtp_data_in_dtls(pkt->get_data(), pkt->get_data_length());
 
+    pkt->set_ssrc(origin_ssrc);
+    pkt->set_payload_type(origin_payload_type);
     return;
 }
 

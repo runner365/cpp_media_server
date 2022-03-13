@@ -8,10 +8,21 @@
 #include <vector>
 #include <memory>
 
-static const uint8_t kIdr = 5;
-static const uint8_t kSps = 7;
-static const uint8_t kPps = 8;
-static const uint8_t kAud = 9;
+enum NaluType : uint8_t
+{
+    kSlice         = 1,
+    kIdr           = 5,
+    kSei           = 6,
+    kSps           = 7,
+    kPps           = 8,
+    kAud           = 9,
+    kEndOfSequence = 10,
+    kEndOfStream   = 11,
+    kFiller        = 12,
+    kStapA         = 24,
+    kFuA           = 28
+};
+
 
 static const uint8_t H264_START_CODE[4] = {0x00, 0x00, 0x00, 0x01};
 

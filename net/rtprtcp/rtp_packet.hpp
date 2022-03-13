@@ -72,9 +72,11 @@ public:
         return (marker << 7) | this->header->payload_type;
     }
     uint8_t get_marker() {return this->header->marker;}
+    void set_marker(uint8_t marker) { this->header->marker = marker; }
     uint16_t get_seq() {return ntohs(this->header->sequence);}
     void set_seq(uint16_t seq) {this->header->sequence = htons(seq);}
     uint32_t get_timestamp() {return ntohl(this->header->timestamp);}
+    void set_timestamp(uint32_t ts) { this->header->timestamp = (uint32_t)htonl(ts); }
     uint32_t get_ssrc() {return ntohl(this->header->ssrc);}
     void set_ssrc(uint32_t ssrc) {this->header->ssrc = (uint32_t)htonl(ssrc);}
 
@@ -83,6 +85,7 @@ public:
 
     uint8_t* get_payload() {return this->payload;}
     size_t get_payload_length() {return this->payload_len;}
+    void set_payload_length(size_t len) { this->payload_len = len; }
 
     void set_mid_extension_id(uint8_t id) { mid_extension_id_ = id; }
     uint8_t get_mid_extension_id() { return mid_extension_id_; }
@@ -95,6 +98,8 @@ public:
 
     bool read_abs_time(uint32_t& abs_time_24bits);
     bool update_abs_time(uint32_t abs_time_24bits);
+
+    void set_need_delete(bool flag) { this->need_delete = false; }
 
     int64_t get_local_ms() {return this->local_ms;}
 
@@ -128,7 +133,7 @@ private:
     uint8_t pad_len           = 0;
     size_t data_len           = 0;
     int64_t local_ms          = 0;
-    bool is_clone_            = false;
+    bool need_delete          = false;
 
 private:
     uint8_t mid_extension_id_      = 0;

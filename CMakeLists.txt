@@ -197,6 +197,8 @@ add_executable(cpp_media_server
             net/webrtc/jitterbuffer.cpp
             net/webrtc/pack_handle_h264.cpp
             net/webrtc/pack_handle_vp8.cpp
+            net/webrtc/rtp_h264_pack.cpp
+            net/webrtc/rtmp2rtc.cpp
             net/webrtc/libwebrtc/modules/remote_bitrate_estimator/bwe_defines.cc
             net/webrtc/libwebrtc/modules/remote_bitrate_estimator/inter_arrival.cc
             net/webrtc/libwebrtc/modules/remote_bitrate_estimator/overuse_detector.cc

@@ -179,7 +179,7 @@ void rtc_publisher::on_handle_rtppacket(rtp_packet* pkt) {
         jb_handler_.input_rtp_packet(roomId_, uid_, media_type_str_, stream_type_, clock_rate_, pkt);
     }
     
-    room_->on_rtppacket_publisher2room(session_, this, pkt);
+    room_->on_rtppacket_publisher2room(this, pkt);
 }
 
 void rtc_publisher::on_handle_rtcp_sr(rtcp_sr_packet* sr_pkt) {

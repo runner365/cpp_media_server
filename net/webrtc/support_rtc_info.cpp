@@ -306,7 +306,7 @@ static void filter_fmts_and_encs_by_h264payload(std::vector<FMTP>& support_input
     for (std::vector<FMTP>::iterator iter = support_input_fmtps.begin();
         iter != support_input_fmtps.end();) {
         if ((iter->payload != h264_payload) && (iter->payload != h264_apt_payload)) {
-            log_infof("remove payload:%d frome fmtps", iter->payload);
+            //log_infof("remove payload:%d frome fmtps", iter->payload);
             iter = support_input_fmtps.erase(iter);
         } else {
             iter++;
@@ -316,7 +316,7 @@ static void filter_fmts_and_encs_by_h264payload(std::vector<FMTP>& support_input
     for (std::vector<RTP_ENCODING>::iterator iter = support_rtp_encodings.begin();
         iter != support_rtp_encodings.end();) {
         if ((iter->payload != h264_payload) && (iter->payload != h264_apt_payload)) {
-            log_infof("remove payload:%d frome rtp encodings", iter->payload);
+            //log_infof("remove payload:%d frome rtp encodings", iter->payload);
             iter = support_rtp_encodings.erase(iter);
         } else {
             iter++;
@@ -503,13 +503,13 @@ void get_support_rtc_media(const rtc_media_info& input, rtc_media_info& support_
             pre_enc_ss << "codec:" << enc_item.codec << ", encoding:" << enc_item.encoding
                 << ", payload:" << enc_item.payload << "\r\n";
         }
-        log_infof("(pre) support rtp encodes:\r\n%s", pre_enc_ss.str().c_str());
+        //log_infof("(pre) support rtp encodes:\r\n%s", pre_enc_ss.str().c_str());
         get_support_fmtp(rtc_info.fmtps, support_rtc_info.fmtps);
         std::stringstream pre_fmtp_ss;
         for (auto item : support_rtc_info.fmtps) {
             pre_fmtp_ss << "config:" << item.config << ", payload:" << item.payload << "\r\n";
         }
-        log_infof("(pre)support fmtps:\r\n%s", pre_fmtp_ss.str().c_str());
+        //log_infof("(pre)support fmtps:\r\n%s", pre_fmtp_ss.str().c_str());
 
         if (support_rtc_info.media_type == "video") {
             int h264_payload     = 0;
@@ -517,7 +517,7 @@ void get_support_rtc_media(const rtc_media_info& input, rtc_media_info& support_
             bool has_h264profile = fmtp_has_h264profile(support_rtc_info.fmtps,
                                                 h264_payload, h264_apt_payload);
             if (has_h264profile && (h264_payload > 0) && (h264_apt_payload > 0)) {
-                log_infof("h264 payload:%d, apt payload:%d", h264_payload, h264_apt_payload);
+                //log_infof("h264 payload:%d, apt payload:%d", h264_payload, h264_apt_payload);
                 filter_fmts_and_encs_by_h264payload(support_rtc_info.fmtps,
                                                 support_rtc_info.rtp_encodings,
                                                 h264_payload, h264_apt_payload);
@@ -532,12 +532,12 @@ void get_support_rtc_media(const rtc_media_info& input, rtc_media_info& support_
             enc_ss << "codec:" << enc_item.codec << ", encoding:" << enc_item.encoding
                 << ", payload:" << enc_item.payload << "\r\n";
         }
-        log_infof("support rtp encodes:\r\n%s", enc_ss.str().c_str());
+        //log_infof("support rtp encodes:\r\n%s", enc_ss.str().c_str());
         std::stringstream fmtp_ss;
         for (auto item : support_rtc_info.fmtps) {
             fmtp_ss << "config:" << item.config << ", payload:" << item.payload << "\r\n";
         }
-        log_infof("support fmtps:\r\n%s", fmtp_ss.str().c_str());
+        //log_infof("support fmtps:\r\n%s", fmtp_ss.str().c_str());
 
         if (!rtc_info.ssrc_groups.empty()) {
             support_rtc_info.ssrc_groups = rtc_info.ssrc_groups;

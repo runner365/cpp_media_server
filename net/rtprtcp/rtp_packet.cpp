@@ -73,12 +73,12 @@ rtp_packet::rtp_packet(rtp_common_header* header, header_extension* ext,
     this->local_ms    = (int64_t)now_millisec();
 
     this->parse_ext();
-    is_clone_ = false;
+    this->need_delete = false;
 }
 
 rtp_packet::~rtp_packet() {
     uint8_t* data = get_data();
-    if (is_clone_ && data) {
+    if (this->need_delete && data) {
         delete[] data;
     }
 }
@@ -89,7 +89,7 @@ rtp_packet* rtp_packet::clone() {
 
     rtp_packet* new_pkt = rtp_packet::parse(new_data, this->get_data_length());
 
-    new_pkt->is_clone_ = true;
+    new_pkt->need_delete = true;
     new_pkt->mid_extension_id_ = this->mid_extension_id_;
     new_pkt->abs_time_extension_id_ = this->abs_time_extension_id_;
 
