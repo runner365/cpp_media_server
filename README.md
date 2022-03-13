@@ -16,8 +16,14 @@ network protocol feature:
 * join
 * publish/unpublish
 * subscribe/unsubscribe
+* webrtc to rtmp
 
-The webrtc client sdk demo(only support chrome browser): [webrtc sdk demo](https://github.com/runner365/webrtc-client-sdk)
+webrtc(roomid:1000, uid: 20000) automatically forward a new rtmp stream(url: rtmp://127.0.0.1/1000/20000) in server
+* rtmp to webrtc
+
+rtmp stream(url: rtmp://hostanme/1000/20000) automatically forward a webrtc stream in webrtc roomid:1000, uid: 20000
+
+* The webrtc client sdk demo: [webrtc sdk demo](https://github.com/runner365/webrtc-client-sdk)
 
 ### rtmp
 * rtmp publish
