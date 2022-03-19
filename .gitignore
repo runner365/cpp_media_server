@@ -2,6 +2,10 @@
 ./__cmake/*
 ./build
 ./build/*
+objs
+objs/*
+hls
+hls/*
 
 *.obj
 *.bak

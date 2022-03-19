@@ -1,11 +1,11 @@
 
-if [ ! -d "__cmake" ]; then
-  mkdir __cmake
+if [ ! -d "objs" ]; then
+  mkdir objs
 else
-  rm -rf __cmake
-  mkdir __cmake
+  rm -rf objs
+  mkdir objs
 fi
 
-cd __cmake
+cd objs
 cmake ..
 make -j 4

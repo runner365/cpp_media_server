@@ -1,55 +1,55 @@
-# cpp_media_server
+# cpp media server
 
-A media server is written by C++11, and the network io is written by Boost.Asio.
+cpp media server是基于c++11开发的webrtc会议服务sfu，网络部分基于Boost.Asio。
 
-It support rtmp/hls/httpflv/websocket(flv)/webrtc.
+## 1. 支持特性
+### 1.1 webrtc相关特性
+* 房间管理服务
+* websocket长连接接入
+* 加入/离开房间
+* 推流/停止推流
+* 拉流/停止拉流
+* 高性能webrtc转rtmp: 无转码
 
-## How to build
-[How to build](doc/how_to_build.md)
+   高性能支持webrtc的旁路rtmp直播
+* 高性能rtmp转webrtc: 无转码
 
-## What does It support
-network protocol feature:
+   高性能支持低延时直播，支持rtmp转为webrtc
 
-### webrtc
-* roommanager
-* websocket
-* join
-* publish/unpublish
-* subscribe/unsubscribe
-* webrtc to rtmp
+<font size=3>划重点：为什么能支持高性能webrtc与rtmp的互转，因为支持opus/vp8 in flv，并提供自定义ffmpeg，见4.2.</font>
 
-webrtc(roomid:1000, uid: 20000) automatically forward a new rtmp stream(url: rtmp://127.0.0.1/1000/20000) in server
-* rtmp to webrtc
+### 1.2 直播相关特性
+* rtmp推拉流服务(支持h264/vp8+aac/opus in rtmp/flv)
+* httpflv拉流服务(支持h264/vp8+aac/opus in rtmp/flv)
+* hls录像服务(支持h264/vp8+aac/opus in mpegts)
+* websocket推送flv直播服务(webcodec编码，websocket flv推流封装)
 
-rtmp stream(url: rtmp://hostanme/1000/20000) automatically forward a webrtc stream in webrtc roomid:1000, uid: 20000
 
-* The webrtc client sdk demo: [webrtc sdk demo](https://github.com/runner365/webrtc-client-sdk)
+## 2. 如何编译
+[如何编译](doc/how_to_build.md)
 
-### rtmp
-* rtmp publish
-* rtmp play
+## 3. Wiki文档
 
-### httpflv
-* httpflv play
-* flv(h264/vp8, aac/opus)
+* 如何配置webrtc: [webrtc配置指南](doc/webrtc.md)
+* 如何配置rtmp server: [rtmp配置指南](doc/rtmp.md)
+* 如何配置rtmp和httpflv服务: [rtmp和httpflv配置指南](doc/rtmp_httpflv.md)
+* 如何配置webrtc2rtmp: [webrtc转rtmp配置指南](doc/webrtc2rtmp.md)
+* 如何配置rtmp2webrtc: [rtmp转webrtc配置指南](doc/rtmp2webrtc.md)
+* 如何配置rtmp和hls服务: [rtmp和hls配置指南](doc/rtmp_hls.md)
+* 如何配置websocket推送flv服务: [websocket flv配置指南](doc/websocket_flv.md)
 
-### hls
-media stream is from rtmp/webrtc/websocket flv.
-support codec: h264/vp8 + aac/opus
+## 4. 支持相关
+### 4.1 webrtc client sdk
+webrtc会议client sdk: [webrtc client sdk](https://github.com/runner365/webrtc-client-sdk)
 
-* hls live: 
-### websocket
-* flv in websocket push
+### 4.2 自定义ffmpeg
 
-webcodec encode media in flv(h264+opus) over websocket, we suggest webclient demo: 
-[webcodecpush](https://github.com/runner365/webcodecpush)
-
-## codec help
-I provide the customized ffmpeg to support
+服务支持丰富的编码格式：
 * h264/vp8, aac/opus in flv
 * h264/vp8, aac/opus in hls
 
-the customized ffmpeg: [my_ffmpeg](https://github.com/runner365/my_ffmpeg)
+提供自定义的ffmpeg源码: [my_ffmpeg](https://github.com/runner365/my_ffmpeg)
 
-
+### 4.3 webcodec client sdk
+基于webcodec的websocket flv推理: [websocket推流sdk](https://github.com/runner365/webcodecpush)
 

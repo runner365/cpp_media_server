@@ -16,24 +16,24 @@ SET(LIBRARY_OUTPUT_PATH ${CMAKE_BINARY_DIR}/output/lib)
 set(CMAKE_PREFIX_PATH "${CMAKE_BINARY_DIR}/output/lib/pkgconfig")
 
 # set include path
-include_directories(./
-                    ./net
-                    ./net/http
-                    ./net/rtmp
-                    ./net/websocket
-                    ./net/websocket/wsimple
-                    ./net/tcp
-                    ./net/stun
-                    ./net/httpflv
-                    ./net/rtprtcp
-                    ./net/hls
-                    ./net/webrtc
-                    ./net/webrtc/libwebrtc
-                    ./format
-                    ./format/flv
-                    ./utils
-                    ./utils/av
-                    ./3rdparty/libsdptransform/include
+include_directories(src
+                    src/net
+                    src/net/http
+                    src/net/rtmp
+                    src/net/websocket
+                    src/net/websocket/wsimple
+                    src/net/tcp
+                    src/net/stun
+                    src/net/httpflv
+                    src/net/rtprtcp
+                    src/net/hls
+                    src/net/webrtc
+                    src/net/webrtc/libwebrtc
+                    src/format
+                    src/format/flv
+                    src/utils
+                    src/utils/av
+                    3rdparty/libsdptransform/include
                     ${CMAKE_BINARY_DIR}/output/include
                     ${CMAKE_BINARY_DIR}/output/include/srtp2
                     ${CMAKE_BINARY_DIR}/output/include/openssl
@@ -44,9 +44,10 @@ include_directories(./
 link_directories(${CMAKE_BINARY_DIR}/output/lib /usr/local/lib64 /usr/local/lib)
 add_subdirectory(3rdparty)
 
-add_executable(echo_demo net/tcp/echo_demo.cpp
-            utils/logger.cpp
-            utils/data_buffer.cpp)
+add_executable(echo_demo
+            src/net/tcp/echo_demo.cpp
+            src/utils/logger.cpp
+            src/utils/data_buffer.cpp)
 IF (APPLE)
 target_link_libraries(echo_demo pthread dl z m boost_thread boost_system)
 ELSEIF (UNIX)
@@ -54,11 +55,11 @@ target_link_libraries(echo_demo pthread rt dl z m boost_thread boost_system)
 ENDIF ()
 
 add_executable(flv_demux_demo
-            format/flv/flv_demux.cpp
-            format/flv/flv_demux_demo.cpp
-            utils/logger.cpp
-            utils/data_buffer.cpp
-            utils/byte_stream.cpp)
+            ./src/format/flv/flv_demux.cpp
+            ./src/format/flv/flv_demux_demo.cpp
+            ./src/utils/logger.cpp
+            ./src/utils/data_buffer.cpp
+            ./src/utils/byte_stream.cpp)
 IF (APPLE)
 target_link_libraries(flv_demux_demo pthread dl z m boost_thread boost_system)
 ELSEIF (UNIX)
@@ -66,12 +67,12 @@ target_link_libraries(flv_demux_demo pthread rt dl z m boost_thread boost_system
 ENDIF ()
 
 add_executable(flv_mux_demo
-            format/flv/flv_mux.cpp
-            format/flv/flv_demux.cpp
-            format/flv/flv_mux_demo.cpp
-            utils/logger.cpp
-            utils/data_buffer.cpp
-            utils/byte_stream.cpp)
+            src/format/flv/flv_mux.cpp
+            src/format/flv/flv_demux.cpp
+            src/format/flv/flv_mux_demo.cpp
+            src/utils/logger.cpp
+            src/utils/data_buffer.cpp
+            src/utils/byte_stream.cpp)
 IF (APPLE)
 target_link_libraries(flv_mux_demo pthread dl z m boost_thread boost_system)
 ELSEIF (UNIX)
@@ -79,11 +80,11 @@ target_link_libraries(flv_mux_demo pthread rt dl z m boost_thread boost_system)
 ENDIF ()
 
 add_executable(mpegts_demux_demo
-            format/mpegts/mpegts_demux_demo.cpp
-            format/mpegts/mpegts_demux.cpp
-            utils/logger.cpp
-            utils/data_buffer.cpp
-            utils/byte_stream.cpp)
+            src/format/mpegts/mpegts_demux_demo.cpp
+            src/format/mpegts/mpegts_demux.cpp
+            src/utils/logger.cpp
+            src/utils/data_buffer.cpp
+            src/utils/byte_stream.cpp)
 IF (APPLE)
 target_link_libraries(mpegts_demux_demo pthread dl z m boost_thread boost_system)
 ELSEIF (UNIX)
@@ -91,12 +92,12 @@ target_link_libraries(mpegts_demux_demo pthread rt dl z m boost_thread boost_sys
 ENDIF ()
 
 add_executable(mpegts_mux_demo
-            format/mpegts/mpegts_mux_demo.cpp
-            format/mpegts/mpegts_mux.cpp
-            format/flv/flv_demux.cpp
-            utils/logger.cpp
-            utils/data_buffer.cpp
-            utils/byte_stream.cpp)
+            src/format/mpegts/mpegts_mux_demo.cpp
+            src/format/mpegts/mpegts_mux.cpp
+            src/format/flv/flv_demux.cpp
+            src/utils/logger.cpp
+            src/utils/data_buffer.cpp
+            src/utils/byte_stream.cpp)
 IF (APPLE)
 target_link_libraries(mpegts_mux_demo pthread dl z m boost_thread boost_system)
 ELSEIF (UNIX)
@@ -105,11 +106,11 @@ ENDIF ()
 
 
 add_executable(http_server_demo
-            net/http/http_server_demo.cpp
-            net/http/http_server.cpp
-            net/http/http_session.cpp
-            utils/data_buffer.cpp
-            utils/logger.cpp)
+            src/net/http/http_server_demo.cpp
+            src/net/http/http_server.cpp
+            src/net/http/http_session.cpp
+            src/utils/data_buffer.cpp
+            src/utils/logger.cpp)
 IF (APPLE)
 target_link_libraries(http_server_demo pthread dl z m boost_thread boost_system)
 ELSEIF (UNIX)
@@ -117,16 +118,16 @@ target_link_libraries(http_server_demo pthread rt dl z m boost_thread boost_syst
 ENDIF ()
 
 add_executable(rtmp_play_demo
-            net/rtmp/client_demo/rtmp_play_demo.cpp
-            net/rtmp/rtmp_client_session.cpp
-            net/rtmp/rtmp_session_base.cpp
-            net/rtmp/rtmp_control_handler.cpp
-            net/rtmp/rtmp_handshake.cpp
-            net/rtmp/chunk_stream.cpp
-            format/flv/flv_mux.cpp
-            utils/logger.cpp
-            utils/data_buffer.cpp
-            utils/byte_stream.cpp)
+            src/net/rtmp/client_demo/rtmp_play_demo.cpp
+            src/net/rtmp/rtmp_client_session.cpp
+            src/net/rtmp/rtmp_session_base.cpp
+            src/net/rtmp/rtmp_control_handler.cpp
+            src/net/rtmp/rtmp_handshake.cpp
+            src/net/rtmp/chunk_stream.cpp
+            src/format/flv/flv_mux.cpp
+            src/utils/logger.cpp
+            src/utils/data_buffer.cpp
+            src/utils/byte_stream.cpp)
 add_dependencies(rtmp_play_demo openssl)
 
 IF (APPLE)
@@ -136,17 +137,17 @@ target_link_libraries(rtmp_play_demo pthread rt dl z m ssl crypto pthread boost_
 ENDIF ()
 
 add_executable(rtmp_publish_demo
-            net/rtmp/client_demo/rtmp_publish_demo.cpp
-            net/rtmp/rtmp_client_session.cpp
-            net/rtmp/rtmp_session_base.cpp
-            net/rtmp/rtmp_control_handler.cpp
-            net/rtmp/rtmp_handshake.cpp
-            net/rtmp/chunk_stream.cpp
-            format/flv/flv_demux.cpp
-            format/flv/flv_mux.cpp
-            utils/logger.cpp
-            utils/data_buffer.cpp
-            utils/byte_stream.cpp)
+            src/net/rtmp/client_demo/rtmp_publish_demo.cpp
+            src/net/rtmp/rtmp_client_session.cpp
+            src/net/rtmp/rtmp_session_base.cpp
+            src/net/rtmp/rtmp_control_handler.cpp
+            src/net/rtmp/rtmp_handshake.cpp
+            src/net/rtmp/chunk_stream.cpp
+            src/format/flv/flv_demux.cpp
+            src/format/flv/flv_mux.cpp
+            src/utils/logger.cpp
+            src/utils/data_buffer.cpp
+            src/utils/byte_stream.cpp)
 add_dependencies(rtmp_publish_demo openssl)
 
 IF (APPLE)
@@ -156,62 +157,63 @@ target_link_libraries(rtmp_publish_demo pthread rt dl z m ssl crypto pthread boo
 ENDIF ()
 
 add_executable(cpp_media_server
-            media_server.cpp
-            format/flv/flv_demux.cpp
-            format/flv/flv_mux.cpp
-            format/mpegts/mpegts_mux.cpp
-            net/http/http_session.cpp
-            net/http/http_server.cpp
-            net/hls/hls_worker.cpp
-            net/hls/hls_writer.cpp
-            net/hls/mpegts_handle.cpp
-            net/rtmp/rtmp_server.cpp
-            net/rtmp/rtmp_server_session.cpp
-            net/rtmp/rtmp_client_session.cpp
-            net/rtmp/rtmp_session_base.cpp
-            net/rtmp/rtmp_control_handler.cpp
-            net/rtmp/rtmp_handshake.cpp
-            net/rtmp/chunk_stream.cpp
-            net/rtmp/rtmp_writer.cpp
-            net/rtprtcp/rtp_packet.cpp
-            net/websocket/ws_server.cpp
-            net/websocket/ws_session.cpp
-            net/websocket/ws_service_imp.cpp
-            net/websocket/wsimple/flv_websocket.cpp
-            net/websocket/wsimple/protoo_server.cpp
-            net/stun/stun_packet.cpp
-            net/webrtc/room_service.cpp
-            net/webrtc/sdp_analyze.cpp
-            net/webrtc/user_info.cpp
-            net/webrtc/rtc_media_info.cpp
-            net/webrtc/rtc_base_session.cpp
-            net/webrtc/webrtc_session.cpp
-            net/webrtc/rtc_subscriber.cpp
-            net/webrtc/rtc_dtls.cpp
-            net/webrtc/srtp_session.cpp
-            net/webrtc/support_rtc_info.cpp
-            net/webrtc/rtc_publisher.cpp
-            net/webrtc/rtp_recv_stream.cpp
-            net/webrtc/rtp_send_stream.cpp
-            net/webrtc/nack_generator.cpp
-            net/webrtc/jitterbuffer.cpp
-            net/webrtc/pack_handle_h264.cpp
-            net/webrtc/pack_handle_vp8.cpp
-            net/webrtc/rtp_h264_pack.cpp
-            net/webrtc/rtmp2rtc.cpp
-            net/webrtc/libwebrtc/modules/remote_bitrate_estimator/bwe_defines.cc
-            net/webrtc/libwebrtc/modules/remote_bitrate_estimator/inter_arrival.cc
-            net/webrtc/libwebrtc/modules/remote_bitrate_estimator/overuse_detector.cc
-            net/webrtc/libwebrtc/modules/remote_bitrate_estimator/overuse_estimator.cc
-            net/webrtc/libwebrtc/modules/remote_bitrate_estimator/remote_bitrate_estimator_abs_send_time.cc
-            net/httpflv/httpflv_server.cpp
-            net/httpflv/httpflv_writer.cpp
-            utils/logger.cpp
-            utils/data_buffer.cpp
-            utils/byte_stream.cpp
-            utils/byte_crypto.cpp
-            utils/av/media_stream_manager.cpp
-            utils/av/gop_cache.cpp)
+            src/media_server.cpp
+            src/format/flv/flv_demux.cpp
+            src/format/flv/flv_mux.cpp
+            src/format/mpegts/mpegts_mux.cpp
+            src/net/http/http_session.cpp
+            src/net/http/http_server.cpp
+            src/net/hls/hls_worker.cpp
+            src/net/hls/hls_writer.cpp
+            src/net/hls/mpegts_handle.cpp
+            src/net/rtmp/rtmp_server.cpp
+            src/net/rtmp/rtmp_server_session.cpp
+            src/net/rtmp/rtmp_client_session.cpp
+            src/net/rtmp/rtmp_session_base.cpp
+            src/net/rtmp/rtmp_control_handler.cpp
+            src/net/rtmp/rtmp_handshake.cpp
+            src/net/rtmp/chunk_stream.cpp
+            src/net/rtmp/rtmp_writer.cpp
+            src/net/rtprtcp/rtp_packet.cpp
+            src/net/websocket/ws_server.cpp
+            src/net/websocket/ws_session.cpp
+            src/net/websocket/ws_service_imp.cpp
+            src/net/websocket/wsimple/flv_websocket.cpp
+            src/net/websocket/wsimple/protoo_server.cpp
+            src/net/stun/stun_packet.cpp
+            src/net/webrtc/room_service.cpp
+            src/net/webrtc/sdp_analyze.cpp
+            src/net/webrtc/user_info.cpp
+            src/net/webrtc/rtc_media_info.cpp
+            src/net/webrtc/rtc_base_session.cpp
+            src/net/webrtc/webrtc_session.cpp
+            src/net/webrtc/rtc_subscriber.cpp
+            src/net/webrtc/rtc_dtls.cpp
+            src/net/webrtc/srtp_session.cpp
+            src/net/webrtc/support_rtc_info.cpp
+            src/net/webrtc/rtc_publisher.cpp
+            src/net/webrtc/rtp_recv_stream.cpp
+            src/net/webrtc/rtp_send_stream.cpp
+            src/net/webrtc/nack_generator.cpp
+            src/net/webrtc/jitterbuffer.cpp
+            src/net/webrtc/pack_handle_h264.cpp
+            src/net/webrtc/pack_handle_vp8.cpp
+            src/net/webrtc/rtp_h264_pack.cpp
+            src/net/webrtc/rtmp2rtc.cpp
+            src/net/webrtc/libwebrtc/modules/remote_bitrate_estimator/bwe_defines.cc
+            src/net/webrtc/libwebrtc/modules/remote_bitrate_estimator/inter_arrival.cc
+            src/net/webrtc/libwebrtc/modules/remote_bitrate_estimator/overuse_detector.cc
+            src/net/webrtc/libwebrtc/modules/remote_bitrate_estimator/overuse_estimator.cc
+            src/net/webrtc/libwebrtc/modules/remote_bitrate_estimator/remote_bitrate_estimator_abs_send_time.cc
+            src/net/httpflv/httpflv_server.cpp
+            src/net/httpflv/httpflv_writer.cpp
+            src/utils/logger.cpp
+            src/utils/config.cpp
+            src/utils/data_buffer.cpp
+            src/utils/byte_stream.cpp
+            src/utils/byte_crypto.cpp
+            src/utils/av/media_stream_manager.cpp
+            src/utils/av/gop_cache.cpp)
 
 add_dependencies(cpp_media_server openssl sdptransform libsrtp)
 
