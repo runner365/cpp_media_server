@@ -2,6 +2,8 @@
 ## 0.1 下载boost库
 下载地址boost v1.76: [boost v1.76](https://boostorg.jfrog.io/ui/native/main/release/1.76.0/source/)
 
+推荐gcc 8.4以上
+
 ## 0.2 How to build
 如何在Mac/linux内编译
 ```markup

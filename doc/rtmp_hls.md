@@ -13,7 +13,7 @@
     "hls":{
         "enable": "yes",
         "ts_duration":5000,
-        "hls_path":"./hls"
+        "hls_path":"./hlsfiles"
     }
 }
 ```
@@ -46,7 +46,7 @@ hls模块，通过配置“hls”的json模块。
 "hls":{
     "enable": "yes",
     "ts_duration":5000,
-    "hls_path":"./hls"
+    "hls_path":"./hlsfiles"
 }
 ```
 配置hls_path，路径为切片的路径，如果路径不存在，生成切片的时候会动态创建，请确定有创建路径的权限。

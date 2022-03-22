@@ -4,6 +4,9 @@
 ./build/*
 objs
 objs/*
+hlsfiles
+hlsfiles/*
+
 
 *.obj
 *.bak

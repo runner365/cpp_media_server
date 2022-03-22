@@ -109,27 +109,27 @@ inline int make_adts(uint8_t* data, uint8_t object_type,
     //AAAAAAAA AAAABCCD EEFFFFGH HHIJKLMM MMMMMMMM MMMOOOOO OOOOOOPP
     // - Sync 0xFFFx
 
-	//first write adts header
-	data[0] = 0xff;
-	data[1] = 0xf1;
-
-	data[2] = 0x00;
-	data[2] = data[2] | ((object_type-1)<<6);
-	data[2] = data[2] | ((sample_rate_index)<<2);
-	data[2] = data[2] | ((channel >> 2));
-
+    //first write adts header
+    data[0] = 0xff;
+    data[1] = 0xf1;
+    
+    data[2] = 0x00;
+    data[2] = data[2] | ((object_type-1)<<6);
+    data[2] = data[2] | ((sample_rate_index)<<2);
+    data[2] = data[2] | ((channel >> 2));
+    
     //0x80
-	data[3] &= 0x00;
-	data[3] = data[3] | (channel << 6);
-	data[3] = data[3] | ((full_frame_size<<3)>>14);
-
-	data[4] &= 0x00;
-	data[4] = data[4] | ((full_frame_size<<5)>>8);
-
-	data[5] &= 0x00;
-	data[5] = data[5] | (((full_frame_size<<13)>>13)<<5);
-	data[5] = data[5] | ((0x7C<<1)>>3);
-	data[6] = 0xfc;
+    data[3] &= 0x00;
+    data[3] = data[3] | (channel << 6);
+    data[3] = data[3] | ((full_frame_size<<3)>>14);
+    
+    data[4] &= 0x00;
+    data[4] = data[4] | ((full_frame_size<<5)>>8);
+    
+    data[5] &= 0x00;
+    data[5] = data[5] | (((full_frame_size<<13)>>13)<<5);
+    data[5] = data[5] | ((0x7C<<1)>>3);
+    data[6] = 0xfc;
     
     return ADTS_LEN;
 }
@@ -147,11 +147,11 @@ inline size_t make_opus_header(uint8_t* data, int sample_rate, int channel) {
     p++;
     *p = (uint8_t)channel;
     p++;
-    write_2bytes_be(p, 0);//initial_padding
+    write_2bytes_le(p, 0);//initial_padding
     p += 2;
-    write_4bytes_be(p, sample_rate);
+    write_4bytes_le(p, sample_rate);
     p += 4;
-    write_2bytes_be(p, 0);
+    write_2bytes_le(p, 0);
     p += 2;
     *p = 0;//mapping_family
     p++;

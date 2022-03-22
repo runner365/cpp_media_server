@@ -89,7 +89,7 @@ void write_4bytes(uint8_t* data, uint32_t value) {
     *p++ = pp[0];
 }
 
-void write_2bytes_be(uint8_t* data, uint32_t value) {
+void write_2bytes_le(uint8_t* data, uint32_t value) {
     uint8_t* p = data;
     uint8_t* pp = (uint8_t*)&value;
 
@@ -97,7 +97,7 @@ void write_2bytes_be(uint8_t* data, uint32_t value) {
     *p++ = pp[1];
 }
 
-void write_4bytes_be(uint8_t* data, uint32_t value) {
+void write_4bytes_le(uint8_t* data, uint32_t value) {
     uint8_t* p = data;
     uint8_t* pp = (uint8_t*)&value;
 

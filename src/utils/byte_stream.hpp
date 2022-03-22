@@ -36,8 +36,8 @@ uint16_t read_2bytes(const uint8_t* data);
 
 void write_8bytes(uint8_t* data, uint64_t value);
 void write_4bytes(uint8_t* data, uint32_t value);
-void write_2bytes_be(uint8_t* data, uint32_t value);
-void write_4bytes_be(uint8_t* data, uint32_t value);
+void write_2bytes_le(uint8_t* data, uint32_t value);
+void write_4bytes_le(uint8_t* data, uint32_t value);
 void write_3bytes(uint8_t* data, uint32_t value);
 void write_2bytes(uint8_t* data, uint16_t value);
 
