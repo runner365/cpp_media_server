@@ -29,14 +29,20 @@ cpp media server是基于c++11开发的webrtc会议服务sfu，网络部分基�
 [如何编译](doc/how_to_build.md)
 
 ## 3. Wiki文档
-
-* 如何配置webrtc: [webrtc配置指南](doc/webrtc.md)
-* 如何配置rtmp server: [rtmp配置指南](doc/rtmp.md)
+### 3.1 配置指南
+* 如何配置webrtc: [webrtc配置指南](doc/conf/webrtc.md)
+* 如何配置rtmp server: [rtmp配置指南](doc/conf/rtmp.md)
 * 如何配置rtmp和httpflv服务: [rtmp和httpflv配置指南](doc/rtmp_httpflv.md)
-* 如何配置webrtc2rtmp: [webrtc转rtmp配置指南](doc/webrtc2rtmp.md)
-* 如何配置rtmp2webrtc: [rtmp转webrtc配置指南](doc/rtmp2webrtc.md)
-* 如何配置rtmp和hls服务: [rtmp和hls配置指南](doc/rtmp_hls.md)
-* 如何配置websocket推送flv服务: [websocket flv配置指南](doc/websocket_flv.md)
+* 如何配置webrtc2rtmp: [webrtc转rtmp配置指南](doc/conf/webrtc2rtmp.md)
+* 如何配置rtmp2webrtc: [rtmp转webrtc配置指南](doc/conf/rtmp2webrtc.md)
+* 如何配置rtmp和hls服务: [rtmp和hls配置指南](doc/conf/rtmp_hls.md)
+* 如何配置websocket推送flv服务: [websocket flv配置指南](doc/conf/websocket_flv.md)
+
+### 3.2 C++媒体模块
+如何引用几个cpp/hpp文件，就能实现流媒体的封装
+* [flv mux/demux模块](doc/module/flv_module.md)
+* [mpegts mux/demux模块](doc/module/mpegts_module.md)
+* [rtmp play/publish模块](doc/module/rtmp_module.md)
 
 ## 4. 支持相关
 ### 4.1 webrtc client sdk
