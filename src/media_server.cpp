@@ -18,11 +18,11 @@
 boost::asio::io_context MediaServer::io_context;
 boost::asio::io_context MediaServer::hls_io_context;
 websocket_server* MediaServer::ws_p  = nullptr;
+websocket_server* MediaServer::ws_flv_p = nullptr;
 rtmp2rtc_writer* MediaServer::r2r_output = nullptr;
 std::shared_ptr<rtmp_server> MediaServer::rtmp_ptr;
 std::shared_ptr<httpflv_server> MediaServer::httpflv_ptr;
 hls_writer* MediaServer::hls_output = nullptr;
-std::shared_ptr<websocket_server> MediaServer::ws_flv_ptr;
 
 void MediaServer::create_webrtc() {
     if (!Config::webrtc_is_enable()) {
@@ -88,7 +88,7 @@ void MediaServer::create_websocket_flv() {
         return;
     }
 
-    MediaServer::ws_flv_ptr = std::make_shared<websocket_server>(io_context, Config::websocket_port(), WEBSOCKET_IMPLEMENT_FLV_TYPE);
+    MediaServer::ws_flv_p = new websocket_server(io_context, Config::websocket_port(), WEBSOCKET_IMPLEMENT_FLV_TYPE);
 
     log_infof("websocket flv is starting...");
     return;
@@ -133,6 +133,11 @@ void MediaServer::release_all() {
     if (MediaServer::ws_p) {
         delete MediaServer::ws_p;
         MediaServer::ws_p = nullptr;
+    }
+
+    if (MediaServer::ws_flv_p) {
+        delete MediaServer::ws_flv_p;
+        MediaServer::ws_flv_p = nullptr;
     }
 
     if (MediaServer::r2r_output) {

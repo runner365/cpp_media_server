@@ -50,7 +50,7 @@ private:
     static hls_writer* hls_output;
 
 private:
-    static std::shared_ptr<websocket_server> ws_flv_ptr;
+    static websocket_server* ws_flv_p;
 };
 
 #endif

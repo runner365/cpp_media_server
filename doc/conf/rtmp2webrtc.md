@@ -42,5 +42,17 @@ rtmp推流流url地址: rtmp://x.x.x.x/2001/10000。
 
 webrtc用户自动会在房间roomid=2001内，看见rtmp流。
 
+### 5.2.3 ffmpeg推流举例
+自定义的ffmpeg源码(支持opus in flv): [my_ffmpeg](https://github.com/runner365/my_ffmpeg)
+
+如果你编译了我自定义的ffmpeg(支持opus in flv)，示例的命令行：
+```markup
+ffmpeg -re -i source.flv -c:v libx264 -s 640x360 -profile:v baseline -r 15 -x264-params 'keyint=30:vbv-maxrate=1000:vbv-bufsize=2000' -c:a libopus -ar 48000 -ac 2 -ab 32k -f flv rtmp://127.0.0.1/2001/30001
+```
+如果你没有编译我自定义的ffmpeg(不支持opus in flv)，webrtc观看只能看见视频，没有声音，示例命令行:
+```markup
+ffmpeg -re -i source.flv -c:v libx264 -s 640x360 -profile:v baseline -r 15 -x264-params 'keyint=30:vbv-maxrate=1000:vbv-bufsize=2000' -c:a aac -ar 44100 -ac 2 -ab 32k -f flv rtmp://127.0.0.1/2001/30001
+```
+
 ## 5.3 webrtc client sdk
 webrtc会议client sdk: [webrtc client sdk](https://github.com/runner365/webrtc-client-sdk)

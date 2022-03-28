@@ -14,7 +14,7 @@
     },
     "websocket":{
         "enable": "yes",
-        "listen": 9000
+        "listen": 12000
     }
 }
 ```
@@ -36,10 +36,10 @@ websocket flv模块，通过配置“websocket”的json模块。
 ```markup
 "websocket":{
     "enable": "yes",
-    "listen":9000
+    "listen":12000
 }
 ```
-websocket端口号: 9000.
+websocket端口号: 12000.
 
 ## 7.3 websocket推流sdk
 基于webcodec的websocket flv推理: [websocket推流sdk](https://github.com/runner365/webcodecpush)

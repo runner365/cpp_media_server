@@ -195,7 +195,9 @@ void rtc_publisher::on_handle_rtppacket(rtp_packet* pkt) {
 }
 
 void rtc_publisher::on_handle_rtcp_sr(rtcp_sr_packet* sr_pkt) {
-    rtp_handler_->on_handle_rtcp_sr(sr_pkt);
+    if (rtp_handler_) {
+        rtp_handler_->on_handle_rtcp_sr(sr_pkt);
+    }
 }
 
 void rtc_publisher::stream_send_rtcp(uint8_t* data, size_t len) {
