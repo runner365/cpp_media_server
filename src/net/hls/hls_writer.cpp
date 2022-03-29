@@ -17,7 +17,8 @@ void hls_writer::run() {
 }
 
 int hls_writer::write_packet(MEDIA_PACKET_PTR pkt_ptr) {
-    work_.insert_packet(pkt_ptr);
+    auto new_pkt_ptr = pkt_ptr->copy();
+    work_.insert_packet(new_pkt_ptr);
     return 0;
 }
 

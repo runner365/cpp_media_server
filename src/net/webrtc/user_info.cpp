@@ -287,6 +287,7 @@ int live_user_info::handle_video_data(MEDIA_PACKET_PTR pkt_ptr) {
             data_vec.push_back({pps_.data(), pps_.size()});
             rtp_packet* sps_pps_pkt = generate_stapA_packets(data_vec);
             sps_pps_pkt->set_seq(vseq_++);
+            sps_pps_pkt->set_ssrc(video_ssrc_);
             sps_pps_pkt->set_timestamp((uint32_t)pkt_ptr->dts_);
             room_cb_->on_rtppacket_publisher2room(publisher_id, "video", sps_pps_pkt);
         }
@@ -297,19 +298,26 @@ int live_user_info::handle_video_data(MEDIA_PACKET_PTR pkt_ptr) {
         }
 
         for (auto& buffer_ptr : nalus) {
+            uint8_t* data = (uint8_t*)buffer_ptr->data() + 4;
+            if (((data[0] & 0x1f) == kSei) || ((data[0] & 0x1f) == kSps)
+                || ((data[0] & 0x1f) == kPps) || ((data[0] & 0x1f) == kFiller)) {
+                continue;
+            }
             if (buffer_ptr->data_len() > RTP_PAYLOAD_MAX_SIZE) {
                 std::vector<rtp_packet*> fuA_vec = generate_fuA_packets((uint8_t*)buffer_ptr->data() + 4,
                                                                         buffer_ptr->data_len() - 4);
                 for (auto fuA_pkt : fuA_vec) {
                     fuA_pkt->set_seq(vseq_++);
+                    fuA_pkt->set_ssrc(video_ssrc_);
                     fuA_pkt->set_timestamp((uint32_t)pkt_ptr->dts_);
                     room_cb_->on_rtppacket_publisher2room(publisher_id, "video", fuA_pkt);
                 }
                 fuA_vec.clear();
             } else {
                 rtp_packet* single_pkt = generate_singlenalu_packets((uint8_t*)buffer_ptr->data() + 4,
-                                                                     buffer_ptr->data_len());
+                                                                     buffer_ptr->data_len() - 4);
                 single_pkt->set_seq(vseq_++);
+                single_pkt->set_ssrc(video_ssrc_);
                 single_pkt->set_timestamp((uint32_t)pkt_ptr->dts_);
                 room_cb_->on_rtppacket_publisher2room(publisher_id, "video", single_pkt);
             }
@@ -330,6 +338,7 @@ int live_user_info::handle_audio_data(MEDIA_PACKET_PTR pkt_ptr) {
                                                              pkt_ptr->buffer_ptr_->data_len() - 2);
 
         single_pkt->set_seq(aseq_++);
+        single_pkt->set_ssrc(audio_ssrc_);
         single_pkt->set_timestamp((uint32_t)pkt_ptr->dts_);
         single_pkt->set_marker(1);
 

@@ -11,6 +11,7 @@
 #include "media_packet.hpp"
 #include "stringex.hpp"
 #include "session_aliver.hpp"
+#include "utils/logger.hpp"
 
 class ts_item_info
 {

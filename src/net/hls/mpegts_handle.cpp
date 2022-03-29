@@ -110,6 +110,11 @@ int mpegts_handle::output_packet(MEDIA_PACKET_PTR pkt_ptr) {
     if (rec_enable_) {
         filename = ts_filename_;
     }
+
+    if (!ts_info_ptr_) {
+        return 0;
+    }
+
     ts_info_ptr_->write(pkt_ptr->dts_, (uint8_t*)pkt_ptr->buffer_ptr_->data(),
                     pkt_ptr->buffer_ptr_->data_len(), filename);
     return 0;
