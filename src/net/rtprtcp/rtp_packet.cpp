@@ -77,7 +77,7 @@ rtp_packet::rtp_packet(rtp_common_header* header, header_extension* ext,
 }
 
 rtp_packet::~rtp_packet() {
-    uint8_t* data = get_data();
+    uint8_t* data = (uint8_t*)this->header;
     if (this->need_delete && data) {
         delete[] data;
     }

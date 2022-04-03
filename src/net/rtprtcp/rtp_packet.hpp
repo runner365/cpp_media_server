@@ -99,7 +99,7 @@ public:
     bool read_abs_time(uint32_t& abs_time_24bits);
     bool update_abs_time(uint32_t abs_time_24bits);
 
-    void set_need_delete(bool flag) { this->need_delete = false; }
+    void set_need_delete(bool flag) { this->need_delete = flag; }
 
     int64_t get_local_ms() {return this->local_ms;}
 

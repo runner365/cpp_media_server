@@ -228,6 +228,30 @@ live_user_info::~live_user_info()
 {
 }
 
+void live_user_info::updata_sps(uint8_t* sps, size_t sps_len) {
+    if (sps_.empty()) {
+        sps_.reserve(sps_len);
+    } else {
+        sps_.resize(sps_len);
+        sps_.clear();
+    }
+
+    sps_.insert(sps_.end(), (uint8_t*)sps, (uint8_t*)sps + sps_len);
+    return;
+}
+
+void live_user_info::updata_pps(uint8_t* pps, size_t pps_len) {
+    if (pps_.empty()) {
+        pps_.reserve(pps_len);
+    } else {
+        pps_.resize(pps_len);
+        pps_.clear();
+    }
+
+    pps_.insert(pps_.end(), (uint8_t*)pps, (uint8_t*)pps + pps_len);
+    return;
+}
+
 int live_user_info::handle_video_data(MEDIA_PACKET_PTR pkt_ptr) {
     int ret = 0;
 
@@ -258,39 +282,11 @@ int live_user_info::handle_video_data(MEDIA_PACKET_PTR pkt_ptr) {
                 return ret;
             }
 
-            if (pps_.empty()) {
-                pps_.reserve(pps_len);
-            } else {
-                pps_.resize(pps_len);
-                pps_.clear();
-            }
-
-            if (sps_.empty()) {
-                sps_.reserve(sps_len);
-            } else {
-                sps_.resize(sps_len);
-                sps_.clear();
-            }
-
-            //pps_.insert(pps_.end(), (uint8_t*)H264_START_CODE, (uint8_t*)H264_START_CODE + 4);
-            pps_.insert(pps_.end(), (uint8_t*)pps, (uint8_t*)pps + pps_len);
-            //sps_.insert(sps_.end(), (uint8_t*)H264_START_CODE, (uint8_t*)H264_START_CODE + 4);
-            sps_.insert(sps_.end(), (uint8_t*)sps, (uint8_t*)sps + sps_len);
+            updata_pps(pps, pps_len);
+            updata_sps(sps, sps_len);
             return ret;
         }
 
-        if (pkt_ptr->is_key_frame_) {
-            //send sps/pps before key frame
-            std::vector<std::pair<uint8_t*, int>> data_vec;
-
-            data_vec.push_back({sps_.data(), sps_.size()});
-            data_vec.push_back({pps_.data(), pps_.size()});
-            rtp_packet* sps_pps_pkt = generate_stapA_packets(data_vec);
-            sps_pps_pkt->set_seq(vseq_++);
-            sps_pps_pkt->set_ssrc(video_ssrc_);
-            sps_pps_pkt->set_timestamp((uint32_t)pkt_ptr->dts_);
-            room_cb_->on_rtppacket_publisher2room(publisher_id, "video", sps_pps_pkt);
-        }
         bool ok = annexb_to_nalus(p, data_len, nalus);
         if (!ok) {
             log_errorf("annexb to nalus error, data len:%lu", data_len);
@@ -299,13 +295,38 @@ int live_user_info::handle_video_data(MEDIA_PACKET_PTR pkt_ptr) {
 
         for (auto& buffer_ptr : nalus) {
             uint8_t* data = (uint8_t*)buffer_ptr->data() + 4;
-            if (((data[0] & 0x1f) == kSei) || ((data[0] & 0x1f) == kSps)
-                || ((data[0] & 0x1f) == kPps) || ((data[0] & 0x1f) == kFiller)) {
+            int64_t data_len = buffer_ptr->data_len() - 4;
+
+            if ((data[0] & 0x1f) == kSps) {
+                updata_sps(data, data_len);
                 continue;
             }
+            if ((data[0] & 0x1f) == kPps) {
+                continue;
+            }
+
+            if ((sps_.size() <= 0) || (pps_.size() <= 0)) {
+                log_infof("sps size:%lu, pps size:%lu", sps_.size(), pps_.size());
+                continue;
+            }
+            if ((data[0] & 0x1f) == kFiller) {
+                continue;
+            }
+            if ((data[0] & 0x1f) == kIdr) {
+                //send sps/pps before key frame
+                std::vector<std::pair<uint8_t*, int>> data_vec;
+    
+                data_vec.push_back({sps_.data(), sps_.size()});
+                data_vec.push_back({pps_.data(), pps_.size()});
+                rtp_packet* sps_pps_pkt = generate_stapA_packets(data_vec);
+                sps_pps_pkt->set_seq(vseq_++);
+                sps_pps_pkt->set_ssrc(video_ssrc_);
+                sps_pps_pkt->set_timestamp((uint32_t)pkt_ptr->dts_);
+                room_cb_->on_rtppacket_publisher2room(publisher_id, "video", sps_pps_pkt);
+            }
+
             if (buffer_ptr->data_len() > RTP_PAYLOAD_MAX_SIZE) {
-                std::vector<rtp_packet*> fuA_vec = generate_fuA_packets((uint8_t*)buffer_ptr->data() + 4,
-                                                                        buffer_ptr->data_len() - 4);
+                std::vector<rtp_packet*> fuA_vec = generate_fuA_packets(data, data_len);
                 for (auto fuA_pkt : fuA_vec) {
                     fuA_pkt->set_seq(vseq_++);
                     fuA_pkt->set_ssrc(video_ssrc_);
@@ -314,15 +335,14 @@ int live_user_info::handle_video_data(MEDIA_PACKET_PTR pkt_ptr) {
                 }
                 fuA_vec.clear();
             } else {
-                rtp_packet* single_pkt = generate_singlenalu_packets((uint8_t*)buffer_ptr->data() + 4,
-                                                                     buffer_ptr->data_len() - 4);
+                rtp_packet* single_pkt = generate_singlenalu_packets(data, data_len);
                 single_pkt->set_seq(vseq_++);
                 single_pkt->set_ssrc(video_ssrc_);
                 single_pkt->set_timestamp((uint32_t)pkt_ptr->dts_);
                 room_cb_->on_rtppacket_publisher2room(publisher_id, "video", single_pkt);
             }
         }
-   }
+    }
 
     return ret;
 }

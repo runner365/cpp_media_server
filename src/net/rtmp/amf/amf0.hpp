@@ -143,8 +143,8 @@ class AMF_Encoder
 {
 public:
     static int encode(double num, data_buffer& buffer) {
-        size_t amf_len = 1 + 8;
-        uint8_t* data  = new uint8_t[amf_len];
+        const size_t amf_len = 1 + 8;
+        uint8_t data[amf_len];
         uint8_t* p     = data;
 
         *p = (uint8_t)AMF_DATA_TYPE_NUMBER;
@@ -159,8 +159,8 @@ public:
     }
 
     static int encode_null(data_buffer& buffer) {
-        size_t amf_len = 1;
-        uint8_t* data  = new uint8_t[amf_len];
+        const size_t amf_len = 1;
+        uint8_t data[amf_len];
         data[0] = AMF_DATA_TYPE_NULL;
 
         buffer.append_data((char*)data, amf_len);
@@ -168,8 +168,8 @@ public:
     }
 
     static int encode(bool flag, data_buffer& buffer) {
-        size_t amf_len = 1 + 1;
-        uint8_t* data  = new uint8_t[amf_len];
+        const size_t amf_len = 1 + 1;
+        uint8_t data[amf_len];
         data[0] = AMF_DATA_TYPE_BOOL;
         data[1] = flag ? 0x01 : 0x00;
 

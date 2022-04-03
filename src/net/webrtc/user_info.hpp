@@ -133,6 +133,10 @@ public:
     std::queue<MEDIA_PACKET_PTR> pkt_queue_;
 
 private:
+    void updata_sps(uint8_t* sps, size_t sps_len);
+    void updata_pps(uint8_t* pps, size_t pps_len);
+
+private:
     std::string uid_;
     std::string roomId_;
     room_callback_interface* room_cb_ = nullptr;

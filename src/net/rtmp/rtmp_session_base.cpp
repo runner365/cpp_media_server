@@ -200,7 +200,6 @@ int rtmp_session_base::read_chunk_stream(CHUNK_STREAM_PTR& cs_ptr) {
 
     ret = cs_ptr->read_message_header(fmt_, csid_);
     if ((ret < RTMP_OK) || (ret == RTMP_NEED_READ_MORE)) {
-        log_errorf("read_message_header return:%d", ret);
         return ret;
     } else {
         ret = cs_ptr->read_message_payload();

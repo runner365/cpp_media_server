@@ -106,14 +106,16 @@ public:
         std::vector<uint16_t> seqs;
 
         for (auto block : nack_blocks_) {
-            uint16_t seq_base = ntohs(block->packet_id);
-            uint16_t bit_mask = ntohs(block->lost_bitmap);
-
-            seqs.push_back(seq_base);
-            for (int i = 0; i < 16; i++) {
-                uint8_t enable = (bit_mask >> (15 - i)) & 0x01;
-                if (enable) {
-                    seqs.push_back(seq_base + i + 1);
+            uint16_t seq = ntohs(block->packet_id);
+            
+            seqs.push_back(seq);
+            seq++;
+            for (uint16_t bit_mask = ntohs(block->lost_bitmap);
+                bit_mask != 0;
+                bit_mask >>= 1, ++seq) {
+                
+                if (bit_mask & 0x01) {
+                    seqs.push_back(seq);
                 }
             }
         }

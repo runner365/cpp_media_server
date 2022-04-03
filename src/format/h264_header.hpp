@@ -27,23 +27,23 @@ enum NaluType : uint8_t
 static const uint8_t H264_START_CODE[4] = {0x00, 0x00, 0x00, 0x01};
 
 inline bool H264_IS_KEYFRAME(uint8_t nalu_type) {
-    return ((nalu_type & kIdr) == kIdr);
+    return ((nalu_type & 0x1f) == kIdr);
 }
 
 inline bool H264_IS_AUD(uint8_t nalu_type) {
-    return ((nalu_type & kAud) == kAud);
+    return ((nalu_type & 0x1f) == kAud);
 }
 
 inline bool H264_IS_SEQ(uint8_t nalu_type) {
-    return ((nalu_type & kSps) == kSps) || ((nalu_type & kPps) == kPps);
+    return ((nalu_type & 0x1f) == kSps) || ((nalu_type & 0x1f) == kPps);
 }
 
 inline bool H264_IS_SPS(uint8_t nalu_type) {
-    return ((nalu_type & kSps) == kSps);
+    return ((nalu_type & 0x1f) == kSps);
 }
 
 inline bool H264_IS_PPS(uint8_t nalu_type) {
-    return ((nalu_type & kPps) == kPps);
+    return ((nalu_type & 0x1f) == kPps);
 }
 
 inline bool Is_Nalu_Header(uint8_t* data, size_t len) {

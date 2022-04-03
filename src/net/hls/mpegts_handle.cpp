@@ -324,13 +324,17 @@ int mpegts_handle::handle_video_h264(MEDIA_PACKET_PTR pkt_ptr) {
         int ret = get_sps_pps_from_extradata(pps, pps_len, sps, sps_len, 
                             data, data_len);
         if (ret == 0) {
-            memcpy(sps_, H264_START_CODE, sizeof(H264_START_CODE));
-            memcpy(sps_ + sizeof(H264_START_CODE), sps, sps_len);
-            sps_len_ = sizeof(H264_START_CODE) + sps_len;
+            if ((sizeof(H264_START_CODE) + sps_len) < sizeof(sps_)) {
+                memcpy(sps_, H264_START_CODE, sizeof(H264_START_CODE));
+                memcpy(sps_ + sizeof(H264_START_CODE), sps, sps_len);
+                sps_len_ = sizeof(H264_START_CODE) + sps_len;
+            }
 
-            memcpy(pps_, H264_START_CODE, sizeof(H264_START_CODE));
-            memcpy(pps_ + sizeof(H264_START_CODE), pps, pps_len);
-            pps_len_ = sizeof(H264_START_CODE) + pps_len;
+            if ((sizeof(H264_START_CODE) + pps_len) < sizeof(pps_)) {
+                memcpy(pps_, H264_START_CODE, sizeof(H264_START_CODE));
+                memcpy(pps_ + sizeof(H264_START_CODE), pps, pps_len);
+                pps_len_ = sizeof(H264_START_CODE) + pps_len;
+            }
         }
         return 0;
     }
@@ -368,12 +372,11 @@ int mpegts_handle::handle_video_h264(MEDIA_PACKET_PTR pkt_ptr) {
         nalu_pkt_ptr->buffer_ptr_->reset();
         
         nalu_pkt_ptr->buffer_ptr_->append_data((char*)H264_AUD_DATA, sizeof(H264_AUD_DATA));
-        if (H264_IS_KEYFRAME(nalu_type)) {
+        if (H264_IS_KEYFRAME(nalu_type) && (sps_len_ > 0) && (pps_len_ > 0)) {
             nalu_pkt_ptr->buffer_ptr_->append_data((char*)sps_, sps_len_);
             nalu_pkt_ptr->buffer_ptr_->append_data((char*)pps_, pps_len_);
         }
         nalu_pkt_ptr->buffer_ptr_->append_data((char*)data, data_len);
-        
         muxer_.input_packet(nalu_pkt_ptr);
     }
     

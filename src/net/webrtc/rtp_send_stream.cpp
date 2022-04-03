@@ -3,6 +3,7 @@
 #include "utils/stream_statics.hpp"
 #include "utils/timeex.hpp"
 #include <stddef.h>
+#include <sstream>
 
 static const size_t RTP_VIDEO_BUFFER_MAX = 800;
 static const size_t RTP_AUDIO_BUFFER_MAX = 100;
@@ -35,10 +36,10 @@ void rtp_send_stream::save_buffer(rtp_packet* input_pkt) {
         rtp_buffer_map_.erase(iter);
     }
 
-    rtp_buffer_map_[seq] = nack_pkt;
-    if (first_seq_ == 0) {
+    if (rtp_buffer_map_.empty()) {
         first_seq_ = seq;
     }
+    rtp_buffer_map_[seq] = nack_pkt;
 
     while(rtp_buffer_map_.size() > buffer_max) {
         auto iter = rtp_buffer_map_.find(first_seq_);
@@ -73,13 +74,22 @@ void rtp_send_stream::clear_buffer() {
 }
 
 void rtp_send_stream::handle_fb_rtp_nack(rtcp_fb_nack* nack_pkt) {
+    if (rtp_buffer_map_.size() == 0) {
+        return;
+    }
+
     std::vector<uint16_t> lost_seqs = nack_pkt->get_lost_seqs();
     int64_t now_ms = now_millisec();
+    auto first_iter = rtp_buffer_map_.begin();
+    auto last_iter = rtp_buffer_map_.rbegin();
+
+    log_infof("nack info:%s", nack_pkt->dump().c_str());
 
     for (auto seq : lost_seqs) {
         auto pkt_iter = rtp_buffer_map_.find(seq);
         if (pkt_iter == rtp_buffer_map_.end()) {
-            //log_errorf("the lost sequence(%d) is missed", seq);
+            log_errorf("the lost sequence(%d) is missed, first seq:%d, last seq:%d, size:%lu, hearder seq:%d",
+                seq, first_iter->first, last_iter->first, rtp_buffer_map_.size(), first_seq_);
             continue;
         }
         if (pkt_iter->second.last_sent_timestamp == 0) {
@@ -88,6 +98,8 @@ void rtp_send_stream::handle_fb_rtp_nack(rtcp_fb_nack* nack_pkt) {
         } else {
             int64_t diff_t = now_ms - pkt_iter->second.last_sent_timestamp;
             if (diff_t < (rtt_ - 5)) {
+                log_warnf("resend is too often, seq:%d, diff:%ld",
+                    pkt_iter->second.packet->get_seq(), diff_t);
                 continue;
             }
             
@@ -99,8 +111,7 @@ void rtp_send_stream::handle_fb_rtp_nack(rtcp_fb_nack* nack_pkt) {
             }
             pkt_iter->second.last_sent_timestamp = now_ms;
         }
-        log_infof("retransmit rtp packet seq:%d, retransmit count:%d",
-            pkt_iter->second.packet->get_seq(), pkt_iter->second.sent_count);
+        log_infof("retransmit rtp packet %d", pkt_iter->second.packet->get_seq());
         cb_->stream_send_rtp(pkt_iter->second.packet->get_data(),
                             pkt_iter->second.packet->get_data_length());
     }
