@@ -135,6 +135,8 @@ rtc_publisher::~rtc_publisher() {
     if (pack_handle_) {
         delete pack_handle_;
     }
+
+    flv_queue_.clear();
 }
 
 std::string rtc_publisher::get_media_type() {

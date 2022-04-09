@@ -40,6 +40,13 @@ rtc_base_session::~rtc_base_session() {
         }
     }
     
+    pid2publishers_.clear();
+    ssrc2publishers_.clear();
+    mid2publishers_.clear();
+
+    mid2subscribers_.clear();
+    ssrc2subscribers_.clear();
+    pid2subscribers_.clear();
     log_infof("rtc_base_session destruct id:%s, direction:%s, roomId:%s, uid:%s",
             id_.c_str(), (direction_ == RTC_DIRECTION_SEND) ? "send" : "receive",
             roomId_.c_str(), uid_.c_str());
