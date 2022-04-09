@@ -1,12 +1,13 @@
 #include "rtc_subscriber.hpp"
 #include "rtc_base_session.hpp"
 #include "net/rtprtcp/rtp_packet.hpp"
+#include "utils/byte_crypto.hpp"
 #include "logger.hpp"
 
 extern boost::asio::io_context& get_global_io_context();
 
 rtc_subscriber::rtc_subscriber(const std::string& roomId, const std::string& uid, const std::string& remote_uid, const std::string& pid
-    , rtc_base_session* session, const MEDIA_RTC_INFO& media_info, room_callback_interface* room_cb):timer_interface(get_global_io_context(), 500)
+    , rtc_base_session* session, const MEDIA_RTC_INFO& media_info, room_callback_interface* room_cb):timer_interface(get_global_io_context(), 50)
             , roomId_(roomId)
             , uid_(uid)
             , remote_uid_(remote_uid)
@@ -99,7 +100,6 @@ void rtc_subscriber::send_rtp_packet(const std::string& roomId, const std::strin
     }
     //update payload&ssrc in subscriber
     stream_ptr_->on_send_rtp_packet(pkt);
-
     session_->send_rtp_data_in_dtls(pkt->get_data(), pkt->get_data_length());
 
     pkt->set_ssrc(origin_ssrc);
@@ -116,7 +116,8 @@ void rtc_subscriber::handle_rtcp_rr(rtcp_rr_packet* rr_pkt) {
 }
 
 void rtc_subscriber::on_timer() {
-    stream_ptr_->on_timer();
+    int64_t now_ms = (int64_t)now_millisec();
+    stream_ptr_->on_timer(now_ms);
 }
 
 void rtc_subscriber::stream_send_rtcp(uint8_t* data, size_t len) {

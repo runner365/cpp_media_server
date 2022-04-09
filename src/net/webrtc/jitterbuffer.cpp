@@ -63,7 +63,7 @@ void jitterbuffer::input_rtp_packet(const std::string& roomId, const std::string
             int64_t pkt_extend_seq = iter->first;
             if ((output_seq_ + 1) == pkt_extend_seq) {
                 if (iter->second->media_type_ == "video") {
-                    log_infof("jitter buffer media type:%s, output seq(%d) in buffer queue",
+                    log_debugf("jitter buffer media type:%s, output seq(%d) in buffer queue",
                         iter->second->media_type_.c_str(), pkt_extend_seq);
                 }
                 output_packet(iter->second);
@@ -79,7 +79,7 @@ void jitterbuffer::input_rtp_packet(const std::string& roomId, const std::string
     }
     rtp_packets_map_[extend_seq] = pkt_info_ptr;
     if (pkt_info_ptr->media_type_ == "video") {
-        log_infof("jitterbuffer media type:%s, packets queue len:%lu, pkt seq:%d, last output seq:%d",
+        log_debugf("jitterbuffer media type:%s, packets queue len:%lu, pkt seq:%d, last output seq:%d",
             pkt_info_ptr->media_type_.c_str(), rtp_packets_map_.size(), pkt_info_ptr->extend_seq_, output_seq_);
     }
 

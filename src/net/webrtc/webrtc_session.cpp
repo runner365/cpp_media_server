@@ -282,6 +282,7 @@ void webrtc_session::send_rtp_data_in_dtls(uint8_t* data, size_t data_len) {
         log_errorf("dtls writer is not ready");
         return;
     }
+    
     bool ret = write_srtp_->encrypt_rtp(const_cast<uint8_t**>(&data), &data_len);
     if (!ret) {
         return;
@@ -297,6 +298,7 @@ void webrtc_session::send_rtcp_data_in_dtls(uint8_t* data, size_t data_len) {
     }
     bool ret = write_srtp_->encrypt_rtcp(const_cast<uint8_t**>(&data), &data_len);
     if (!ret) {
+        log_errorf("encrypt rtcp error");
         return;
     }
     write_udp_data(data, data_len, remote_address_);
@@ -647,7 +649,6 @@ void webrtc_session::handle_rtcp_rtpfb(uint8_t* data, size_t data_len) {
             {
                 rtcp_fb_nack* nack_pkt = rtcp_fb_nack::parse(data, data_len);
                 uint32_t media_ssrc = nack_pkt->get_media_ssrc();
-                log_infof("receive rtcp nack len:%lu, media ssrc:%u", data_len, media_ssrc);
                 std::shared_ptr<rtc_subscriber> subscriber_ptr = get_subscriber(media_ssrc);
                 if (!subscriber_ptr) {
                     return;

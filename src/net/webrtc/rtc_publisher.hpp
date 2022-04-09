@@ -95,7 +95,6 @@ private:
     bool has_rtx_              = false;
     int mid_extension_id_      = 0;
     int abs_time_extension_id_ = 0;
-    int64_t timer_count_       = 0;
 
 private:
     rtp_recv_stream* rtp_handler_  = nullptr;
@@ -110,6 +109,8 @@ private:
     int64_t last_rrt_ = 0;
     float   rtt_      = 0;
 
+private:
+    int64_t last_keyrequest_ts_ = 0;
 };
 
 #endif

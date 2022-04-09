@@ -138,7 +138,8 @@ void websocket_session::async_write(const char* data, int len) {
     send_buffer.commit(len);
 
     send_buffer_queue_.push(send_buffer);
-    io_ctx_.post(std::bind(&websocket_session::do_write, this));
+
+    do_write();
     return;
 }
 

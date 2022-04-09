@@ -265,13 +265,22 @@ void rtc_publisher::handle_xr_dlrr(xr_dlrr_data* dlrr_block) {
 }
 
 void rtc_publisher::on_timer() {
-    timer_count_++;
+    const int64_t KEY_INTERVAL = 4000;
+
+    int64_t now_ms = (int64_t)now_millisec();
     if (rtp_handler_) {
-        rtp_handler_->on_timer();
+        rtp_handler_->on_timer(now_ms);
     }
-    if ((timer_count_ % 8 == 0) && (media_type_ == MEDIA_VIDEO_TYPE)) {
-        request_keyframe(rtp_ssrc_);
+    
+    if (last_keyrequest_ts_ == 0) {
+        last_keyrequest_ts_ = now_ms;
+    } else {
+        if (((now_ms - last_keyrequest_ts_) >= KEY_INTERVAL) && (media_type_ == MEDIA_VIDEO_TYPE)) {
+            last_keyrequest_ts_ = now_ms;
+            request_keyframe(rtp_ssrc_);
+        }
     }
+
 }
 
 void rtc_publisher::rtp_packet_reset(std::shared_ptr<rtp_packet_info> pkt_ptr) {

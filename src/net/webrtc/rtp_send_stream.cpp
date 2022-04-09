@@ -2,6 +2,7 @@
 #include "rtc_stream_pub.hpp"
 #include "utils/stream_statics.hpp"
 #include "utils/timeex.hpp"
+#include "utils/byte_crypto.hpp"
 #include <stddef.h>
 #include <sstream>
 
@@ -83,13 +84,20 @@ void rtp_send_stream::handle_fb_rtp_nack(rtcp_fb_nack* nack_pkt) {
     auto first_iter = rtp_buffer_map_.begin();
     auto last_iter = rtp_buffer_map_.rbegin();
 
-    log_infof("nack info:%s", nack_pkt->dump().c_str());
+    std::stringstream ss;
 
+    ss << "[";
+    for (auto seq : lost_seqs) {
+        ss << " " << seq;
+    }
+    ss << " ]";
+    log_infof("media ssrc:%u, nack lost seqs:%s, avg rtt:%.02f",
+        nack_pkt->get_media_ssrc(), ss.str().c_str(), avg_rtt_);
     for (auto seq : lost_seqs) {
         auto pkt_iter = rtp_buffer_map_.find(seq);
         if (pkt_iter == rtp_buffer_map_.end()) {
-            log_errorf("the lost sequence(%d) is missed, first seq:%d, last seq:%d, size:%lu, hearder seq:%d",
-                seq, first_iter->first, last_iter->first, rtp_buffer_map_.size(), first_seq_);
+            log_errorf("the lost sequence(%d) is missed, first seq:%d, last seq:%d, size:%lu, hearder seq:%d, avg rtt:%.02f",
+                seq, first_iter->first, last_iter->first, rtp_buffer_map_.size(), first_seq_, avg_rtt_);
             continue;
         }
         if (pkt_iter->second.last_sent_timestamp == 0) {
@@ -97,7 +105,7 @@ void rtp_send_stream::handle_fb_rtp_nack(rtcp_fb_nack* nack_pkt) {
             pkt_iter->second.sent_count = 1;
         } else {
             int64_t diff_t = now_ms - pkt_iter->second.last_sent_timestamp;
-            if (diff_t < (rtt_ - 5)) {
+            if ((diff_t < avg_rtt_) && (avg_rtt_ <= 150)) {
                 log_warnf("resend is too often, seq:%d, diff:%ld",
                     pkt_iter->second.packet->get_seq(), diff_t);
                 continue;
@@ -105,13 +113,12 @@ void rtp_send_stream::handle_fb_rtp_nack(rtcp_fb_nack* nack_pkt) {
             
             pkt_iter->second.sent_count++;
             if (pkt_iter->second.sent_count > RETRANSMIT_MAX_COUNT) {
-                log_errorf("the lost sequence(%d) has been retransmited over times(%d)",
-                        seq, pkt_iter->second.sent_count);
+                log_errorf("the lost sequence(%d) has been retransmited over times(%d), avg rtt:%.02f",
+                        seq, pkt_iter->second.sent_count, avg_rtt_);
                 continue;
             }
             pkt_iter->second.last_sent_timestamp = now_ms;
         }
-        log_infof("retransmit rtp packet %d", pkt_iter->second.packet->get_seq());
         cb_->stream_send_rtp(pkt_iter->second.packet->get_data(),
                             pkt_iter->second.packet->get_data_length());
     }
@@ -147,60 +154,73 @@ void rtp_send_stream::handle_rtcp_rr(rtcp_rr_packet* rr_pkt) {
         return;
     }
     int64_t now_ms = (int64_t)now_millisec();
-    NTP_TIMESTAMP lsr_ntp = {
-        .ntp_sec = (lsr & 0xffff0000) >> 16,
-        .ntp_frac = (lsr & 0xffff) << 16
-    };
-    int64_t lsr_ms = ntp_to_millisec(lsr_ntp);
-    int64_t dlsr_ms = dlsr * 1000 / 65536;
 
     NTP_TIMESTAMP now_ntp = millisec_to_ntp(now_ms);
-    now_ntp.ntp_sec  = now_ntp.ntp_sec & 0x0000ffff;
-    now_ntp.ntp_frac = now_ntp.ntp_frac & 0xffff0000;
-    uint32_t now_uint32_ms = ntp_to_millisec(now_ntp);
+    uint32_t compact_ntp = (now_ntp.ntp_sec & 0x0000FFFF) << 16;
 
-    rtt_ = now_uint32_ms - lsr_ms - dlsr_ms;
+    compact_ntp |= (now_ntp.ntp_frac & 0xFFFF0000) >> 16;
 
-    if (rtt_ < 0) {
-        rtt_ = 1;
+    uint32_t rtt = 0;
+
+    // If no Sender Report was received by the remote endpoint yet, ignore lastSr
+    // and dlsr values in the Receiver Report.
+    if (lsr && dlsr && (compact_ntp > dlsr + lsr)){
+        rtt = compact_ntp - dlsr - lsr;
     }
-    if (rtt_ > 150) {
-        rtt_ = 150;
-    }
-    if (avg_rtt_ == 0) {
+    rtt_ = static_cast<float>(rtt >> 16) * 1000;
+    rtt_ += (static_cast<float>(rtt & 0x0000FFFF) / 65536) * 1000;
+
+    if (avg_rtt_ == 0.0) {
         avg_rtt_ = rtt_;
     } else {
-        avg_rtt_ += (rtt_ - avg_rtt_)/16;
+        avg_rtt_ += (rtt_ - avg_rtt_) / 4.0;
     }
-    log_debugf("handle rtcp rr media(%s), ssrc:%u, lost total:%u, lost rate:%.03f, jitter:%u, rtt_:%d, avg rtt:%d",
+    log_debugf("handle rtcp rr media(%s), ssrc:%u, lost total:%u, lost rate:%.03f, jitter:%u, rtt_:%.02f, avg rtt:%.02f",
         media_type_.c_str(), rtp_ssrc_, lost_total_, lost_rate_, jitter_, rtt_, avg_rtt_);
-    log_debugf("handle rtcp rr now_uint32_ms:%u, lsr ms:%ld, dlsr ms:%ld",
-        now_uint32_ms, lsr_ms, dlsr_ms);
 }
 
-void rtp_send_stream::on_timer() {
-    const int64_t STATICS_TIMER_COUNT = 12;
-    const int64_t RTCP_SR_COUNT       = 2;
+void rtp_send_stream::on_timer(int64_t now_ms) {
+    const int64_t STATICS_TIMEOUT    = 2500;
+    const int64_t VIDEO_RTCP_TIMEOUT = 800;
+    const int64_t AUDIO_RTCP_TIMEOUT = 4000;
 
-    int64_t now_ms = (int64_t)now_millisec();
-    time_count_++;
+    if (last_statics_ms_ == 0) {
+        last_statics_ms_ = now_ms;
+    } else {
+        if ((now_ms - last_statics_ms_) > STATICS_TIMEOUT) {
+            size_t fps;
+            size_t speed = send_statics_.bytes_per_second(now_ms, fps);
 
-    if ((time_count_ % STATICS_TIMER_COUNT) == 0) {
-        size_t fps;
-        size_t speed = send_statics_.bytes_per_second(now_ms, fps);
+            last_statics_ms_ = now_ms;
+        
+            log_debugf("rtc send mediatype:%s, ssrc:%u, payloadtype:%d, speed(bytes/s):%lu, fps:%lu",
+                media_type_.c_str(), rtp_ssrc_, rtp_payload_type_, speed, fps);
+        }
+    }
+
+    if (last_send_rtcp_ts_ == 0) {
+        last_send_rtcp_ts_ = now_ms;
+    } else {
+        bool send_sr_flag = false;
+        uint32_t rand_number = byte_crypto::get_random_uint(5, 15);
+        float ratio = rand_number / 10.0;
+
+        if (media_type_ == "video") {
+            send_sr_flag = ((now_ms - last_send_rtcp_ts_) * ratio > VIDEO_RTCP_TIMEOUT);
+        } else {
+            send_sr_flag = ((now_ms - last_send_rtcp_ts_) * ratio > AUDIO_RTCP_TIMEOUT);
+        }
+        if (send_sr_flag) {
+            last_send_rtcp_ts_ = now_ms;
+
+            rtcp_sr_packet* sr_pkt = get_rtcp_sr(now_ms);
     
-        log_debugf("rtc send mediatype:%s, ssrc:%u, payloadtype:%d, speed(bytes/s):%lu, fps:%lu",
-            media_type_.c_str(), rtp_ssrc_, rtp_payload_type_, speed, fps);
+            log_debugf("rtcp sr ssrc:%u, ntp sec:%u, ntp frac:%u, rtp ts:%u",
+                sr_pkt->get_ssrc(), sr_pkt->get_ntp_sec(), sr_pkt->get_ntp_frac(),
+                sr_pkt->get_rtp_timestamp());
+            cb_->stream_send_rtcp(sr_pkt->get_data(), sr_pkt->get_data_len());
+            delete sr_pkt;
+        }
     }
 
-    if ((time_count_ % RTCP_SR_COUNT) == 0) {
-        rtcp_sr_packet* sr_pkt = get_rtcp_sr(now_ms);
-
-        log_debugf("rtcp sr ssrc:%u, ntp sec:%u, ntp frac:%u, rtp ts:%u, pkt count:%u, bytes count:%u, data len:%lu, data:%p",
-            sr_pkt->get_ssrc(), sr_pkt->get_ntp_sec(), sr_pkt->get_ntp_frac(),
-            sr_pkt->get_rtp_timestamp(), sr_pkt->get_pkt_count(), sr_pkt->get_bytes_count(),
-            sr_pkt->get_data_len(), sr_pkt->get_data());
-        cb_->stream_send_rtcp(sr_pkt->get_data(), sr_pkt->get_data_len());
-        delete sr_pkt;
-    }
 }

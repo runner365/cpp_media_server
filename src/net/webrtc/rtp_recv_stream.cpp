@@ -2,6 +2,7 @@
 #include "timeex.hpp"
 #include "net/rtprtcp/rtcp_rr.hpp"
 #include "net/rtprtcp/rtcpfb_nack.hpp"
+#include "utils/byte_crypto.hpp"
 #include <sstream>
 
 rtp_recv_stream::rtp_recv_stream(rtc_stream_callback* cb, std::string media_type, uint32_t ssrc, uint8_t payloadtype,
@@ -82,24 +83,39 @@ int64_t rtp_recv_stream::get_expected_packets() {
     return cycles_ + max_seq_ - bad_seq_ + 1;
 }
 
-void rtp_recv_stream::on_timer() {
-    const int64_t STATICS_TIMER_COUNT = 12;
-    const int64_t RTCP_RR_AUDIO_COUNT = 4;
+void rtp_recv_stream::on_timer(int64_t now_ms) {
+    const int64_t STATICS_TIMEOUT    = 2500;
+    const int64_t VIDEO_RTCP_TIMEOUT = 400;
+    const int64_t AUDIO_RTCP_TIMEOUT = 2000;
 
-    timer_count_++;
+    if (last_statics_ts_ == 0) {
+        last_statics_ts_ = now_ms;
+    } else {
+        if ((now_ms - last_statics_ts_) > STATICS_TIMEOUT) {
+            size_t fps;
+            size_t speed = recv_statics_.bytes_per_second((int64_t)now_millisec(), fps);
 
-    if ((timer_count_ % STATICS_TIMER_COUNT) == 0) {
-        size_t fps;
-        size_t speed = recv_statics_.bytes_per_second((int64_t)now_millisec(), fps);
-    
-        log_debugf("rtc receive mediatype:%s, ssrc:%u, payloadtype:%d, is_rtx:%d, speed(bytes/s):%lu, fps:%lu",
-            media_type_.c_str(), ssrc_, payloadtype_, has_rtx_, speed, fps);
+            last_statics_ts_ = now_ms;
+        
+            log_debugf("rtc receive mediatype:%s, ssrc:%u, payloadtype:%d, is_rtx:%d, speed(bytes/s):%lu, fps:%lu",
+                media_type_.c_str(), ssrc_, payloadtype_, has_rtx_, speed, fps);
+        }
     }
 
-    if (media_type_ == "video") {
-        send_rtcp_rr();
+    if (last_rtcp_send_ts_ == 0) {
+        last_rtcp_send_ts_ = now_ms;
     } else {
-        if ((timer_count_ % RTCP_RR_AUDIO_COUNT) == 0) {
+        bool rtcp_flag = false;
+        uint32_t rand_number = byte_crypto::get_random_uint(5, 15);
+        float ratio = rand_number / 10.0;
+
+        if (media_type_ == "video") {
+            rtcp_flag = ((now_ms - last_rtcp_send_ts_) * ratio > VIDEO_RTCP_TIMEOUT);
+        } else {
+            rtcp_flag = ((now_ms - last_rtcp_send_ts_) * ratio > AUDIO_RTCP_TIMEOUT);
+        }
+        if (rtcp_flag) {
+            last_rtcp_send_ts_ = now_ms;
             send_rtcp_rr();
         }
     }

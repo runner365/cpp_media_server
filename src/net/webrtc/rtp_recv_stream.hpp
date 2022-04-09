@@ -26,7 +26,7 @@ public:
     virtual void generate_nacklist(const std::vector<uint16_t>& seq_vec) override;
     
 public:
-    void on_timer();
+    void on_timer(int64_t now_ms);
     void set_rtx_ssrc(uint32_t ssrc) {rtx_ssrc_ = ssrc;}
     void set_rtx_payloadtype(uint8_t type) {rtx_payloadtype_ = type;}
     int64_t get_expected_packets();
@@ -57,7 +57,6 @@ private:
     double jitter_         = 0;
     uint32_t lsr_          = 0;
     int64_t last_sr_ms_    = 0;
-    int64_t timer_count_   = 0;
     int64_t discard_count_ = 0;
     int64_t total_lost_    = 0;
     int64_t expect_recv_   = 0;
@@ -84,6 +83,10 @@ private://for rtcp sr
 
 private:
     nack_generator* nack_handle_ = nullptr;
+
+private:
+    int64_t last_statics_ts_   = 0;
+    int64_t last_rtcp_send_ts_ = 0;
 };
 
 #endif

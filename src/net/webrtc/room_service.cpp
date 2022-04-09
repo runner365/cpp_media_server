@@ -107,7 +107,9 @@ room_service::room_service(const std::string& roomId):timer_interface(get_global
 }
 
 room_service::~room_service() {
-
+    users_.clear();
+    live_users_.clear();
+    pid2subscribers_.clear();
 }
 
 void room_service::on_timer() {
