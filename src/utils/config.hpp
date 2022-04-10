@@ -15,6 +15,7 @@ using json = nlohmann::json;
 #define WEBRTC_UDP_PORT    7000
 #define RTMP_DEF_PORT      1935
 #define HTTPFLV_DEF_PORT   8080
+#define HTTPAPI_DEF_PORT   8090
 #define WEBSOCKET_DEF_PORT 9000
 #define HLS_MPEGTS_DEF_DURATION 5000 //ms
 #define HLS_DEF_PATH "./hls"
@@ -142,6 +143,28 @@ public:
     std::string hls_path = HLS_DEF_PATH;
 };
 
+class HttpApiConfig
+{
+public:
+    HttpApiConfig() {};
+    ~HttpApiConfig() {};
+
+public:
+    std::string dump() {
+        std::stringstream ss;
+
+        ss << "http api config:\r\n";
+        ss << "  enable: " << httpapi_enable << "\r\n";
+        ss << "  port: " << listen_port << "\r\n";
+
+        return ss.str();
+    }
+
+public:
+    bool httpapi_enable  = false;
+    uint16_t listen_port = HTTPAPI_DEF_PORT;
+};
+
 class Config
 {
 public:
@@ -155,6 +178,7 @@ public:
         ss << rtmp_config_.dump();
         ss << httpflv_config_.dump();
         ss << hls_config_.dump();
+        ss << httpapi_config_.dump();
         ss << webrtc_config_.dump();
         ss << websocket_config_.dump();
 
@@ -169,6 +193,10 @@ public:
 public:
     static bool httpflv_is_enable();
     static uint16_t httpflv_port();
+
+public:
+    static bool httpapi_is_enable();
+    static uint16_t httpapi_port();
 
 public:
     static bool hls_is_enable();
@@ -201,6 +229,7 @@ private:
     static int init_hls(json& json_object);
     static int init_webrtc(json& json_object);
     static int init_websocket(json& json_object);
+    static int init_httpapi(json& json_object);
 
 private:
     static Config* s_config_;
@@ -217,6 +246,7 @@ private:
     static HlsConfig hls_config_;
     static WebrtcConfig webrtc_config_;
     static WebSocketConfg websocket_config_;
+    static HttpApiConfig httpapi_config_;
 };
 
 #endif

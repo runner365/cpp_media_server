@@ -7,6 +7,8 @@
 #include "utils/timer.hpp"
 #include <vector>
 
+extern int get_publisher_statics(const std::string& roomId, const std::string& uid, json& data_json);
+
 class rtc_publisher;
 class rtc_subscriber;
 class room_callback_interface;
@@ -16,6 +18,9 @@ class rtc_base_session
 public:
     rtc_base_session(const std::string& roomId, const std::string& uid, room_callback_interface* room, int session_direction, const rtc_media_info& media_info);
     virtual ~rtc_base_session();
+
+public:
+    friend int get_publisher_statics(const std::string& roomId, const std::string& uid, json& data_json);
 
 public:
     std::string get_id() { return id_; }

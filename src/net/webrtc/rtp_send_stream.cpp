@@ -4,7 +4,10 @@
 #include "utils/timeex.hpp"
 #include "utils/byte_crypto.hpp"
 #include <stddef.h>
+#include "json.hpp"
 #include <sstream>
+
+using json = nlohmann::json;
 
 static const size_t RTP_VIDEO_BUFFER_MAX = 800;
 static const size_t RTP_AUDIO_BUFFER_MAX = 100;
@@ -18,6 +21,23 @@ rtp_send_stream::rtp_send_stream(const std::string& media_type, bool nack_enable
 
 rtp_send_stream::~rtp_send_stream() {
     clear_buffer();
+}
+
+void rtp_send_stream::get_statics(json& json_data) {
+    size_t fps;
+    size_t speed = send_statics_.bytes_per_second((int64_t)now_millisec(), fps);
+
+    json_data["bps"] = speed * 8;
+    json_data["fps"] = fps;
+    json_data["count"] = send_statics_.get_count();
+    json_data["bytes"] = send_statics_.get_bytes();
+
+    json_data["rtt"] = avg_rtt_;
+    json_data["lostrate"] = lost_rate_;
+    json_data["losttotal"] = lost_total_;
+    json_data["jitter"] = jitter_;
+
+    return;
 }
 
 void rtp_send_stream::save_buffer(rtp_packet* input_pkt) {

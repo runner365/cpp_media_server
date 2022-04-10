@@ -8,6 +8,7 @@
 #include "net/rtprtcp/rtp_packet.hpp"
 #include "net/rtprtcp/rtcpfb_nack.hpp"
 #include "net/rtprtcp/rtcp_rr.hpp"
+#include "json.hpp"
 #include <string>
 #include <stdint.h>
 #include <stddef.h>
@@ -18,6 +19,8 @@ typedef enum
     RTC_STREAM_TYPE,
     LIVE_STREAM_TYPE
 } SOURCE_STREAM_TYPE;
+
+using json = nlohmann::json;
 
 class rtc_base_session;
 class room_callback_interface;
@@ -43,6 +46,7 @@ public:
     int get_clockrate() { return clock_rate_; }
     void set_stream_type(SOURCE_STREAM_TYPE stream_type) { stream_type_ = stream_type; }
     SOURCE_STREAM_TYPE get_stream_type() { return stream_type_; }
+    void get_statics(json& json_data);
 
 public:
     void send_rtp_packet(const std::string& roomId, const std::string& media_type,

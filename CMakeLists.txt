@@ -207,6 +207,7 @@ add_executable(cpp_media_server
             src/net/webrtc/libwebrtc/modules/remote_bitrate_estimator/remote_bitrate_estimator_abs_send_time.cc
             src/net/httpflv/httpflv_server.cpp
             src/net/httpflv/httpflv_writer.cpp
+            src/net/httpapi/httpapi_server.cpp
             src/utils/logger.cpp
             src/utils/config.cpp
             src/utils/data_buffer.cpp

@@ -8,10 +8,13 @@
 #include "utils/stream_statics.hpp"
 #include "utils/timeex.hpp"
 #include "rtc_stream_pub.hpp"
+#include "json.hpp"
 #include <stdint.h>
 #include <stddef.h>
 #include <string>
 #include <map>
+
+using json = nlohmann::json;
 
 typedef struct NACK_PACKET_S {
     uint32_t last_sent_timestamp;
@@ -41,6 +44,7 @@ public:
     void set_rtx_ssrc(uint32_t ssrc) { rtx_ssrc_ = ssrc; }
     uint32_t get_rtx_ssrc() { return rtx_ssrc_; }
 
+    void get_statics(json& json_data);
 
 public:
     void on_timer(int64_t now_ms);

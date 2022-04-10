@@ -6,9 +6,13 @@
 #include "net/rtprtcp/rtcp_sr.hpp"
 #include "nack_generator.hpp"
 #include "rtc_stream_pub.hpp"
+#include "json.hpp"
+
 #include <stdint.h>
 #include <stddef.h>
 #include <string>
+
+using json = nlohmann::json;
 
 class rtp_recv_stream : public nack_generator_callback_interface
 {
@@ -32,6 +36,7 @@ public:
     int64_t get_expected_packets();
     int64_t get_packet_lost();
     void update_rtt(int64_t rtt);
+    void get_statics(json& json_data);
 
 private:
     void init_seq(uint16_t seq);

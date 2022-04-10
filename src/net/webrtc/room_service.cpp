@@ -72,6 +72,84 @@ bool room_has_rtc_uid(const std::string& roomId, const std::string& uid) {
     return room_ptr->has_rtc_user(uid);
 }
 
+int get_subscriber_statics(const std::string& roomId, const std::string& uid, json& data_json) {
+    auto iter = s_rooms.find(roomId);
+    if (iter == s_rooms.end()) {
+        log_infof("the roomid(%s) does not exist", roomId.c_str());
+        return -1;
+    }
+    std::shared_ptr<room_service> room_ptr = iter->second;
+    if (!room_ptr) {
+        log_errorf("the room(%s) is null", roomId.c_str());
+        return -1;
+    }
+
+    int count = 0;
+
+    data_json["list"] = json::array();
+    for (auto item : room_ptr->pid2subscribers_) {
+        for (auto subscriber_item : item.second) {
+            std::shared_ptr<rtc_subscriber> subscriber_ptr = subscriber_item.second;
+            json subscirber_data = json::object();
+
+            subscriber_ptr->get_statics(subscirber_data);
+            count++;
+            data_json["list"].emplace_back(subscirber_data);
+        }
+    }
+    data_json["count"] = count;
+    return 0;
+}
+
+int get_publisher_statics(const std::string& roomId, const std::string& uid, json& data_json) {
+    auto iter = s_rooms.find(roomId);
+    if (iter == s_rooms.end()) {
+        log_infof("the roomid(%s) does not exist", roomId.c_str());
+        return -1;
+    }
+    std::shared_ptr<room_service> room_ptr = iter->second;
+    if (!room_ptr) {
+        log_errorf("the room(%s) is null", roomId.c_str());
+        return -1;
+    }
+
+    std::shared_ptr<user_info> rtc_user_ptr = room_ptr->get_rtc_user(uid);
+    if (rtc_user_ptr.get() != 0) {
+        auto iter = rtc_user_ptr->publish_sessions_.begin();
+        if (iter == rtc_user_ptr->publish_sessions_.end()) {
+            data_json["count"] = 0;
+            return 0;
+        }
+
+        std::shared_ptr<webrtc_session> session_ptr = iter->second;
+        if (!session_ptr) {
+            data_json["count"] = 0;
+            return 0;
+        }
+        if (session_ptr->ssrc2publishers_.size() == 0) {
+            data_json["count"] = 0;
+            return 0;
+        }
+        
+        data_json["list"]  = json::array();
+        int count = 0;
+        for (auto item : session_ptr->ssrc2publishers_) {
+            if (item.first == item.second->get_rtx_ssrc()) {
+                continue;
+            }
+            json publisher_data = json::object();
+
+            item.second->get_statics(publisher_data);
+            data_json["list"].emplace_back(publisher_data);
+            count++;
+        }
+        data_json["count"] = count;
+    } else {
+        log_infof("the user(%s) does not exist", uid.c_str());
+    }
+    return 0;
+}
+
 webrtc_stream_manager_callback::webrtc_stream_manager_callback() {
 
 }
@@ -127,6 +205,26 @@ void room_service::on_timer() {
         }
         iter++;
     }
+}
+
+std::shared_ptr<user_info> room_service::get_rtc_user(const std::string& uid) {
+    std::shared_ptr<user_info> user_ptr;
+    auto iter = users_.find(uid);
+    if (iter == users_.end()) {
+        return user_ptr;
+    }
+
+    return iter->second;
+}
+
+std::shared_ptr<live_user_info> room_service::get_live_user(const std::string& uid) {
+    std::shared_ptr<live_user_info> user_ptr;
+    auto iter = live_users_.find(uid);
+    if (iter == live_users_.end()) {
+        return user_ptr;
+    }
+
+    return iter->second;
 }
 
 bool room_service::has_rtc_user(const std::string& uid) {

@@ -82,6 +82,24 @@ payload:%d, has rtx:%d, rtx payload:%d, mid:%d, id:%s",
         has_rtx_, rtx_payloadtype_, mid_, sid_.c_str());
 }
 
+void rtc_subscriber::get_statics(json& json_data) {
+    json_data["uid"] = uid_;
+    json_data["remote_uid"] = remote_uid_;
+    json_data["stream"] = (stream_type_ == RTC_STREAM_TYPE) ? "rtc" : "live";
+    json_data["media"] = media_type_;
+    json_data["mid"] = mid_;
+    json_data["src_mid"] = src_mid_;
+    json_data["ssrc"] = rtp_ssrc_;
+    json_data["rtx_ssrc"] = rtx_ssrc_;
+    json_data["clockrate"] = clock_rate_;
+    json_data["payload"] = payloadtype_;
+    json_data["rtx_payload"] = rtx_payloadtype_;
+
+    stream_ptr_->get_statics(json_data);
+    
+    return;
+}
+
 void rtc_subscriber::send_rtp_packet(const std::string& roomId, const std::string& media_type,
                     const std::string& publish_id, rtp_packet* pkt) {
     if (pkt->has_extension()) {

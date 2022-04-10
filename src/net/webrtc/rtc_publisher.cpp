@@ -135,8 +135,6 @@ rtc_publisher::~rtc_publisher() {
     if (pack_handle_) {
         delete pack_handle_;
     }
-
-    flv_queue_.clear();
 }
 
 std::string rtc_publisher::get_media_type() {
@@ -157,6 +155,26 @@ uint8_t rtc_publisher::get_rtx_payloadtype() {
 
 bool rtc_publisher::has_rtx() {
     return has_rtx_;
+}
+
+void rtc_publisher::get_statics(json& json_data) {
+    json_data["media"] = media_type_str_;
+    json_data["payload"] = payloadtype_;
+    json_data["rtx_payload"] = rtx_payloadtype_;
+    json_data["clockrate"] = clock_rate_;
+    json_data["codec"] =  codectype_tostring(codec_type_);
+    json_data["stream"] = stream_type_;
+    json_data["ssrc"] = rtp_ssrc_;
+    json_data["rtx_ssrc"] = rtx_ssrc_;
+    json_data["rtt"] = rtt_;
+
+    if (media_type_ == MEDIA_AUDIO_TYPE) {
+        json_data["channel"] = channel_;
+    }
+
+    rtp_handler_->get_statics(json_data);
+
+    return;
 }
 
 void rtc_publisher::on_handle_rtppacket(rtp_packet* pkt) {

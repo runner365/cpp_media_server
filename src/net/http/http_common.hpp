@@ -8,6 +8,7 @@
 #include <unordered_map>
 #include <stdint.h>
 #include <sstream>
+#include <map>
 
 class http_request
 {
@@ -29,6 +30,7 @@ public:
 public:
     std::string method_;
     std::string uri_;
+    std::map<std::string, std::string> params;
     std::string version_;
     char* content_body_ = nullptr;
     int content_length_ = 0;
@@ -56,6 +58,7 @@ public:
     int write(const char* data, size_t len, bool continue_flag = false) {
         std::stringstream ss;
 
+        continue_flag_ = continue_flag;
         if (is_close_ || session_ == nullptr) {
             return -1;
         }
@@ -106,6 +109,7 @@ private:
 
 public:
     http_session* session_;
+    bool continue_flag_ = false;
 };
 
 using HTTP_HANDLE_Ptr = void (*)(const http_request* request, std::shared_ptr<http_response> response_ptr);

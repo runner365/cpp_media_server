@@ -35,6 +35,9 @@ public:
     virtual ~room_service();
 
 public:
+    friend int get_subscriber_statics(const std::string& roomId, const std::string& uid, json& data_json);
+
+public:
     virtual void on_open() override;
     virtual void on_failed() override;
     virtual void on_disconnected() override;
@@ -61,6 +64,8 @@ public:
     bool has_rtc_user(const std::string& uid);
     void rtmp_stream_ingest(MEDIA_PACKET_PTR pkt_ptr);
     void remove_live_user(const std::string& roomid, const std::string& uid);
+    std::shared_ptr<user_info> get_rtc_user(const std::string& uid);
+    std::shared_ptr<live_user_info> get_live_user(const std::string& uid);
 
 private:
     void handle_join(const std::string& id, const std::string& method,

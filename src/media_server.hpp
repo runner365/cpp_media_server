@@ -8,6 +8,7 @@
 #include "net/webrtc/srtp_session.hpp"
 #include "net/webrtc/rtmp2rtc.hpp"
 #include "net/hls/hls_writer.hpp"
+#include "net/httpapi/httpapi_server.hpp"
 #include "utils/byte_crypto.hpp"
 #include "utils/config.hpp"
 #include "utils/av/media_stream_manager.hpp"
@@ -29,6 +30,7 @@ private:
     static void create_httpflv();
     static void create_hls();
     static void create_websocket_flv();
+    static void create_httpapi();
 
     static void release_all();
 
@@ -45,6 +47,9 @@ private:
 
 private:
     static std::shared_ptr<httpflv_server> httpflv_ptr;
+
+private:
+    static std::shared_ptr<httpapi_server> httpapi_ptr;
 
 private:
     static hls_writer* hls_output;

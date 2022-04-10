@@ -13,6 +13,7 @@ enum LOGGER_LEVEL Config::log_level_;
 
 RtmpConfig     Config::rtmp_config_;
 HttpflvConfig  Config::httpflv_config_;
+HttpApiConfig  Config::httpapi_config_;
 HlsConfig      Config::hls_config_;
 WebrtcConfig   Config::webrtc_config_;
 WebSocketConfg Config::websocket_config_;
@@ -111,6 +112,27 @@ int Config::init_httpflv(json& json_object) {
         httpflv_config_.listen_port = (uint16_t)port_iter->get<int>();
     }
 
+    return 0;
+}
+
+int Config::init_httpapi(json& json_object) {
+    //httpapi_config_
+    auto enable_iter = json_object.find("enable");
+    if (enable_iter == json_object.end()) {
+        httpapi_config_.httpapi_enable = false;
+        return 0;
+    }
+    std::string enable_str = enable_iter->get<std::string>();
+    if (enable_str != "yes") {
+        httpapi_config_.httpapi_enable = false;
+        return 0;
+    }
+    httpapi_config_.httpapi_enable = true;
+
+    auto port_iter = json_object.find("listen");
+    if (port_iter != json_object.end()) {
+        httpapi_config_.listen_port = (uint16_t)port_iter->get<int>();
+    }
     return 0;
 }
 
@@ -255,6 +277,15 @@ int Config::init(uint8_t* data, size_t len) {
             }
         }
 
+        auto httpapi_iter = data_json.find("httpapi");
+        if (httpapi_iter != data_json.end()) {
+            ret = init_httpapi(*httpapi_iter);
+            if (ret < 0) {
+                std::cout << "init httpapi config error" << "\r\n";
+                return ret;
+            }
+        }
+
         auto hls_iter = data_json.find("hls");
         if (hls_iter != data_json.end()) {
             ret = init_hls(*hls_iter);
@@ -308,6 +339,13 @@ bool Config::rtmp_gop_cache() {
     return rtmp_config_.gop_cache;
 }
 
+bool Config::httpapi_is_enable() {
+    return httpapi_config_.httpapi_enable;
+}
+
+uint16_t Config::httpapi_port() {
+    return httpapi_config_.listen_port;
+}
 
 bool Config::httpflv_is_enable() {
     return httpflv_config_.httpflv_enable;

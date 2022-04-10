@@ -39,6 +39,7 @@ protected://tcp_session_callbackI
     virtual void on_read(int ret_code, const char* data, size_t data_size) override;
 
 private:
+    int handle_request(const char* data, size_t data_size, bool& continue_flag);
     int analyze_header();
 
 private:
@@ -53,6 +54,7 @@ private:
 private:
     bool header_is_ready_ = false;
     bool is_closed_ = false;
+    bool continue_flag_ = false;
     boost::asio::ip::tcp::endpoint remote_endpoint_;
 };
 

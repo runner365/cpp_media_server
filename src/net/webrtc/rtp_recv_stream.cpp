@@ -3,7 +3,10 @@
 #include "net/rtprtcp/rtcp_rr.hpp"
 #include "net/rtprtcp/rtcpfb_nack.hpp"
 #include "utils/byte_crypto.hpp"
+#include "json.hpp"
 #include <sstream>
+
+using json = nlohmann::json;
 
 rtp_recv_stream::rtp_recv_stream(rtc_stream_callback* cb, std::string media_type, uint32_t ssrc, uint8_t payloadtype,
                     bool is_rtx, int clock_rate):cb_(cb)
@@ -259,4 +262,15 @@ void rtp_recv_stream::generate_nacklist(const std::vector<uint16_t>& seq_vec) {
     cb_->stream_send_rtcp(nack_pkt->get_data(), nack_pkt->get_len());
 
     delete nack_pkt;
+}
+
+void rtp_recv_stream::get_statics(json& json_data) {
+    size_t fps;
+    size_t speed = recv_statics_.bytes_per_second((int64_t)now_millisec(), fps);
+
+    json_data["bps"] = speed * 8;
+    json_data["fps"] = fps;
+    json_data["count"] = recv_statics_.get_count();
+    json_data["bytes"] = recv_statics_.get_bytes();
+    return;
 }

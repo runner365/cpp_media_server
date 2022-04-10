@@ -578,7 +578,6 @@ void webrtc_session::handle_rtcp_xr(uint8_t* data, size_t data_len) {
     return;
 }
 
-
 void webrtc_session::handle_xr_dlrr(xr_dlrr_data* dlrr_block) {
     uint32_t media_ssrc = ntohl(dlrr_block->ssrc);
     std::shared_ptr<rtc_publisher> publisher_ptr = get_publisher(media_ssrc);
