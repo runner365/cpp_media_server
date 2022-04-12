@@ -28,7 +28,7 @@ Boost.Asio为网络IO高性能并发提供好的基础，并且支持跨平台(l
 
 
 ## 2. 如何编译
-[如何编译](doc/how_to_build.md)
+[如何编译](doc/conf/how_to_build.md)
 
 ## 3. Wiki文档
 ### 3.1 配置指南
