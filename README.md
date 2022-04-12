@@ -34,7 +34,7 @@ Boost.Asio为网络IO高性能并发提供好的基础，并且支持跨平台(l
 ### 3.1 配置指南
 * 如何配置webrtc: [webrtc配置指南](doc/conf/webrtc.md)
 * 如何配置rtmp server: [rtmp配置指南](doc/conf/rtmp.md)
-* 如何配置rtmp和httpflv服务: [rtmp和httpflv配置指南](doc/rtmp_httpflv.md)
+* 如何配置rtmp和httpflv服务: [rtmp和httpflv配置指南](doc/conf/rtmp_httpflv.md)
 * 如何配置webrtc2rtmp: [webrtc转rtmp配置指南](doc/conf/webrtc2rtmp.md)
 * 如何配置rtmp2webrtc: [rtmp转webrtc配置指南](doc/conf/rtmp2webrtc.md)
 * 如何配置rtmp和hls服务: [rtmp和hls配置指南](doc/conf/rtmp_hls.md)
