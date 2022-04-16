@@ -41,7 +41,7 @@ public:
 private:
     void init_seq(uint16_t seq);
     void update_seq(uint16_t seq);
-    void generate_jitter(uint32_t rtp_timestamp);
+    void generate_jitter(uint32_t rtp_timestamp, int64_t recv_pkt_ms);
 
 private:
     void send_rtcp_rr();
@@ -58,8 +58,8 @@ private:
 
 private:
     stream_statics recv_statics_;
-    int64_t ts_diff_       = 0;
-    double jitter_         = 0;
+    uint32_t jitter_q4_    = 0;
+    uint32_t jitter_       = 0;
     uint32_t lsr_          = 0;
     int64_t last_sr_ms_    = 0;
     int64_t discard_count_ = 0;
@@ -67,16 +67,19 @@ private:
     int64_t expect_recv_   = 0;
     int64_t last_recv_     = 0;
     uint8_t frac_lost_     = 0;
+    double lost_percent_   = 0.0;
 
 private:
     int64_t rtt_ = 0;
 
 private:
-    bool first_pkt_    = true;
-    uint16_t base_seq_ = 0;
-    uint16_t max_seq_  = 0;
-    uint32_t bad_seq_  = RTP_SEQ_MOD + 1;   /* so seq == bad_seq is false */
-    uint32_t cycles_   = 0;
+    bool first_pkt_      = true;
+    uint16_t base_seq_   = 0;
+    uint16_t max_seq_    = 0;
+    uint32_t bad_seq_    = RTP_SEQ_MOD + 1;   /* so seq == bad_seq is false */
+    uint32_t cycles_     = 0;
+    int64_t last_pkt_ms_ = 0;
+    int64_t last_rtp_ts_ = 0;
 
 private://for rtcp sr
     NTP_TIMESTAMP ntp_;//from rtcp sr

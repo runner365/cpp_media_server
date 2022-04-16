@@ -312,7 +312,8 @@ int live_user_info::handle_video_data(MEDIA_PACKET_PTR pkt_ptr) {
             if ((data[0] & 0x1f) == kFiller) {
                 continue;
             }
-            if ((data[0] & 0x1f) == kIdr) {
+            bool isIdr = ((data[0] & 0x1f) == kIdr);
+            if (isIdr) {
                 //send sps/pps before key frame
                 std::vector<std::pair<uint8_t*, int>> data_vec;
     
@@ -325,7 +326,7 @@ int live_user_info::handle_video_data(MEDIA_PACKET_PTR pkt_ptr) {
                 room_cb_->on_rtppacket_publisher2room(publisher_id, "video", sps_pps_pkt);
             }
 
-            if (buffer_ptr->data_len() > RTP_PAYLOAD_MAX_SIZE) {
+            if (data_len > RTP_PAYLOAD_MAX_SIZE) {
                 std::vector<rtp_packet*> fuA_vec = generate_fuA_packets(data, data_len);
                 for (auto fuA_pkt : fuA_vec) {
                     fuA_pkt->set_seq(vseq_++);
@@ -338,6 +339,7 @@ int live_user_info::handle_video_data(MEDIA_PACKET_PTR pkt_ptr) {
                 rtp_packet* single_pkt = generate_singlenalu_packets(data, data_len);
                 single_pkt->set_seq(vseq_++);
                 single_pkt->set_ssrc(video_ssrc_);
+                single_pkt->set_marker(1);
                 single_pkt->set_timestamp((uint32_t)pkt_ptr->dts_);
                 room_cb_->on_rtppacket_publisher2room(publisher_id, "video", single_pkt);
             }

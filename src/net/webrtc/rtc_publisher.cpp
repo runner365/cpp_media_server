@@ -172,7 +172,10 @@ void rtc_publisher::get_statics(json& json_data) {
         json_data["channel"] = channel_;
     }
 
-    rtp_handler_->get_statics(json_data);
+    if (rtp_handler_) {
+        rtp_handler_->get_statics(json_data);
+    }
+    
 
     return;
 }

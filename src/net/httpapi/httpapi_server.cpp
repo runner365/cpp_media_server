@@ -8,6 +8,7 @@ using json = nlohmann::json;
 
 extern int get_publisher_statics(const std::string& roomId, const std::string& uid, json& data_json);
 extern int get_subscriber_statics(const std::string& roomId, const std::string& uid, json& data_json);
+extern int get_room_statics(json& data_json);
 
 void httpapi_response(int code, const std::string& desc, const json& data, std::shared_ptr<http_response> response) {
     auto resp_json = json::object();
@@ -69,6 +70,27 @@ void httpapi_webrtc_subscriber_handle(const http_request* request, std::shared_p
     return;
 }
 
+/*
+url: /api/webrtc/room
+*/
+void httpapi_webrtc_room_handle(const http_request* request, std::shared_ptr<http_response> response) {
+    auto data_json = json::object();
+
+    try {
+        log_infof("webrtc room request uri:%s", request->uri_.c_str());
+        get_room_statics(data_json);
+    }
+    catch(const std::exception& e) {
+        std::stringstream ss;
+        ss << "parameter error: " << e.what();
+        httpapi_response(501, ss.str().c_str(), data_json, response);
+        return;
+    }
+    
+    httpapi_response(0, "ok", data_json, response);
+    return;
+}
+
 httpapi_server::httpapi_server(boost::asio::io_context& io_ctx, uint16_t port):server_(io_ctx, port)
 {
     run();
@@ -83,4 +105,5 @@ httpapi_server::~httpapi_server()
 void httpapi_server::run() {
     server_.add_get_handle("/api/webrtc/publisher", httpapi_webrtc_publisher_handle);
     server_.add_get_handle("/api/webrtc/subscriber", httpapi_webrtc_subscriber_handle);
+    server_.add_get_handle("/api/webrtc/room", httpapi_webrtc_room_handle);
 }

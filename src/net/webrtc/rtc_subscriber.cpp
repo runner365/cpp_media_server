@@ -95,6 +95,9 @@ void rtc_subscriber::get_statics(json& json_data) {
     json_data["payload"] = payloadtype_;
     json_data["rtx_payload"] = rtx_payloadtype_;
 
+    if (!stream_ptr_) {
+        return;
+    }
     stream_ptr_->get_statics(json_data);
     
     return;
@@ -151,4 +154,8 @@ void rtc_subscriber::stream_send_rtp(uint8_t* data, size_t len) {
 
 void rtc_subscriber::request_keyframe() {
     room_cb_->on_request_keyframe(pid_, sid_, rtp_ssrc_);
+}
+
+void rtc_subscriber::set_remb_bitrate(int64_t bitrate) {
+    remb_bitrate_ = bitrate;
 }

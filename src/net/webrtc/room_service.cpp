@@ -72,6 +72,36 @@ bool room_has_rtc_uid(const std::string& roomId, const std::string& uid) {
     return room_ptr->has_rtc_user(uid);
 }
 
+int get_room_statics(json& data_json) {
+    data_json["rtc_list"] = json::array();
+    data_json["live_list"] = json::array();
+
+    for (auto& room_item : s_rooms) {
+        std::string roomId = room_item.first;
+        std::shared_ptr<room_service> room_ptr = room_item.second;
+
+        for (auto rtc_user_item : room_ptr->users_) {
+            std::string uid = rtc_user_item.first;
+            std::shared_ptr<user_info> user_ptr = rtc_user_item.second;
+
+            json user_json = json::object();
+            user_json["uid"] = uid;
+            user_json["publishers"]  = user_ptr->publish_sessions_.size();;
+            user_json["subscribers"] = user_ptr->subscribe_sessions_.size();;
+            data_json["rtc_list"].emplace_back(user_json);
+        }
+
+        for (auto& live_user_item : room_ptr->live_users_) {
+            std::string uid = live_user_item.first;
+
+            json user_json = json::object();
+            user_json["uid"] = uid;
+            data_json["live_list"].emplace_back(user_json);
+        }
+    }
+    return 0;
+}
+
 int get_subscriber_statics(const std::string& roomId, const std::string& uid, json& data_json) {
     auto iter = s_rooms.find(roomId);
     if (iter == s_rooms.end()) {
@@ -90,11 +120,12 @@ int get_subscriber_statics(const std::string& roomId, const std::string& uid, js
     for (auto item : room_ptr->pid2subscribers_) {
         for (auto subscriber_item : item.second) {
             std::shared_ptr<rtc_subscriber> subscriber_ptr = subscriber_item.second;
-            json subscirber_data = json::object();
-
-            subscriber_ptr->get_statics(subscirber_data);
-            count++;
-            data_json["list"].emplace_back(subscirber_data);
+            if (subscriber_ptr->get_uid() == uid) {
+                json subscirber_data = json::object();
+                subscriber_ptr->get_statics(subscirber_data);
+                count++;
+                data_json["list"].emplace_back(subscirber_data);   
+            }
         }
     }
     data_json["count"] = count;
@@ -145,8 +176,9 @@ int get_publisher_statics(const std::string& roomId, const std::string& uid, jso
         }
         data_json["count"] = count;
     } else {
-        log_infof("the user(%s) does not exist", uid.c_str());
+        log_infof("the rtc user(%s) does not exist", uid.c_str());
     }
+
     return 0;
 }
 

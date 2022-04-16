@@ -3,6 +3,7 @@
 #include "rtprtcp_pub.hpp"
 #include "rtcp_fb_pub.hpp"
 #include "utils/byte_stream.hpp"
+#include "utils/logger.hpp"
 #include <stdint.h>
 #include <stddef.h>
 #include <string>
@@ -65,6 +66,37 @@ public:
 
     ~rtcpfb_remb() {
 
+    }
+
+    static rtcpfb_remb* parse(uint8_t* data, size_t len) {
+        rtcpfb_remb* remb = new rtcpfb_remb(0, 0);
+
+        memcpy(remb->get_data(), data, len);
+
+        remb->sender_ssrc_ = ntohl(remb->fb_header_->sender_ssrc);
+        remb->media_ssrc_  = ntohl(remb->fb_header_->media_ssrc);
+
+        uint8_t exponenta = remb->remb_block_->br_exp >> 2;
+        uint64_t mantissa = (static_cast<uint32_t>(remb->remb_block_->br_exp & 0x03) << 16) | ntohs(remb->remb_block_->br_mantissa);
+        remb->bitrate_ = (mantissa << exponenta);
+        bool shift_overflow = (static_cast<uint64_t>(remb->bitrate_) >> exponenta) != mantissa;
+        if (shift_overflow) {
+          return nullptr;
+        }
+
+        uint8_t ssrc_num = remb->remb_block_->ssrc_num;
+        uint8_t* p = (uint8_t*)(&(remb->remb_block_->ssrc_num));
+
+        //log_infof("ssrc num:%d, br_exp:%d, br_mantissa:%d",
+        //    ssrc_num, remb->remb_block_->br_exp, ntohs(remb->remb_block_->br_mantissa));
+        p += 4;
+        uint32_t* ssrc_p = (uint32_t*)p;
+        for (uint8_t index = 0; index < ssrc_num; index++) {
+            //log_infof("ssrc:%u", ntohl(*ssrc_p));
+            remb->ssrcs_.push_back(ntohl(*ssrc_p));
+            ssrc_p++;
+        }
+        return remb;
     }
 
     uint8_t* serial(size_t& data_len) {

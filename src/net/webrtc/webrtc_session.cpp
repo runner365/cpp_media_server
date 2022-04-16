@@ -623,9 +623,28 @@ void webrtc_session::handle_rtcp_psfb(uint8_t* data, size_t data_len) {
                 
                 break;
             }
-            
+            case FB_PS_AFB:
+            {
+                rtcpfb_remb* remb_pkt = rtcpfb_remb::parse(data, data_len);
+                if (!remb_pkt) {
+                    break;
+                }
+                //log_infof("subscriber bitrate:%ld", remb_pkt->get_bitrate());
+                remb_bitrate_ = remb_pkt->get_bitrate();
+                std::vector<uint32_t> ssrcs = remb_pkt->get_ssrcs();
+
+                for (auto ssrc : ssrcs) {
+                    auto iter = ssrc2subscribers_.find(ssrc);
+                    if (iter != ssrc2subscribers_.end()) {
+                        iter->second->set_remb_bitrate(remb_bitrate_);
+                    }
+                }
+                delete remb_pkt;
+                break;
+            }
             default:
             {
+                log_debugf("rtcp psfb doesn't handle fmt:%d", header->fmt);
                 break;
             }
         }

@@ -177,7 +177,7 @@ void pack_handle_h264::check_fua_timeout() {
             break;
         }
         packets_queue_.pop_front();
-        log_warnf("h264 packet pop seq:%d", pkt_ptr->pkt->get_seq());
+        log_warnf("h264 fua list is timeout, packet pop seq:%d", pkt_ptr->pkt->get_seq());
     }
     return;
 }

@@ -71,6 +71,9 @@ protected:
     std::map<int, std::shared_ptr<rtc_subscriber>> mid2subscribers_;         //key: mid, value: rtc_subscriber
     std::map<uint32_t, std::shared_ptr<rtc_subscriber>> ssrc2subscribers_;   //key: ssrc, value: rtc_subscriber
     std::map<std::string, std::shared_ptr<rtc_subscriber>> pid2subscribers_; //key: publisher_id, value: rtc_subscriber
+
+protected:
+    int64_t remb_bitrate_ = 0;
 };
 
 #endif

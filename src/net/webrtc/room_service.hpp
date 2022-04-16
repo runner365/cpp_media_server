@@ -36,6 +36,7 @@ public:
 
 public:
     friend int get_subscriber_statics(const std::string& roomId, const std::string& uid, json& data_json);
+    friend int get_room_statics(json& data_json);
 
 public:
     virtual void on_open() override;
