@@ -6,12 +6,12 @@
     "log_dir":"server.log",
     "log_level": "info",
     "rtmp":{
-        "enable": "yes",
+        "enable": true,
         "listen":1935,
         "gop_cache":"enable"
     },
     "httpflv":{
-        "enable": "yes",
+        "enable": true,
         "listen":8070
     }
 }
@@ -26,14 +26,14 @@ httpflv模块，通过配置“httpflv”的json模块。
 ### 3.2.1 使能httpflv
 ```markup
 "httpflv":{
-    "enable": "yes"
+    "enable": true
     ......
 }
 ```
 ### 3.2.2 配置httpflv端口号
 ```markup
 "httpflv":{
-    "enable": "yes"
+    "enable": true
     "listen":8070
 }
 ```

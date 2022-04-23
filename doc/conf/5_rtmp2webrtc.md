@@ -6,18 +6,18 @@
     "log_dir":"server.log",
     "log_level": "info",
     "rtmp":{
-        "enable": "yes",
+        "enable": true,
         "listen":1935,
         "gop_cache":"enable"
     },
     "webrtc":{
-        "enable": "yes",
+        "enable": true,
         "listen": 8000,
         "tls_key": "certs/server.key",
         "tls_cert": "certs/server.crt",
         "udp_port": 7000,
         "candidate_ip": "192.168.1.98",
-        "rtmp2rtc": "yes"
+        "rtmp2rtc": true
     }
 }
 ```
@@ -29,7 +29,7 @@
 ```markup
 "webrtc":{
     ......
-    "rtmp2rtc": "yes"
+    "rtmp2rtc": true
 }
 ```
 

@@ -37,7 +37,7 @@ int rtmp_control_handler::handle_server_command_message(CHUNK_STREAM_PTR cs_ptr,
                 (session_->client_phase_ == client_create_stream_phase) ||
                 (session_->client_phase_ == client_create_stream_resp_phase)) {
                 if ((item->desc_str_ != "_result") && (item->desc_str_ != "onBWDone")) {
-                    log_errorf("rtmp client connect return %s", item->desc_str_.c_str());
+                    log_errorf("rtmp client connect error: %s", item->desc_str_.c_str());
                     return -1;
                 }
                 if ((session_->client_phase_ == client_connect_phase) || 
@@ -60,7 +60,7 @@ int rtmp_control_handler::handle_server_command_message(CHUNK_STREAM_PTR cs_ptr,
                 }
             } else if ((session_->client_phase_ == client_create_publish_phase) ||
                     (session_->client_phase_ == client_create_play_phase)) {
-                if ((item->desc_str_ != "_result") && (item->desc_str_ != "onStatus")) {
+                if ((item->desc_str_ != "_result") && (item->desc_str_ != "onStatus") && (item->desc_str_ != "onBWDone")) {
                     log_errorf("rtmp client %s return %s", session_->is_publish_desc(), item->desc_str_.c_str());
                     return -1;
                 }
@@ -95,8 +95,8 @@ int rtmp_control_handler::handle_server_command_message(CHUNK_STREAM_PTR cs_ptr,
     }
 
     if (session_->client_phase_ != next_phase) {
-        //log_infof("rtmp client session phase change [%s] to [%s]",
-        //        get_client_phase_desc(session_->client_phase_), get_client_phase_desc(next_phase));
+        log_infof("rtmp client session phase change [%s] to [%s]",
+                get_client_phase_desc(session_->client_phase_), get_client_phase_desc(next_phase));
         session_->client_phase_ = next_phase;
     }
     return 0;

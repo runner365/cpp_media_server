@@ -6,7 +6,7 @@
     "log_dir":"server.log",
     "log_level": "info",
     "webrtc":{
-        "enable": "yes",
+        "enable": true,
         "listen": 8000,
         "tls_key": "certs/server.key",
         "tls_cert": "certs/server.crt",
@@ -26,7 +26,7 @@ webrtc模块，通过配置“webrtc”的json模块。
 ```markup
 
 "webrtc":{
-    "enable": "yes"
+    "enable": true
     ......
 }
 ```
@@ -34,7 +34,7 @@ webrtc模块，通过配置“webrtc”的json模块。
 ### 1.2.2 websocket端口号
 ```markup
 "webrtc":{
-    "enable": "yes"
+    "enable": true
     "listen": 8000
     ......
 }

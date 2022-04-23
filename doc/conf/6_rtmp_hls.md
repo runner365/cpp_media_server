@@ -6,12 +6,12 @@
     "log_dir":"server.log",
     "log_level": "info",
     "rtmp":{
-        "enable": "yes",
+        "enable": true,
         "listen":1935,
         "gop_cache":"enable"
     },
     "hls":{
-        "enable": "yes",
+        "enable": true,
         "ts_duration":5000,
         "hls_path":"./hlsfiles"
     }
@@ -28,14 +28,14 @@ hls模块，通过配置“hls”的json模块。
 ### 6.2.1 使能hls
 ```markup
 "hls":{
-    "enable": "yes"
+    "enable": true
     ......
 }
 ```
 ### 6.2.2 配置mpegts切片市场
 ```markup
 "hls":{
-    "enable": "yes",
+    "enable": true,
     "ts_duration":5000,
     ....
 }
@@ -44,7 +44,7 @@ hls模块，通过配置“hls”的json模块。
 ### 6.2.3 配置hls的mpegts生成目录
 ```markup
 "hls":{
-    "enable": "yes",
+    "enable": true,
     "ts_duration":5000,
     "hls_path":"./hlsfiles"
 }

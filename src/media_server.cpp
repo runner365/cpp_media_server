@@ -24,6 +24,26 @@ std::shared_ptr<rtmp_server> MediaServer::rtmp_ptr;
 std::shared_ptr<httpflv_server> MediaServer::httpflv_ptr;
 std::shared_ptr<httpapi_server> MediaServer::httpapi_ptr;
 hls_writer* MediaServer::hls_output = nullptr;
+rtmp_relay_manager* MediaServer::relay_mgr_p = nullptr;
+
+void on_play_callback(const std::string& key) {
+    if (!Config::rtmp_is_enable()) {
+        return;
+    }
+    std::string host = Config::rtmp_relay_host();
+    if (host.empty()) {
+        return;
+    }
+
+    if (MediaServer::relay_mgr_p == nullptr) {
+        return;
+    }
+
+    log_infof("request a new stream:%s, host:%s", key.c_str(), host.c_str());
+    MediaServer::relay_mgr_p->add_new_relay(host, key);
+
+    return;
+}
 
 void MediaServer::create_webrtc() {
     if (!Config::webrtc_is_enable()) {
@@ -56,6 +76,11 @@ void MediaServer::create_rtmp() {
     }
     MediaServer::rtmp_ptr = std::make_shared<rtmp_server>(io_context, Config::rtmp_listen_port());
     log_infof("rtmp server is starting, listen port:%d", Config::rtmp_listen_port());
+
+    if (Config::rtmp_relay_is_enable() && !Config::rtmp_relay_host().empty()) {
+        MediaServer::relay_mgr_p = new rtmp_relay_manager(MediaServer::io_context);
+        media_stream_manager::set_play_callback(on_play_callback);
+    }
     return;
 }
 

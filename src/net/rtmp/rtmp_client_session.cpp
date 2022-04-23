@@ -11,11 +11,12 @@ rtmp_client_session::rtmp_client_session(boost::asio::io_context& io_context, rt
     , ctrl_handler_(this)
     , io_ctx_(io_context)
 {
-
+    log_infof("rtmp client session construct....");
 }
 
 rtmp_client_session::~rtmp_client_session() {
-
+    log_infof("rtmp client session desctruct....");
+    close();
 }
 
 int rtmp_client_session::start(const std::string& url, bool is_publish) {
@@ -165,7 +166,6 @@ int rtmp_client_session::handle_message() {
         log_infof("rtmp client handshake is done");
 
         client_phase_ = client_connect_phase;
-
         //send rtmp connect
         ret = rtmp_connect();
         if (ret < 0) {
@@ -209,7 +209,7 @@ int rtmp_client_session::handle_message() {
     if (client_phase_ == client_create_stream_resp_phase) {
         ret = receive_resp_message();
         if (ret < 0) {
-            log_errorf("rtmp receive resp message error:%d", ret);
+            log_errorf("rtmp receive resp message in the create stream response phrase error:%d", ret);
             return ret;
         } else if (ret == RTMP_NEED_READ_MORE) {
             return RTMP_NEED_READ_MORE;
@@ -269,6 +269,9 @@ int rtmp_client_session::receive_resp_message() {
         //receive fmt+csid | basic header | message header | data
         ret = read_chunk_stream(cs_ptr);
         if ((ret < RTMP_OK) || (ret == RTMP_NEED_READ_MORE)) {
+            if (ret < RTMP_OK) {
+                log_errorf("read_chunk_stream error:%d", ret);
+            }
             return ret;
         }
 
@@ -283,6 +286,7 @@ int rtmp_client_session::receive_resp_message() {
         if ((cs_ptr->type_id_ >= RTMP_CONTROL_SET_CHUNK_SIZE) && (cs_ptr->type_id_ <= RTMP_CONTROL_SET_PEER_BANDWIDTH)) {
             ret = ctrl_handler_.handle_rtmp_control_message(cs_ptr, false);
             if (ret < RTMP_OK) {
+                log_infof("handle_rtmp_control_message error:%d", ret);
                 return ret;
             }
             cs_ptr->reset();
@@ -298,6 +302,7 @@ int rtmp_client_session::receive_resp_message() {
                     AMF_ITERM* temp = iter;
                     delete temp;
                 }
+                log_infof("handle_server_command_message error:%d", ret);
                 return ret;
             }
             for (auto iter : amf_vec) {
@@ -312,7 +317,7 @@ int rtmp_client_session::receive_resp_message() {
         }  else if ((cs_ptr->type_id_ == RTMP_MEDIA_PACKET_VIDEO) || (cs_ptr->type_id_ == RTMP_MEDIA_PACKET_AUDIO)
                 || (cs_ptr->type_id_ == RTMP_COMMAND_MESSAGES_META_DATA0) || (cs_ptr->type_id_ == RTMP_COMMAND_MESSAGES_META_DATA3)) {
             MEDIA_PACKET_PTR pkt_ptr = get_media_packet(cs_ptr);
-            if (pkt_ptr->buffer_ptr_->data_len() == 0) {
+            if (!pkt_ptr || !(pkt_ptr->buffer_ptr_) || pkt_ptr->buffer_ptr_->data_len() == 0) {
                 return -1;
             }
 
@@ -346,7 +351,7 @@ int rtmp_client_session::rtmp_connect() {
     app_item->set_amf_type(AMF_DATA_TYPE_STRING);
     app_item->desc_str_ = req_.app_;
     event_amf_obj.insert(std::make_pair("app", app_item));
-    log_debugf("rtmp connect app:%s", req_.app_.c_str());
+    log_infof("rtmp connect app:%s", req_.app_.c_str());
 
     AMF_ITERM* type_item = new AMF_ITERM();
     type_item->set_amf_type(AMF_DATA_TYPE_STRING);
@@ -362,7 +367,7 @@ int rtmp_client_session::rtmp_connect() {
     tcurl_item->set_amf_type(AMF_DATA_TYPE_STRING);
     tcurl_item->desc_str_ = req_.tcurl_;
     event_amf_obj.insert(std::make_pair("tcUrl", tcurl_item));
-    log_debugf("rtmp connect tcurl:%s", req_.tcurl_.c_str());
+    log_infof("rtmp connect tcurl:%s", req_.tcurl_.c_str());
 
     AMF_Encoder::encode(event_amf_obj, amf_buffer);
 
@@ -371,7 +376,7 @@ int rtmp_client_session::rtmp_connect() {
     delete ver_item;
     delete tcurl_item;
 
-    log_debugf("rtmp connect start chunk_size:%u", get_chunk_size());
+    log_infof("rtmp connect start chunk_size:%u", chunk_size_);
 
     uint32_t stream_id = 0;
     int ret = write_data_by_chunk_stream(this, 3, 0, RTMP_COMMAND_MESSAGES_AMF0,

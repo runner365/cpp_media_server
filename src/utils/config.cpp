@@ -72,12 +72,7 @@ int Config::init_rtmp(json& json_object) {
         rtmp_config_.rtmp_enable = false;
         return 0;
     }
-    std::string enable_str = enable_iter->get<std::string>();
-    if (enable_str != "yes") {
-        rtmp_config_.rtmp_enable = false;
-        return 0;
-    }
-    rtmp_config_.rtmp_enable = true;
+    rtmp_config_.rtmp_enable = enable_iter->get<bool>();
 
     auto port_iter = json_object.find("listen");
     if (port_iter != json_object.end()) {
@@ -90,6 +85,12 @@ int Config::init_rtmp(json& json_object) {
         rtmp_config_.gop_cache = (gop_cache_str == "enable") ? true : false;
     }
 
+    auto rtmp_relay_iter = json_object.find("rtmp_relay");
+    if (rtmp_relay_iter != json_object.end()) {
+        rtmp_config_.rtmp_relay.enable     = (*rtmp_relay_iter)["enable"];
+        rtmp_config_.rtmp_relay.relay_host = (*rtmp_relay_iter)["host"];
+    }
+
     return 0;
 }
 
@@ -100,12 +101,7 @@ int Config::init_httpflv(json& json_object) {
         httpflv_config_.httpflv_enable = false;
         return 0;
     }
-    std::string enable_str = enable_iter->get<std::string>();
-    if (enable_str != "yes") {
-        httpflv_config_.httpflv_enable = false;
-        return 0;
-    }
-    httpflv_config_.httpflv_enable = true;
+    httpflv_config_.httpflv_enable = enable_iter->get<bool>();
 
     auto port_iter = json_object.find("listen");
     if (port_iter != json_object.end()) {
@@ -122,12 +118,7 @@ int Config::init_httpapi(json& json_object) {
         httpapi_config_.httpapi_enable = false;
         return 0;
     }
-    std::string enable_str = enable_iter->get<std::string>();
-    if (enable_str != "yes") {
-        httpapi_config_.httpapi_enable = false;
-        return 0;
-    }
-    httpapi_config_.httpapi_enable = true;
+    httpapi_config_.httpapi_enable = enable_iter->get<bool>();
 
     auto port_iter = json_object.find("listen");
     if (port_iter != json_object.end()) {
@@ -142,12 +133,7 @@ int Config::init_hls(json& json_object) {
         hls_config_.hls_enable = false;
         return 0;
     }
-    std::string enable_str = enable_iter->get<std::string>();
-    if (enable_str != "yes") {
-        hls_config_.hls_enable = false;
-        return 0;
-    }
-    hls_config_.hls_enable = true;
+    hls_config_.hls_enable = enable_iter->get<bool>();
 
     auto ts_duration_iter = json_object.find("ts_duration");
     if (ts_duration_iter != json_object.end()) {
@@ -168,12 +154,7 @@ int Config::init_websocket(json& json_object) {
         websocket_config_.websocket_enable = false;
         return 0;
     }
-    std::string enable_str = enable_iter->get<std::string>();
-    if (enable_str != "yes") {
-        websocket_config_.websocket_enable = false;
-        return 0;
-    }
-    websocket_config_.websocket_enable = true;
+    websocket_config_.websocket_enable = enable_iter->get<bool>();
 
     auto port_iter = json_object.find("listen");
     if (port_iter != json_object.end()) {
@@ -189,12 +170,7 @@ int Config::init_webrtc(json& json_object) {
         webrtc_config_.webrtc_enable = false;
         return 0;
     }
-    std::string enable_str = enable_iter->get<std::string>();
-    if (enable_str != "yes") {
-        webrtc_config_.webrtc_enable = false;
-        return 0;
-    }
-    webrtc_config_.webrtc_enable = true;
+    webrtc_config_.webrtc_enable = enable_iter->get<bool>();
 
     auto port_iter = json_object.find("listen");
     if (port_iter != json_object.end()) {
@@ -229,24 +205,14 @@ int Config::init_webrtc(json& json_object) {
     if (rtc2rtmp_iter == json_object.end()) {
         webrtc_config_.rtc2rtmp_enable = false;
     } else {
-        enable_str = rtc2rtmp_iter->get<std::string>();
-        if (enable_str != "yes") {
-            webrtc_config_.rtc2rtmp_enable = false;
-        } else {
-            webrtc_config_.rtc2rtmp_enable = true;
-        }
+        webrtc_config_.rtc2rtmp_enable = rtc2rtmp_iter->get<bool>();
     }
  
     auto rtmp2rtc_iter = json_object.find("rtmp2rtc");
     if (rtmp2rtc_iter == json_object.end()) {
         webrtc_config_.rtmp2rtc_enable = false;
     } else {
-        enable_str = rtmp2rtc_iter->get<std::string>();
-        if (enable_str != "yes") {
-            webrtc_config_.rtmp2rtc_enable = false;
-        } else {
-            webrtc_config_.rtmp2rtc_enable = true;
-        }
+        webrtc_config_.rtmp2rtc_enable = rtmp2rtc_iter->get<bool>();
     }
     return 0;
 }
@@ -337,6 +303,14 @@ uint16_t Config::rtmp_listen_port() {
 
 bool Config::rtmp_gop_cache() {
     return rtmp_config_.gop_cache;
+}
+
+bool Config::rtmp_relay_is_enable() {
+    return rtmp_config_.rtmp_relay.enable;
+}
+
+std::string Config::rtmp_relay_host() {
+    return rtmp_config_.rtmp_relay.relay_host;
 }
 
 bool Config::httpapi_is_enable() {

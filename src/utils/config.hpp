@@ -76,6 +76,27 @@ public:
     bool rtc2rtmp_enable = false;
 };
 
+class RtmpRelayConfig
+{
+public:
+    RtmpRelayConfig(){};
+    ~RtmpRelayConfig(){};
+
+public:
+    std::string dump() {
+        std::stringstream ss;
+
+        ss << "  rtmp relay:" << this->enable << "\r\n";
+        ss << "  rtmp host:" << this->relay_host << "\r\n";
+
+        return ss.str();
+    }
+
+public:
+    bool enable = false;
+    std::string relay_host;
+};
+
 class RtmpConfig
 {
 public:
@@ -89,6 +110,7 @@ public:
         ss << "  enable: " << rtmp_enable << "\r\n";
         ss << "  port: " << listen_port << "\r\n";
         ss << "  gop cache: " << gop_cache << "\r\n";
+        ss << rtmp_relay.dump();
 
         return ss.str();
     }
@@ -97,6 +119,8 @@ public:
     bool rtmp_enable = false;
     uint16_t listen_port = RTMP_DEF_PORT;
     bool gop_cache = true;
+
+    RtmpRelayConfig rtmp_relay;
 };
 
 class HttpflvConfig
@@ -189,6 +213,8 @@ public:
     static bool rtmp_is_enable();
     static uint16_t rtmp_listen_port();
     static bool rtmp_gop_cache();
+    static bool rtmp_relay_is_enable();
+    static std::string rtmp_relay_host();
 
 public:
     static bool httpflv_is_enable();

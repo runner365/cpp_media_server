@@ -4,6 +4,10 @@
 #include "utils/timeex.hpp"
 
 c1s1_handle::c1s1_handle() {
+    digest_random0_ = nullptr;
+    digest_random1_ = nullptr;
+    digest_random0_size_ = 0;
+    digest_random1_size_ = 0;
 }
 
 c1s1_handle::~c1s1_handle() {
@@ -15,9 +19,11 @@ c1s1_handle::~c1s1_handle() {
     }
     if (digest_random0_) {
         delete[] digest_random0_;
+        digest_random0_ = nullptr;
     }
     if (digest_random1_) {
         delete[] digest_random1_;
+        digest_random1_ = nullptr;
     }
 }
 
@@ -109,12 +115,20 @@ int c1s1_handle::make_c0c1(char* c0c1_data) {
     write_4bytes(p, c1_digest_offset_);
     p += 4;
 
+    if ((digest_random0_ == nullptr) || (digest_random0_size_ <= 0)) {
+        delete[] c1_digest;
+        return -1;
+    }
     memcpy(p, digest_random0_, digest_random0_size_);
     p += digest_random0_size_;
 
     memcpy(p, c1_digest, 32);
     p += 32;
     delete[] c1_digest;
+
+    if ((digest_random1_ == nullptr) || (digest_random1_size_ <= 0)) {
+        return -1;
+    }
     memcpy(p, digest_random1_, digest_random1_size_);
     p += digest_random1_size_;
 

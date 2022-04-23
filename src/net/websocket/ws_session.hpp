@@ -38,7 +38,6 @@ private:
     void close_session(boost::beast::error_code& ec);
 
 private:
-    boost::asio::io_context& io_ctx_;
     boost::beast::websocket::stream<boost::beast::tcp_stream>* ws_ = nullptr;
     boost::beast::websocket::stream<boost::beast::ssl_stream<boost::beast::tcp_stream>>* wss_ = nullptr;
     websocket_server_callbackI* server_cb_ = nullptr;

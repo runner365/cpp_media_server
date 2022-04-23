@@ -11,8 +11,9 @@ rtmp_server_session::rtmp_server_session(boost::asio::ip::tcp::socket socket, rt
 }
 
 rtmp_server_session::~rtmp_server_session() {
-    log_infof("rtmp session destruct:%s, publisher:%d",
-        req_.key_.c_str(), req_.publish_flag_);
+    log_infof("rtmp session destruct:%s, action:%s, request ready:%s",
+        req_.key_.c_str(), req_.publish_flag_ ? "publish" : "play",
+        req_.is_ready_ ? "true" : "false");
     close();
 }
 
@@ -45,7 +46,9 @@ void rtmp_server_session::close() {
         return;
     }
     closed_flag_ = true;
-    log_infof("rtmp session close....");
+    log_infof("rtmp session close, request isReady:%s, action:%s",
+            req_.is_ready_ ? "true" : "false",
+            req_.publish_flag_ ? "publish" : "play");
     if (req_.is_ready_ && !req_.publish_flag_) {
         if (play_writer_) {
             media_stream_manager::remove_player(play_writer_);

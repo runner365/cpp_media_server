@@ -4,7 +4,20 @@
 
 推荐gcc 8.4以上
 
-## 0.2 How to build
+## 0.2 安装c++11
+### 0.2.1 centos安装c++11
+```markup
+yum install centos-release-scl -y
+yum install devtoolset-8-gcc* -y
+source /opt/rh/devtoolset-8/enable
+```
+
+### 0.2.2 ubuntu安装c++11
+```markup
+apt-get install -y gcc-8 g++-8
+```
+
+## 0.3 How to build
 如何在Mac/linux内编译
 ```markup
 ./bootstrap.sh

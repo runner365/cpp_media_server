@@ -8,12 +8,12 @@
     "log_dir":"server.log",
     "log_level": "info",
     "rtmp":{
-        "enable": "yes",
+        "enable": true,
         "listen":1935,
         "gop_cache":"enable"
     },
     "websocket":{
-        "enable": "yes",
+        "enable": true,
         "listen": 12000
     }
 }
@@ -28,14 +28,14 @@ websocket flv模块，通过配置“websocket”的json模块。
 ### 7.2.1 使能websocket flv
 ```markup
 "websocket":{
-    "enable": "yes"
+    "enable": true
     ......
 }
 ```
 ### 7.2.2 配置websocket port
 ```markup
 "websocket":{
-    "enable": "yes",
+    "enable": true,
     "listen":12000
 }
 ```

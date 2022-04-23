@@ -181,7 +181,7 @@ public:
         if (str.length() > 0xffff) {
             uint32_t str_len = str.length();
             size_t amf_len   = 4 + str_len;
-            uint8_t* data    = new uint8_t[amf_len];
+            uint8_t* data    = new uint8_t[2*amf_len];
             uint8_t* p       = data;
 
             if (!skip_marker) {
@@ -198,7 +198,7 @@ public:
         } else {
             uint16_t str_len = str.length();
             size_t amf_len   = 2 + str_len;
-            uint8_t* data    = new uint8_t[amf_len];
+            uint8_t* data    = new uint8_t[2*amf_len];
             uint8_t* p       = data;
 
             if (!skip_marker) {

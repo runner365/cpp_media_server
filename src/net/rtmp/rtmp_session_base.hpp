@@ -65,7 +65,7 @@ public:
     RTMP_SERVER_SESSION_PHASE server_phase_ = initial_phase;
     RTMP_CLIENT_SESSION_PHASE client_phase_ = client_initial_phase;
 
-private:
+protected:
     uint32_t chunk_size_ = CHUNK_DEF_SIZE;
 };
 

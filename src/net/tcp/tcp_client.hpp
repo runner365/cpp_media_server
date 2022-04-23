@@ -91,6 +91,9 @@ public:
     void async_read() {
         socket_.async_read_some(boost::asio::buffer(buffer_, buffer_size_),
             [this](boost::system::error_code ec, size_t read_length) {
+                if (!is_connect_) {
+                    return;
+                }
                 if (!ec) {
                     this->callback_->on_read(0, this->buffer_, read_length);
                     return;
@@ -100,10 +103,10 @@ public:
     }
 
     void close() {
+        is_connect_ = false;
         if (socket_.is_open()) {
             socket_.close();
         }
-        is_connect_ = false;
     }
 
     bool is_connect() {
@@ -124,6 +127,9 @@ private:
         head_ptr->sent_flag_ = true;
         boost::asio::async_write(socket_, boost::asio::buffer(head_ptr->data(), head_ptr->data_len()),
             [this](boost::system::error_code ec, size_t written_size) {
+                if (!is_connect_) {
+                    return;
+                }
                 if (!ec && this->callback_ && (written_size > 0)) {
                     if (!this->send_buffer_queue_.empty()) {
                         this->send_buffer_queue_.pop();

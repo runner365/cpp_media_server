@@ -6,12 +6,12 @@
     "log_dir":"server.log",
     "log_level": "info",
     "rtmp":{
-        "enable": "yes",
+        "enable": true,
         "listen":1935,
         "gop_cache":"enable"
     },
     "webrtc":{
-        "enable": "yes",
+        "enable": true,
         "listen": 8000,
         "tls_key": "certs/server.key",
         "tls_cert": "certs/server.crt",
@@ -28,7 +28,7 @@
 ```markup
 "webrtc":{
     ......
-    "rtc2rtmp": "yes"
+    "rtc2rtmp": true
 }
 ```
 

@@ -14,6 +14,8 @@ class rtmp_request;
 
 typedef std::unordered_map<std::string, av_writer_base*> WRITER_MAP;
 
+typedef void (*PLAY_CALLBACK)(const std::string& key);
+
 class media_stream
 {
 public:
@@ -44,6 +46,9 @@ public:
     static void set_hls_writer(av_writer_base* writer);
     static void set_rtc_writer(av_writer_base* writer);
 
+    static void set_play_callback(PLAY_CALLBACK cb);
+    static PLAY_CALLBACK get_play_callback();
+
 public:
     static int writer_media_packet(MEDIA_PACKET_PTR pkt_ptr);
 
@@ -62,6 +67,9 @@ private:
 private:
     static av_writer_base* hls_writer_;
     static av_writer_base* r2r_writer_;//rtmp to webrtc
+
+private:
+    static PLAY_CALLBACK play_cb_;
 };
 
 #endif //RTMP_MEDIA_STREAM_HPP

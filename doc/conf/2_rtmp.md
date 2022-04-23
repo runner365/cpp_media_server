@@ -6,7 +6,7 @@
     "log_dir":"server.log",
     "log_level": "info",
     "rtmp":{
-        "enable": "yes",
+        "enable": true,
         "listen":1935,
         "gop_cache":"enable"
     }
@@ -22,14 +22,14 @@ rtmp模块，通过配置“rtmp”的json模块。
 ### 2.2.1 使能rtmp
 ```markup
 "rtmp":{
-    "enable": "yes"
+    "enable": true
     ......
 }
 ```
 ### 2.2.2 rtmp端口号
 ```markup
 "rtmp":{
-    "enable": "yes",
+    "enable": true,
     "listen":1935
     ......
 }
@@ -38,7 +38,7 @@ rtmp模块，通过配置“rtmp”的json模块。
 ### 2.2.3 gop cache配置
 ```markup
 "rtmp":{
-    "enable": "yes",
+    "enable": true,
     "listen":1935,
     "gop_cache":"enable"
 }

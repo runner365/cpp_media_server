@@ -183,7 +183,6 @@ int rtmp_session_base::read_chunk_stream(CHUNK_STREAM_PTR& cs_ptr) {
     if (!fmt_ready_) {
         ret = read_fmt_csid();
         if (ret != 0) {
-            log_errorf("read_fmt_csid return:%d", ret);
             return ret;
         }
         fmt_ready_ = true;

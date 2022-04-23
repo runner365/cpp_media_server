@@ -9,6 +9,8 @@ std::vector<stream_manager_callbackI*> media_stream_manager::cb_vec_;
 av_writer_base* media_stream_manager::hls_writer_ = nullptr;
 av_writer_base* media_stream_manager::r2r_writer_ = nullptr;
 
+PLAY_CALLBACK media_stream_manager::play_cb_ = nullptr;
+
 bool media_stream_manager::get_app_streamname(const std::string& stream_key, std::string& app, std::string& streamname) {
     size_t pos = stream_key.find("/");
     if (pos == stream_key.npos) {
@@ -30,7 +32,12 @@ int media_stream_manager::add_player(av_writer_base* writer_p) {
 
         new_stream_ptr->writer_map_.insert(std::make_pair(writerid, writer_p));
         media_stream_manager::media_streams_map_.insert(std::make_pair(key_str, new_stream_ptr));
-        log_infof("add player request:%s in new writer list", key_str.c_str());
+
+        log_infof("add player request:%s(%s) in new writer list", key_str.c_str(), writerid.c_str());
+        
+        if (play_cb_) {
+            play_cb_(key_str);
+        }
         return 1;
     }
 
@@ -53,7 +60,11 @@ void media_stream_manager::remove_player(av_writer_base* writer_p) {
 
     auto writer_iter = map_iter->second->writer_map_.find(writerid);
     if (writer_iter != map_iter->second->writer_map_.end()) {
+        log_infof("remove player key:%s, erase writeid:%s", key_str.c_str(), writerid.c_str());
         map_iter->second->writer_map_.erase(writer_iter);
+    } else {
+        log_infof("remove player key:%s, fail to find writeid:%s, writer map size:%lu",
+                key_str.c_str(), writerid.c_str(), map_iter->second->writer_map_.size());
     }
     
     if (map_iter->second->writer_map_.empty() && !map_iter->second->publisher_exist_) {
@@ -123,8 +134,17 @@ void media_stream_manager::set_rtc_writer(av_writer_base* writer) {
     r2r_writer_ = writer;
 }
 
+PLAY_CALLBACK media_stream_manager::get_play_callback() {
+    return play_cb_;
+}
+
+void media_stream_manager::set_play_callback(PLAY_CALLBACK cb) {
+    play_cb_ = cb;
+}
+
 int media_stream_manager::writer_media_packet(MEDIA_PACKET_PTR pkt_ptr) {
     MEDIA_STREAM_PTR stream_ptr = add_publisher(pkt_ptr->key_);
+    int player_cnt = 0;
 
     if (!stream_ptr) {
         log_errorf("fail to get stream key:%s", pkt_ptr->key_.c_str());
@@ -140,6 +160,8 @@ int media_stream_manager::writer_media_packet(MEDIA_PACKET_PTR pkt_ptr) {
             writer->set_init_flag(true);
             if (stream_ptr->cache_.writer_gop(writer) < 0) {
                 remove_list.push_back(writer);
+            } else {
+                player_cnt++;
             }
         } else {
             if (writer->write_packet(pkt_ptr) < 0) {
@@ -148,6 +170,8 @@ int media_stream_manager::writer_media_packet(MEDIA_PACKET_PTR pkt_ptr) {
                 log_warnf("writer send packet error, key:%s, id:%s",
                         key_str.c_str(), writerid.c_str());
                 remove_list.push_back(writer);
+            } else {
+                player_cnt++;
             }
         }
     }
@@ -166,5 +190,5 @@ int media_stream_manager::writer_media_packet(MEDIA_PACKET_PTR pkt_ptr) {
         remove_player(write_p);
     }
 
-    return 0;
+    return player_cnt;
 }

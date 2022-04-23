@@ -1,12 +1,12 @@
-# 7. webrtc statics
-## 7.1 webrtc statics配置
+# 8. webrtc statics
+## 8.1 webrtc statics配置
 实例配置:
 ```markup
 {
     "log_dir":"server.log",
     "log_level":"info",
     "webrtc":{
-        "enable":"yes",
+        "enable":true,
         "listen":8000,
         "tls_key":"certs/server.key",
         "tls_cert":"certs/server.crt",
@@ -14,7 +14,7 @@
         "candidate_ip":"192.168.1.98"
     },
     "httpapi":{
-        "enable":"yes",
+        "enable":true,
         "listen":8090
     }
 }
@@ -22,31 +22,31 @@
 
 如何运行：./objs/cpp_media_server -c ./conf/webrtc.cfg
 
-## 7.2 配置详解
+## 8.2 配置详解
 statics模块，通过配置“httpapi”的json模块。
 
 如果不配置httpapi的json模块，httpapi服务为“去使能”状态。
 
-### 7.2.1 使能httpapi
+### 8.2.1 使能httpapi
 ```markup
 
 "httpapi":{
-    "enable": "yes"
+    "enable": true
     ......
 }
 ```
 
-### 7.2.2 httpapi端口号
+### 8.2.2 httpapi端口号
 ```markup
 "httpapi":{
-    "enable": "yes"
+    "enable": true
     "listen": 8090
 }
 ```
 该端口号8090用于httpapi服务，提供httpapi等查询服务。
 
-## 7.3 查询接口
-### 7.3.1 房间查询
+## 8.3 查询接口
+### 8.3.1 房间查询
 url: http://x.x.x.x:8090/api/webrtc/room
 
 http方法: get
@@ -80,7 +80,7 @@ uri: /api/webrtc/room
 }
 ```
 
-### 7.3.2 webrtc推流查询
+### 8.3.2 webrtc推流查询
 url: http://x.x.x.x:8090/api/webrtc/publisher?roomId=2001&uid=98376
 
 http方法: get
@@ -133,7 +133,7 @@ uri: /api/webrtc/publisher
 }
 ```
 
-### 7.3.3 webrtc拉流查询
+### 8.3.3 webrtc拉流查询
 url: http://x.x.x.x:8090/api/webrtc/subscriber?roomId=2001&uid=98376
 
 http方法: get
