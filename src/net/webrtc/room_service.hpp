@@ -14,6 +14,7 @@
 using json = nlohmann::json;
 
 class rtc_subscriber;
+class http_response;
 
 typedef std::unordered_map<std::string, std::shared_ptr<rtc_subscriber>> SUBSCRIBER_MAP;
 
@@ -60,13 +61,24 @@ public:
     virtual void on_unsubscribe(const std::string& pid, const std::string& sid) override;
     virtual void on_rtmp_callback(const std::string& roomId, const std::string& uid,
                                 const std::string& stream_type, MEDIA_PACKET_PTR pkt_ptr) override;
-
+    virtual void on_update_alive(const std::string& roomId, const std::string& uid, int64_t now_ms) override;
 public:
     bool has_rtc_user(const std::string& uid);
     void rtmp_stream_ingest(MEDIA_PACKET_PTR pkt_ptr);
     void remove_live_user(const std::string& roomid, const std::string& uid);
     std::shared_ptr<user_info> get_rtc_user(const std::string& uid);
     std::shared_ptr<live_user_info> get_live_user(const std::string& uid);
+
+public:
+    void handle_http_join(const std::string& uid);
+    int handle_http_publish(const std::string& uid, const std::string& data, std::string& resp_sdp,
+                        std::string& session_id, std::string& err_msg);
+    int handle_http_unpublish(const std::string& uid, std::string& err_msg);
+    int handle_http_unpublish(const std::string& uid, const std::string& sessionid, std::string& err_msg);
+    int handle_http_subscribe(const std::string& my_uid, const std::string& remote_uid, const std::string& data,
+                        std::string& resp_sdp, std::string& session_id, std::string& err_msg);
+    int handle_http_unsubscribe(const std::string& my_uid, const std::string& remote_uid, std::string& err_msg);
+    int handle_http_unsubscribe(const std::string& my_uid, const std::string& remote_uid, const std::string& sessionid, std::string& err_msg);
 
 private:
     void handle_join(const std::string& id, const std::string& method,

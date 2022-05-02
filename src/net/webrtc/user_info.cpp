@@ -35,6 +35,14 @@ std::string make_cname() {
 user_info::user_info(const std::string& uid, const std::string& roomId, protoo_request_interface* fb):uid_(uid), roomId_(roomId)
 {
     fb_ = fb;
+    user_type_ = "websocket";
+    active_last_ms_ = now_millisec();
+}
+
+user_info::user_info(const std::string& uid, const std::string& roomId):uid_(uid), roomId_(roomId)
+{
+    user_type_ = "whip";
+    active_last_ms_ = now_millisec();
 }
 
 user_info::~user_info() {

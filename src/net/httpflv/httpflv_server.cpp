@@ -44,6 +44,7 @@ httpflv_server::httpflv_server(boost::asio::io_context& io_ctx, uint16_t port):t
 
 httpflv_server::~httpflv_server()
 {
+    stop_timer();
 }
 
 void httpflv_server::httpflv_writer_close(const std::string& id) {

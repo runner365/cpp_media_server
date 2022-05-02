@@ -7,7 +7,7 @@ class httpflv_server : public timer_interface
 {
 public:
     httpflv_server(boost::asio::io_context& io_ctx, uint16_t port);
-    ~httpflv_server();
+    virtual ~httpflv_server();
 
     static void httpflv_writer_close(const std::string& id);
 

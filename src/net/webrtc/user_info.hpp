@@ -20,12 +20,16 @@ class user_info
 {
 public:
     user_info(const std::string& uid, const std::string& roomId, protoo_request_interface* fb);
+    user_info(const std::string& uid, const std::string& roomId);
     ~user_info();
 
 public:
     std::string uid() {return uid_;}
     std::string roomId() {return roomId_;}
+    std::string user_type() {return user_type_;}
     protoo_request_interface* feedback() { return fb_; }
+    int64_t active_last_ms() { return active_last_ms_; }
+    void update_alive(int64_t now_ms) { active_last_ms_ = now_ms; }
 
 public:
     json parse_remote_sdp(const std::string& sdp);
@@ -52,7 +56,9 @@ public:
 private:
     std::string uid_;
     std::string roomId_;
+    std::string user_type_ = "websocket";//1) websocket; 2) whip
     protoo_request_interface* fb_ = nullptr;
+    int64_t active_last_ms_ = 0;
 
 private:
     sdp_analyze remote_sdp_analyze_;

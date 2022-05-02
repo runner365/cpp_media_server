@@ -8,7 +8,7 @@ websocket_session::websocket_session(boost::asio::io_context& io_ctx,
     boost::asio::ip::tcp::socket&& socket,
     websocket_server_callbackI* cb,
     std::string id):server_cb_(cb)
-    , stream_id_(id)
+                , stream_id_(id)
 {
     ws_  = new boost::beast::websocket::stream<boost::beast::tcp_stream>(std::move(socket));
     wss_ = nullptr;
@@ -16,7 +16,7 @@ websocket_session::websocket_session(boost::asio::io_context& io_ctx,
 
 websocket_session::websocket_session(boost::asio::io_context& io_ctx, boost::asio::ip::tcp::socket&& socket, boost::asio::ssl::context& ctx,
             websocket_server_callbackI* cb, std::string id):server_cb_(cb)
-    , stream_id_(id)
+                                                        , stream_id_(id)
 {
     ws_  = nullptr;
     wss_ = new boost::beast::websocket::stream<boost::beast::ssl_stream<boost::beast::tcp_stream>>(std::move(socket), ctx);

@@ -293,7 +293,6 @@ void webrtc_session::send_rtp_data_in_dtls(uint8_t* data, size_t data_len) {
 
 void webrtc_session::send_rtcp_data_in_dtls(uint8_t* data, size_t data_len) {
     if(!write_srtp_) {
-        log_errorf("dtls writer is not ready");
         return;
     }
     bool ret = write_srtp_->encrypt_rtcp(const_cast<uint8_t**>(&data), &data_len);
@@ -596,6 +595,7 @@ void webrtc_session::handle_rtcp_psfb(uint8_t* data, size_t data_len) {
         return;
     }
 
+    int64_t now_ms = now_millisec();
     try {
         rtcp_fb_common_header* header = (rtcp_fb_common_header*)data;
         switch (header->fmt)
@@ -618,7 +618,7 @@ void webrtc_session::handle_rtcp_psfb(uint8_t* data, size_t data_len) {
                             pspli_pkt->get_media_ssrc(), pspli_pkt->get_sender_ssrc());
                     return;
                 }
-
+                subscriber_ptr->update_alive(now_ms);
                 subscriber_ptr->request_keyframe();
                 
                 break;
@@ -659,6 +659,7 @@ void webrtc_session::handle_rtcp_rtpfb(uint8_t* data, size_t data_len) {
     if (data_len <=sizeof(rtcp_fb_common_header)) {
         return;
     }
+    int64_t now_ms = now_millisec();
     try {
         rtcp_fb_common_header* header = (rtcp_fb_common_header*)data;
         switch (header->fmt)
@@ -671,6 +672,7 @@ void webrtc_session::handle_rtcp_rtpfb(uint8_t* data, size_t data_len) {
                 if (!subscriber_ptr) {
                     return;
                 }
+                subscriber_ptr->update_alive(now_ms);
                 subscriber_ptr->handle_fb_rtp_nack(nack_pkt);
                 break;
             }
@@ -712,12 +714,15 @@ void webrtc_session::handle_rtcp_rr(uint8_t* data, size_t data_len) {
     if (data_len <=sizeof(rtcp_common_header)) {
         return;
     }
+    
+    int64_t now_ms = now_millisec();
     try {
         rtcp_rr_packet* rr_pkt = rtcp_rr_packet::parse(data, data_len);
         std::shared_ptr<rtc_subscriber> subscriber_ptr = get_subscriber(rr_pkt->get_reportee_ssrc());
         if (!subscriber_ptr) {
             log_errorf("fail to get subscribe by ssrc:%u for rtcp rr", rr_pkt->get_reportee_ssrc());
         } else {
+            subscriber_ptr->update_alive(now_ms);
             subscriber_ptr->handle_rtcp_rr(rr_pkt);
             //handl rtcp rr;
         }

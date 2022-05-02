@@ -361,7 +361,7 @@ void rtc_dtls::on_timer() {
 
     send_pending_dtls_data();
 
-    start_timer();
+    //start_timer();
 }
 
 void rtc_dtls::handle_dtls_data(const uint8_t* data, size_t data_len) {

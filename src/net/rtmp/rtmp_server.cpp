@@ -11,7 +11,7 @@ rtmp_server::rtmp_server(boost::asio::io_context& io_context, uint16_t port):tim
 }
 
 rtmp_server::~rtmp_server() {
-
+   stop_timer();
 }
 
 void rtmp_server::on_close(std::string session_key) {

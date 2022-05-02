@@ -33,6 +33,8 @@ public:
     void try_read();
     void write(const char* data, size_t len);
     void close();
+    bool is_continue() { return continue_flag_; }
+    boost::asio::ip::tcp::endpoint remote_endpoint() { return remote_endpoint_; }
 
 protected://tcp_session_callbackI
     virtual void on_write(int ret_code, size_t sent_size) override;

@@ -9,7 +9,8 @@ httpflv_writer::httpflv_writer(std::string key, std::string id,
     , has_video_(has_video)
     , has_audio_(has_audio)
 {
-
+    resp_->add_header("Access-Control-Allow-Origin", "*");
+    resp_->add_header("Access-Control-Allow-Headers", "*");
 }
 
 httpflv_writer::~httpflv_writer()

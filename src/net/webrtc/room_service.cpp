@@ -1,5 +1,6 @@
 #include "room_service.hpp"
 #include "rtc_subscriber.hpp"
+#include "net/http/http_common.hpp"
 #include "utils/logger.hpp"
 #include "utils/av/media_stream_manager.hpp"
 #include "json.hpp"
@@ -70,6 +71,113 @@ bool room_has_rtc_uid(const std::string& roomId, const std::string& uid) {
     }
 
     return room_ptr->has_rtc_user(uid);
+}
+
+int whip_publisher(const std::string& roomId, const std::string& uid, const std::string& sdp,
+                std::string& resp_sdp, std::string& session_id, std::string& err_msg) {
+    std::shared_ptr<room_service> room_ptr = GetorCreate_room_service(roomId);
+    if (!room_ptr) {
+        err_msg = "get or create roomid ";
+        err_msg += roomId;
+        err_msg += " error";
+        log_errorf("%s", err_msg.c_str());
+        return -1;
+    }
+
+    return room_ptr->handle_http_publish(uid, sdp, resp_sdp, session_id, err_msg);
+}
+
+int whip_unpublisher(const std::string& roomId, const std::string& uid, std::string& err_msg) {
+    auto iter = s_rooms.find(roomId);
+    if (iter == s_rooms.end()) {
+        err_msg = "get room error by roomid ";
+        err_msg += roomId;
+        return -1;
+    }
+
+    std::shared_ptr<room_service> room_ptr = iter->second;
+    if (!room_ptr) {
+        std::string err_msg = "get room error by roomid ";
+        err_msg += roomId;
+        return -1;
+    }
+
+    return room_ptr->handle_http_unpublish(uid, err_msg);
+}
+
+int whip_unpublisher(const std::string& roomId, const std::string& uid, const std::string& sessionid, std::string& err_msg) {
+    auto iter = s_rooms.find(roomId);
+    if (iter == s_rooms.end()) {
+        err_msg = "get room error by roomid ";
+        err_msg += roomId;
+        return -1;
+    }
+
+    std::shared_ptr<room_service> room_ptr = iter->second;
+    if (!room_ptr) {
+        std::string err_msg = "get room error by roomid ";
+        err_msg += roomId;
+        return -1;
+    }
+
+    return room_ptr->handle_http_unpublish(uid, sessionid, err_msg);
+}
+
+int whip_subscriber(const std::string& roomId, const std::string& uid, const std::string& remote_uid,
+            const std::string& data, std::string& resp_sdp, std::string& session_id, std::string& err_msg) {
+    auto iter = s_rooms.find(roomId);
+    if (iter == s_rooms.end()) {
+        err_msg = "get room error by roomid ";
+        err_msg += roomId;
+        return -1;
+    }
+
+    std::shared_ptr<room_service> room_ptr = iter->second;
+    if (!room_ptr) {
+        std::string err_msg = "get room error by roomid ";
+        err_msg += roomId;
+        return -1;
+    }
+
+    return room_ptr->handle_http_subscribe(uid, remote_uid, data, resp_sdp, session_id, err_msg);
+}
+
+int whip_unsubscriber(const std::string& roomId, const std::string& uid, const std::string& remote_uid,
+                    std::string& err_msg) {
+    auto iter = s_rooms.find(roomId);
+    if (iter == s_rooms.end()) {
+        err_msg = "get room error by roomid ";
+        err_msg += roomId;
+        return -1;
+    }
+
+    std::shared_ptr<room_service> room_ptr = iter->second;
+    if (!room_ptr) {
+        err_msg = "get room error by roomid ";
+        err_msg += roomId;
+        return -1;
+    }
+    
+    return room_ptr->handle_http_unsubscribe(uid, remote_uid, err_msg);
+}
+
+int whip_unsubscriber(const std::string& roomId, const std::string& uid, const std::string& remote_uid,
+                    const std::string& sessionid, std::string& err_msg) {
+    auto iter = s_rooms.find(roomId);
+    if (iter == s_rooms.end()) {
+        err_msg = "get room error by roomid ";
+        err_msg += roomId;
+        return -1;
+    }
+
+    std::shared_ptr<room_service> room_ptr = iter->second;
+    if (!room_ptr) {
+        err_msg = "get room error by roomid ";
+        err_msg += roomId;
+        return -1;
+    }
+    
+    return room_ptr->handle_http_unsubscribe(uid, remote_uid, sessionid, err_msg);
 }
 
 int get_room_statics(json& data_json) {
@@ -217,6 +325,7 @@ room_service::room_service(const std::string& roomId):timer_interface(get_global
 }
 
 room_service::~room_service() {
+    stop_timer();
     users_.clear();
     live_users_.clear();
     pid2subscribers_.clear();
@@ -236,6 +345,20 @@ void room_service::on_timer() {
             continue;
         }
         iter++;
+    }
+
+    for(auto user_iter = users_.begin();
+        user_iter != users_.end();) {
+        int64_t diff_t = now_ms - user_iter->second->active_last_ms();
+        if (diff_t > 20*1000) {
+            log_infof("rtc user(%s) type(%s) is timeout:%ld, now_ms:%ld",
+                    user_iter->second->uid().c_str(),
+                    user_iter->second->user_type().c_str(), diff_t, now_ms);
+            notify_userout_to_others(user_iter->second->uid());
+            user_iter = users_.erase(user_iter);
+            continue;
+        }
+        user_iter++;
     }
 }
 
@@ -515,6 +638,15 @@ void room_service::on_unsubscribe(const std::string& pid, const std::string& sid
         sid.c_str(), pid.c_str());
 }
 
+void room_service::on_update_alive(const std::string& roomId, const std::string& uid, int64_t now_ms) {
+    auto user_iter = users_.find(uid);
+    if (user_iter != users_.end()) {
+        user_iter->second->update_alive(now_ms);
+        return;
+    }
+    return;
+}
+
 void room_service::on_request_keyframe(const std::string& pid, const std::string& sid, uint32_t media_ssrc) {
     log_infof("request keyframe publisherid:%s, subscriberid:%s, media ssrc:%u", pid.c_str(), sid.c_str(), media_ssrc);
 
@@ -692,9 +824,11 @@ void room_service::handle_unpublish(const std::string& id, const std::string& me
 
     auto pc_id_json = data_json.find("pcid");
     if (pc_id_json == data_json.end()) {
+        feedback_p->reject(id, UID_ERROR, "peer connection id can't be found");
         return;
     }
     if (!pc_id_json->is_string()) {
+        feedback_p->reject(id, UID_ERROR, "peer connection id is not string");
         return;
     }
 
@@ -1032,14 +1166,14 @@ void room_service::handle_webrtc_subscribe(const std::string& id, const json& da
     std::string remote_uid = data_json["remoteUid"];
     remote_user_ptr = get_user_info(remote_uid);
     if (!remote_user_ptr) {
-        feedback_p->reject(id, UID_ERROR, "publisher uid doesn't exist");
+        feedback_p->reject(id, UID_ERROR, "subscribe uid doesn't exist");
         return;
     }
 
     std::string remote_pcid = data_json["remotePcId"];
     auto remote_session_iter = remote_user_ptr->publish_sessions_.find(remote_pcid);
     if (remote_session_iter == remote_user_ptr->publish_sessions_.end()) {
-        feedback_p->reject(id, UID_ERROR, "publisher pcid doesn't exist");
+        feedback_p->reject(id, UID_ERROR, "subscribe pcid doesn't exist");
         return;
     }
     std::shared_ptr<webrtc_session> remote_session_ptr = remote_session_iter->second;
@@ -1161,9 +1295,8 @@ void room_service::handle_webrtc_subscribe(const std::string& id, const json& da
     std::string resp_data = resp_json.dump();
     //log_infof("subscirbe response data:%s", resp_data.c_str());
     feedback_p->accept(id, resp_data);
-
-
 }
+
 std::shared_ptr<live_user_info> room_service::live_user_join(const std::string& roomId, const std::string& uid) {
     std::shared_ptr<live_user_info> user_ptr;
 
@@ -1177,6 +1310,406 @@ std::shared_ptr<live_user_info> room_service::live_user_join(const std::string& 
     notify_userin_to_others(uid, "live");
 
     return user_ptr;
+}
+
+int room_service::handle_http_publish(const std::string& uid, const std::string& data,
+                        std::string& resp_sdp, std::string& session_id, std::string& err_msg) {
+    std::string sdp = data;
+    std::shared_ptr<user_info> user_ptr;
+
+    err_msg = "ok";
+
+    handle_http_join(uid);
+    user_ptr = get_user_info(uid);
+
+    json info_json = user_ptr->parse_remote_sdp(sdp);
+    //log_infof("publish sdp json:%s", info_json.dump().c_str());
+
+    rtc_media_info& info = user_ptr->parse_remote_media_info(info_json);
+    //log_infof("http publish get input sdp dump:\r\n%s", info.dump().c_str());
+    rtc_media_info support_info;
+
+    user_ptr->get_support_media_info(info, support_info);
+    //log_infof("http publish support info sdp dump:\r\n%s", support_info.dump().c_str());
+
+    std::shared_ptr<webrtc_session> session_ptr = std::make_shared<webrtc_session>(roomId_, uid,
+                                                    this, RTC_DIRECTION_RECV, support_info);
+    session_ptr->set_remote_finger_print(info.finger_print);
+    for (auto media_item : support_info.medias) {
+        if (media_item.rtp_encodings.empty()) {
+            std::stringstream ss;
+            ss << "publish media rtp encodings is empty, mid:" << media_item.mid
+               << ", media type:" << media_item.media_type << ", protocal:" << media_item.protocol;
+            err_msg = ss.str();
+            log_errorf("%s", ss.str().c_str());
+            return -1;
+        }
+        session_ptr->create_publisher(media_item);
+    }
+
+    support_info.ice.ice_pwd = session_ptr->get_user_pwd();
+    support_info.ice.ice_ufrag = session_ptr->get_username_fragment();
+
+    support_info.finger_print.type = info.finger_print.type;
+    finger_print_info fingerprint = session_ptr->get_local_finger_print(info.finger_print.type);
+    support_info.finger_print.hash = fingerprint.value;
+
+    CANDIDATE_INFO candidate_data = {
+        .foundation = "0",
+        .component  = 1,
+        .transport  = "udp",
+        .priority   = 2113667327,
+        .ip         = session_ptr->get_candidates_ip(),
+        .port       = session_ptr->get_candidates_port(),
+        .type       = "host"
+    };
+
+    support_info.candidates.push_back(candidate_data);
+
+    /********* suppot publish rtc information is ready ************/
+    resp_sdp = user_ptr->rtc_media_info_2_sdp(support_info);
+
+    user_ptr->publish_sessions_[session_ptr->get_id()] = session_ptr;
+    session_id = session_ptr->get_id();
+    log_infof("http publish response sdp:\r\n%s", resp_sdp.c_str());
+    log_infof("http publish response sessionid:\r\n%s", session_id.c_str());
+
+    //notify new publish infomation to other users
+    std::vector<publisher_info> publishers_vec = session_ptr->get_publishs_information();
+    notify_publisher_to_others(uid, "whip", session_ptr->get_id(), publishers_vec);
+
+    return 0;
+}
+
+int room_service::handle_http_unpublish(const std::string& uid, const std::string& sessionid, std::string& err_msg) {
+    std::shared_ptr<user_info> user_ptr;
+    err_msg = "ok";
+
+    user_ptr = get_user_info(uid);
+    if (!user_ptr) {
+        err_msg = "uid doesn't exist";
+        return -1;
+    }
+
+    auto session_iter = user_ptr->publish_sessions_.find(sessionid);
+    if (session_iter == user_ptr->publish_sessions_.end()) {
+        err_msg = "peer connection id doesn't exist";
+        return -1;
+    }
+    auto unpublish_vec = session_iter->second->get_publishs_information();
+    user_ptr->publish_sessions_.erase(session_iter);
+
+    for(auto unpublish_item : unpublish_vec) {
+        auto erase_iter = pid2subscribers_.find(unpublish_item.pid);
+        if (erase_iter != pid2subscribers_.end()) {
+            log_infof("unpublish remove publishid:%s, subscriber size:%lu",
+                unpublish_item.pid.c_str(), erase_iter->second.size());
+            pid2subscribers_.erase(erase_iter);
+        }
+    }
+
+    //notify unpublish to others
+    notify_unpublisher_to_others(uid, unpublish_vec);
+
+    return 0;
+}
+
+int room_service::handle_http_unpublish(const std::string& uid, std::string& err_msg) {
+    std::shared_ptr<user_info> user_ptr;
+    err_msg = "ok";
+
+    user_ptr = get_user_info(uid);
+    if (!user_ptr) {
+        err_msg = "uid doesn't exist";
+        return -1;
+    }
+
+    auto session_iter = user_ptr->publish_sessions_.begin();
+    if (session_iter == user_ptr->publish_sessions_.end()) {
+        err_msg = "peer connection id doesn't exist";
+        return -1;
+    }
+    auto unpublish_vec = session_iter->second->get_publishs_information();
+    user_ptr->publish_sessions_.erase(session_iter);
+
+    for(auto unpublish_item : unpublish_vec) {
+        auto erase_iter = pid2subscribers_.find(unpublish_item.pid);
+        if (erase_iter != pid2subscribers_.end()) {
+            log_infof("unpublish remove publishid:%s, subscriber size:%lu",
+                unpublish_item.pid.c_str(), erase_iter->second.size());
+            pid2subscribers_.erase(erase_iter);
+        }
+    }
+
+    //notify unpublish to others
+    notify_unpublisher_to_others(uid, unpublish_vec);
+
+    return 0;
+}
+
+int room_service::handle_http_subscribe(const std::string& uid, const std::string& remote_uid, const std::string& data,
+                        std::string& resp_sdp, std::string& session_id, std::string& err_msg) {
+    std::shared_ptr<user_info> user_ptr;
+    std::shared_ptr<user_info> remote_user_ptr;
+
+    err_msg = "ok";
+
+    handle_http_join(uid);
+
+    user_ptr = get_user_info(uid);
+    if (!user_ptr) {
+        err_msg = "subscribe uid doesn't exist";
+        return -1;
+    }
+
+    remote_user_ptr = get_user_info(remote_uid);
+    if (!remote_user_ptr) {
+        err_msg = "subscriber uid doesn't exist";
+        return -1;
+    }
+    if (remote_user_ptr->publish_sessions_.empty()) {
+        err_msg = "subscriber pcid doesn't exist";
+        return -1;
+    }
+
+    auto remote_session_iter = remote_user_ptr->publish_sessions_.begin();
+    std::shared_ptr<webrtc_session> remote_session_ptr = remote_session_iter->second;
+    std::vector<publisher_info> publishers = remote_session_ptr->get_publishs_information();
+
+    std::string sdp = data;
+
+    json info_json = user_ptr->parse_remote_sdp(sdp);
+    //log_infof("http subscribe sdp json:%s", info_json.dump().c_str());
+
+    rtc_media_info& info = user_ptr->parse_remote_media_info(info_json);
+    //log_infof("http subscribe input media info:\r\n%s", info.dump().c_str());
+
+    rtc_media_info support_info;
+    user_ptr->get_support_media_info(info, support_info);
+
+    /******************* add ssrc info from publisher *************************/
+    for (auto& media : support_info.medias) {
+        std::string pid;
+        for (auto info : publishers) {
+            if (info.media_type == media.media_type) {
+                auto publisher_ptr =  remote_session_ptr->get_publisher(info.mid);
+                if (!publisher_ptr) {
+                    log_errorf("fail to get publisher by mid:%d", info.mid);
+                    err_msg = "fail to get publisher by mid";
+                    return -1;
+                }
+                std::stringstream ss_debug;
+                media.ssrc_infos    = publisher_ptr->get_media_info().ssrc_infos;
+                ss_debug << "ssrc infos:" << "\r\n";
+                for (auto ssrc_info_item : media.ssrc_infos) {
+                    ss_debug << "attribute:" << ssrc_info_item.attribute
+                    << ", value:" << ssrc_info_item.value
+                    << ", ssrc:" << ssrc_info_item.ssrc
+                    << "\r\n";
+                }
+
+                media.ssrc_groups   = publisher_ptr->get_media_info().ssrc_groups;
+                for (auto ssrc_group_item : media.ssrc_groups) {
+                    ss_debug << "semantics:" << ssrc_group_item.semantics << " ";
+                    ss_debug << "ssrcs: ";
+                    for (auto ssrc : ssrc_group_item.ssrcs) {
+                        ss_debug << ssrc << " ";
+                    }
+                    ss_debug << "\r\n";
+                }
+                media.msid          = publisher_ptr->get_media_info().msid;
+                media.publisher_id  = publisher_ptr->get_publisher_id();
+                media.src_mid       = info.mid;
+                ss_debug << "msid: " << media.msid << "\r\n";
+                ss_debug << "publisher id: " << media.publisher_id << "\r\n";
+                ss_debug << "src mid: " << media.src_mid << "\r\n";
+                
+                //log_infof("http subscribe media type:%s, debug info:%s", info.media_type.c_str(), ss_debug.str().c_str());
+                break;
+            }
+        }
+    }
+
+    std::shared_ptr<webrtc_session> session_ptr;
+    /********************** create subscribe session **************************/
+    session_ptr = std::make_shared<webrtc_session>(roomId_, uid, this,
+                                            RTC_DIRECTION_SEND, support_info);
+    session_ptr->set_remote_finger_print(info.finger_print);
+    user_ptr->subscribe_sessions_[session_ptr->get_id()] = session_ptr;
+    //log_infof("http subscribe session id:%s", session_ptr->get_id().c_str());
+
+    /***************** create subscribers for the publisher *******************/
+    for (auto media_item : support_info.medias) {
+        auto subscirber_ptr = session_ptr->create_subscriber(remote_uid, media_item, media_item.publisher_id, this);
+        subscirber_ptr->set_stream_type(RTC_STREAM_TYPE);
+        insert_subscriber(media_item.publisher_id, subscirber_ptr);
+    }
+
+    /********************** add ice and finger print **************************/
+    support_info.ice.ice_pwd = session_ptr->get_user_pwd();
+    support_info.ice.ice_ufrag = session_ptr->get_username_fragment();
+
+    support_info.finger_print.type = info.finger_print.type;
+    finger_print_info fingerprint = session_ptr->get_local_finger_print(info.finger_print.type);
+    support_info.finger_print.hash = fingerprint.value;
+
+    CANDIDATE_INFO candidate_data = {
+        .foundation = "0",
+        .component  = 1,
+        .transport  = "udp",
+        .priority   = 2113667327,
+        .ip         = session_ptr->get_candidates_ip(),
+        .port       = session_ptr->get_candidates_port(),
+        .type       = "host"
+    };
+
+    support_info.candidates.push_back(candidate_data);
+    //log_infof("http subscribe support media info:\r\n%s", support_info.dump().c_str());
+
+    resp_sdp = user_ptr->rtc_media_info_2_sdp(support_info);
+    session_id = session_ptr->get_id();
+    
+    log_infof("subscribe sdp:%s", resp_sdp.c_str());
+    
+    return 0;
+}
+
+int room_service::handle_http_unsubscribe(const std::string& uid, const std::string& remote_uid,
+                                    const std::string& sessionid, std::string& err_msg) {
+    std::shared_ptr<user_info> user_ptr;
+    std::shared_ptr<user_info> remote_user_ptr;
+
+    user_ptr = get_user_info(uid);
+    if (!user_ptr) {
+        err_msg = "subscribe uid doesn't exist";
+        return -1;
+    }
+
+    //remove pcid frome user_info's publisher_sessions: key<remote_pcid>, value<webrtc_session>
+    if (user_ptr->subscribe_sessions_.empty()) {
+        log_infof("unsubscribe fail to get remote publishers");
+        err_msg = "unsubscribe doesn't exist";
+        return -1;
+    }
+    auto subscriber_session_iter = user_ptr->subscribe_sessions_.find(sessionid);
+    if (subscriber_session_iter == user_ptr->subscribe_sessions_.end()) {
+        log_infof("http unsubscribe fail to find sessionid:%s", sessionid.c_str());
+        err_msg = "unsubscribe fail to find sessionid";
+        return -1;
+    }
+
+    user_ptr->subscribe_sessions_.erase(subscriber_session_iter);
+    log_infof("unsubscribe remote uid:%s", uid.c_str());
+
+    remote_user_ptr = get_user_info(remote_uid);
+    if (!remote_user_ptr) {
+        err_msg = "subscriber uid doesn't exist";
+        return -1;
+    }
+    if (remote_user_ptr->publish_sessions_.empty()) {
+        err_msg = "subscriber pcid doesn't exist";
+        return -1;
+    }
+
+    auto remote_session_iter = remote_user_ptr->publish_sessions_.begin();
+    std::shared_ptr<webrtc_session> remote_session_ptr = remote_session_iter->second;
+    std::vector<publisher_info> publishers = remote_session_ptr->get_publishs_information();
+
+    for (auto info : publishers) {
+        //pid2subscribers_;//key: publisher_id, value: rtc_subscriber
+        auto iter = pid2subscribers_.find(info.pid);
+        if (iter == pid2subscribers_.end()) {
+            continue;
+        }
+        log_infof("remove publisher id:%s, subscribers size:%lu",
+            info.pid.c_str(), iter->second.size());
+        iter->second.clear();
+        pid2subscribers_.erase(iter);
+    }
+
+    return 0;
+}
+
+int room_service::handle_http_unsubscribe(const std::string& uid, const std::string& remote_uid,
+                                        std::string& err_msg) {
+    std::shared_ptr<user_info> user_ptr;
+    std::shared_ptr<user_info> remote_user_ptr;
+
+    user_ptr = get_user_info(uid);
+    if (!user_ptr) {
+        err_msg = "subscribe uid doesn't exist";
+        return -1;
+    }
+
+    //remove pcid frome user_info's publisher_sessions: key<remote_pcid>, value<webrtc_session>
+    if (user_ptr->subscribe_sessions_.empty()) {
+        log_infof("unsubscribe fail to get remote publishers");
+        err_msg = "unsubscribe doesn't exist";
+        return -1;
+    }
+    auto subscriber_session_iter = user_ptr->subscribe_sessions_.begin();
+
+    user_ptr->subscribe_sessions_.erase(subscriber_session_iter);
+    log_infof("unsubscribe remote uid:%s", uid.c_str());
+
+    remote_user_ptr = get_user_info(remote_uid);
+    if (!remote_user_ptr) {
+        err_msg = "subscriber uid doesn't exist";
+        return -1;
+    }
+    if (remote_user_ptr->publish_sessions_.empty()) {
+        err_msg = "subscriber pcid doesn't exist";
+        return -1;
+    }
+
+    auto remote_session_iter = remote_user_ptr->publish_sessions_.begin();
+    std::shared_ptr<webrtc_session> remote_session_ptr = remote_session_iter->second;
+    std::vector<publisher_info> publishers = remote_session_ptr->get_publishs_information();
+
+    for (auto info : publishers) {
+        //pid2subscribers_;//key: publisher_id, value: rtc_subscriber
+        auto iter = pid2subscribers_.find(info.pid);
+        if (iter == pid2subscribers_.end()) {
+            continue;
+        }
+        log_infof("remove publisher id:%s, subscribers size:%lu",
+            info.pid.c_str(), iter->second.size());
+        iter->second.clear();
+        pid2subscribers_.erase(iter);
+    }
+
+    return 0;
+}
+
+void room_service::handle_http_join(const std::string& uid) {
+    std::shared_ptr<user_info> user_ptr = get_user_info(uid);
+    if (user_ptr.get() != nullptr) {
+        return;
+    }
+
+    user_ptr = std::make_shared<user_info>(uid, roomId_);
+    users_.insert(std::make_pair(uid, user_ptr));
+
+    log_infof("http user join uid:%s, roomId:%s", uid.c_str(), roomId_.c_str());
+
+    auto resp_json = json::object();
+    resp_json["users"] = json::array();
+
+    for (auto& user_item : users_) {
+        auto user_json = json::object();
+        user_json["uid"] = user_item.first;
+        resp_json["users"].emplace_back(user_json);
+    }
+
+    for (auto& user_item : live_users_) {
+        auto user_json = json::object();
+        user_json["uid"] = user_item.first;
+        resp_json["users"].emplace_back(user_json);
+    }
+
+    notify_userin_to_others(uid, "whip");
+
+    return;
 }
 
 void room_service::handle_join(const std::string& id, const std::string& method, const std::string& data,
@@ -1250,11 +1783,16 @@ void room_service::notify_userin_to_others(const std::string& uid, const std::st
             continue;
         }
         std::shared_ptr<user_info> other_user = iter.second;
+        if (other_user->user_type() != "websocket") {
+            continue;
+        }
         auto resp_json = json::object();
         resp_json["uid"] = uid;
         resp_json["user_type"] = user_type;
         log_infof("send newuser message: %s", resp_json.dump().c_str());
-        other_user->feedback()->notification("userin", resp_json.dump());
+        if (other_user->feedback()) {
+            other_user->feedback()->notification("userin", resp_json.dump());
+        }
     }
 }
 
@@ -1264,10 +1802,16 @@ void room_service::notify_userout_to_others(const std::string& uid) {
             continue;
         }
         std::shared_ptr<user_info> other_user = iter.second;
+        if (other_user->user_type() != "websocket") {
+            continue;
+        }
         auto resp_json = json::object();
         resp_json["uid"] = uid;
         log_infof("send userout message: %s", resp_json.dump().c_str());
-        other_user->feedback()->notification("userout", resp_json.dump());
+        if (other_user->feedback()) {
+            other_user->feedback()->notification("userout", resp_json.dump());
+        }
+        
     }
 }
 
@@ -1358,6 +1902,9 @@ void room_service::notify_publisher_to_others(const std::string& uid, const std:
             continue;
         }
         std::shared_ptr<user_info> other_user = iter.second;
+        if (other_user->user_type() != "websocket") {
+            continue;
+        }
         auto resp_json       = json::object();
         auto publisher_array = json::array();
 
@@ -1376,7 +1923,9 @@ void room_service::notify_publisher_to_others(const std::string& uid, const std:
         resp_json["pcid"]       = pc_id;
 
         log_infof("send publish message: %s", resp_json.dump().c_str());
-        other_user->feedback()->notification("publish", resp_json.dump());
+        if (other_user->feedback()) {
+            other_user->feedback()->notification("publish", resp_json.dump());
+        }
     }
 }
 
@@ -1386,6 +1935,9 @@ void room_service::notify_unpublisher_to_others(const std::string& uid, const st
             continue;
         }
         std::shared_ptr<user_info> other_user = iter.second;
+        if (other_user->user_type() != "websocket") {
+            continue;
+        }
         auto resp_json       = json::object();
         auto publisher_array = json::array();
 
@@ -1402,7 +1954,9 @@ void room_service::notify_unpublisher_to_others(const std::string& uid, const st
         resp_json["uid"]       = uid;
 
         log_infof("send unpublish message: %s", resp_json.dump().c_str());
-        other_user->feedback()->notification("unpublish", resp_json.dump());
+        if (other_user->feedback()) {
+            other_user->feedback()->notification("unpublish", resp_json.dump());
+        }
     }
 }
 

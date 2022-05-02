@@ -12,6 +12,7 @@ rtmp_relay_manager::rtmp_relay_manager(boost::asio::io_context& io_context):time
 
 rtmp_relay_manager::~rtmp_relay_manager()
 {
+    stop_timer();
 }
 
 int rtmp_relay_manager::add_new_relay(const std::string& host, const std::string& key) {

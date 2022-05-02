@@ -156,6 +156,10 @@ void rtc_subscriber::request_keyframe() {
     room_cb_->on_request_keyframe(pid_, sid_, rtp_ssrc_);
 }
 
+void rtc_subscriber::update_alive(int64_t now_ms) {
+    room_cb_->on_update_alive(roomId_, uid_, now_ms);
+}
+
 void rtc_subscriber::set_remb_bitrate(int64_t bitrate) {
     remb_bitrate_ = bitrate;
 }

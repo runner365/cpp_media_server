@@ -127,7 +127,6 @@ public:
 
     void close() {
         if (socket_.is_open()) {
-            log_infof("tcp close...");
             socket_.close();
         }
         callback_ = nullptr;

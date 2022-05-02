@@ -214,6 +214,7 @@ void rtc_publisher::on_handle_rtppacket(rtp_packet* pkt) {
         jb_handler_.input_rtp_packet(roomId_, uid_, media_type_str_, stream_type_, clock_rate_, pkt);
     }
     
+    room_->on_update_alive(roomId_, uid_, pkt->get_local_ms());
     room_->on_rtppacket_publisher2room(this, pkt);
 }
 

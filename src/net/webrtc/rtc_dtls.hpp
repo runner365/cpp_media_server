@@ -78,7 +78,7 @@ class rtc_dtls : public timer_interface
 {
 public:
     rtc_dtls(webrtc_session* session, boost::asio::io_context& io_ctx);
-    ~rtc_dtls();
+    virtual ~rtc_dtls();
 
 public:
     void start(DTLS_ROLE role_mode);

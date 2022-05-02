@@ -1,13 +1,14 @@
 #include "http_server.hpp"
 
 
-http_server::http_server(boost::asio::io_context& io_context, uint16_t port):timer_interface(io_context, 5000) {
+http_server::http_server(boost::asio::io_context& io_context, uint16_t port):timer_interface(io_context, 2500) {
     server_ = std::make_shared<tcp_server>(io_context, port, this);
     server_->accept();
     start_timer();
 }
 
 http_server::~http_server() {
+    stop_timer();
 }
 
 void http_server::add_get_handle(const std::string uri, HTTP_HANDLE_Ptr handle_func) {
@@ -24,7 +25,6 @@ void http_server::on_timer() {
         std::shared_ptr<http_session> session_ptr = iter->second;
         
         if (!session_ptr->is_alive()) {
-            log_infof("remove http session %s", iter->first.c_str());
             session_ptr_map_.erase(iter++);
             continue;
         }
@@ -47,7 +47,6 @@ void http_server::on_close(boost::asio::ip::tcp::endpoint endpoint) {
     std::string key;
     make_endpoint_string(endpoint, key);
 
-    log_infof("http server remove key:%s", key.c_str());
     auto iter = session_ptr_map_.find(key);
     if (iter != session_ptr_map_.end()) {
         session_ptr_map_.erase(iter);
@@ -74,9 +73,16 @@ HTTP_HANDLE_Ptr http_server::get_handle(const http_request* request) {
     }
     
     iter = get_handle_map_.find("/");
+    if (iter != get_handle_map_.end()) {
+        handle_func = iter->second;
+        return handle_func;
+    }
+    
+    iter = post_handle_map_.find("/");
     if (iter != post_handle_map_.end()) {
         handle_func = iter->second;
         return handle_func;
     }
+    
     return handle_func;
 }

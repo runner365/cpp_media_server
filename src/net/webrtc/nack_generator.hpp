@@ -43,7 +43,7 @@ class nack_generator : public timer_interface
 {
 public:
     nack_generator(nack_generator_callback_interface* cb);
-    ~nack_generator();
+    virtual ~nack_generator();
 
     void update_nacklist(rtp_packet* pkt);
     void update_rtt(int64_t rtt);

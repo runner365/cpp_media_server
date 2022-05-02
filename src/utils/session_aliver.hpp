@@ -24,6 +24,8 @@ public:
         return true;
     }
 
+    void update_max(int max) { try_max_ = max; }
+
 private:
     int not_alive_cnt_ = 0;
     int try_max_ = 0;

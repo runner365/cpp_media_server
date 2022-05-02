@@ -30,7 +30,7 @@ class rtc_subscriber : public timer_interface, public rtc_stream_callback
 public:
     rtc_subscriber(const std::string& roomId, const std::string& uid, const std::string& remote_uid, const std::string& pid
             , rtc_base_session* session, const MEDIA_RTC_INFO& media_info, room_callback_interface* room_cb);
-    ~rtc_subscriber();
+    virtual ~rtc_subscriber();
 
 public:
     std::string get_roomid() {return roomId_;}
@@ -49,6 +49,7 @@ public:
     int64_t get_remb_bitrate() { return remb_bitrate_; }
     void set_remb_bitrate(int64_t bitrate);
     void get_statics(json& json_data);
+    void update_alive(int64_t now_ms);
 
 public:
     void send_rtp_packet(const std::string& roomId, const std::string& media_type,
