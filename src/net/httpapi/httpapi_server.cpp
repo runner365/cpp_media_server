@@ -561,6 +561,11 @@ void httpapi_server::run() {
     server_.add_post_handle("/rtc/v1/play", rtcdn_subscribe_handle);
     server_.add_post_handle("/rtc/v1/unplay", rtcdn_unsubscribe_handle);
 
+    server_.add_post_handle("rtc/v1/publish/", rtcdn_publish_handle);
+    server_.add_post_handle("rtc/v1/unpublish", rtcdn_unpublish_handle);
+    server_.add_post_handle("rtc/v1/play/", rtcdn_subscribe_handle);
+    server_.add_post_handle("rtc/v1/unplay/", rtcdn_unsubscribe_handle);
+
     /******* start: only for webrtc statics *******/
     server_.add_get_handle("/api/webrtc/publisher", httpapi_webrtc_publisher_handle);
     server_.add_get_handle("/api/webrtc/subscriber", httpapi_webrtc_subscriber_handle);
