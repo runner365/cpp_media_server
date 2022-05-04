@@ -218,7 +218,7 @@ void rtcdn_publish_response(int code, const std::string& msg, const std::string&
     json data_json = json::object();
 
     resp_json["code"]   = code;
-    resp_json["server"] = "cpp_media_srver";
+    resp_json["server"] = "cpp_media_server";
     resp_json["sdp"]    = resp_sdp;
     resp_json["sessionid"] = session_id;
 
