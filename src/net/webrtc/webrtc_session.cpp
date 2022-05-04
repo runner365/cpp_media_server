@@ -161,8 +161,8 @@ void single_udp_session_callback::on_read(const char* data, size_t data_size, ud
 extern boost::asio::io_context& get_global_io_context();
 
 webrtc_session::webrtc_session(const std::string& roomId, const std::string& uid,
-                room_callback_interface* room, int session_direction,
-                const rtc_media_info& media_info):rtc_base_session(roomId, uid, room, session_direction, media_info)
+                room_callback_interface* room, int session_direction, const rtc_media_info& media_info,
+                std::string id):rtc_base_session(roomId, uid, room, session_direction, media_info, id)
             , timer_interface(get_global_io_context(), 500)
             , bitrate_estimate_(this) {
     username_fragment_ = byte_crypto::get_random_string(16);

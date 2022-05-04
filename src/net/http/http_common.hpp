@@ -128,4 +128,17 @@ public:
 
 using HTTP_HANDLE_Ptr = void (*)(const http_request* request, std::shared_ptr<http_response> response_ptr);
 
+inline std::string get_uri(std::string& uri) {
+    size_t pos = uri.find("/");
+    if (pos == 0) {
+        uri = uri.substr(1);
+    }
+    pos = uri.rfind("/");
+    if (pos == (uri.length() - 1)) {
+        uri = uri.substr(0, pos);
+    }
+
+    return uri;
+}
+
 #endif

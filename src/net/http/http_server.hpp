@@ -22,7 +22,7 @@ class http_callbackI
 {
 public:
     virtual void on_close(boost::asio::ip::tcp::endpoint endpoint) = 0;
-    virtual HTTP_HANDLE_Ptr get_handle(const http_request* request) = 0;
+    virtual HTTP_HANDLE_Ptr get_handle(http_request* request) = 0;
 };
 
 class http_server : public tcp_server_callbackI, public http_callbackI, public timer_interface
@@ -32,8 +32,8 @@ public:
     virtual ~http_server();
 
 public:
-    void add_get_handle(const std::string uri, HTTP_HANDLE_Ptr handle_func);
-    void add_post_handle(const std::string uri, HTTP_HANDLE_Ptr handle_func);
+    void add_get_handle(std::string uri, HTTP_HANDLE_Ptr handle_func);
+    void add_post_handle(std::string uri, HTTP_HANDLE_Ptr handle_func);
 
 public:
     virtual void on_timer() override;
@@ -43,7 +43,7 @@ protected://tcp_server_callbackI
 
 protected://http_callbackI
     virtual void on_close(boost::asio::ip::tcp::endpoint endpoint) override;
-    virtual HTTP_HANDLE_Ptr get_handle(const http_request* request) override;
+    virtual HTTP_HANDLE_Ptr get_handle(http_request* request) override;
 
 private:
     std::shared_ptr<tcp_server> server_;

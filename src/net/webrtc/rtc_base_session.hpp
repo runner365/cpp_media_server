@@ -16,7 +16,8 @@ class room_callback_interface;
 class rtc_base_session
 {
 public:
-    rtc_base_session(const std::string& roomId, const std::string& uid, room_callback_interface* room, int session_direction, const rtc_media_info& media_info);
+    rtc_base_session(const std::string& roomId, const std::string& uid, room_callback_interface* room,
+            int session_direction, const rtc_media_info& media_info, std::string id = "");
     virtual ~rtc_base_session();
 
 public:

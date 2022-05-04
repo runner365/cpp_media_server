@@ -1,5 +1,5 @@
 #include "http_server.hpp"
-
+#include "http_common.hpp"
 
 http_server::http_server(boost::asio::io_context& io_context, uint16_t port):timer_interface(io_context, 2500) {
     server_ = std::make_shared<tcp_server>(io_context, port, this);
@@ -11,12 +11,14 @@ http_server::~http_server() {
     stop_timer();
 }
 
-void http_server::add_get_handle(const std::string uri, HTTP_HANDLE_Ptr handle_func) {
-    get_handle_map_.insert(std::make_pair(uri, handle_func));
+void http_server::add_get_handle(std::string uri, HTTP_HANDLE_Ptr handle_func) {
+    std::string uri_key = get_uri(uri);
+    get_handle_map_.insert(std::make_pair(uri_key, handle_func));
 }
 
-void http_server::add_post_handle(const std::string uri, HTTP_HANDLE_Ptr handle_func) {
-    post_handle_map_.insert(std::make_pair(uri, handle_func));
+void http_server::add_post_handle(std::string uri, HTTP_HANDLE_Ptr handle_func) {
+    std::string uri_key = get_uri(uri);
+    post_handle_map_.insert(std::make_pair(uri_key, handle_func));
 }
 
 void http_server::on_timer() {
@@ -54,9 +56,10 @@ void http_server::on_close(boost::asio::ip::tcp::endpoint endpoint) {
     return;
 }
 
-HTTP_HANDLE_Ptr http_server::get_handle(const http_request* request) {
+HTTP_HANDLE_Ptr http_server::get_handle(http_request* request) {
     HTTP_HANDLE_Ptr handle_func = nullptr;
     std::unordered_map< std::string, HTTP_HANDLE_Ptr >::iterator iter;
+    get_uri(request->uri_);
 
     if (request->method_ == "GET") {
         iter = get_handle_map_.find(request->uri_);

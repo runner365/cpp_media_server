@@ -2,6 +2,7 @@
 #include "http_common.hpp"
 #include "json.hpp"
 #include "utils/stringex.hpp"
+#include "utils/uuid.hpp"
 #include <memory>
 #include <sstream>
 
@@ -437,7 +438,7 @@ void rtcdn_subscribe_handle(const http_request* request, std::shared_ptr<http_re
 
         roomId     = path_vec[1];
         remote_uid = path_vec[2];
-        uid        = request->remote_address();
+        uid        = make_uuid();
 
         ret = whip_subscriber(roomId, uid, remote_uid, sdp, resp_sdp, session_id, err_msg);
         if (ret == 0) {
@@ -512,7 +513,7 @@ void rtcdn_unsubscribe_handle(const http_request* request, std::shared_ptr<http_
 
         std::string roomId     = path_vec[1];
         std::string remote_uid = path_vec[2];
-        std::string uid        = request->remote_address();
+        std::string uid        = session_id;
 
         ret = whip_unsubscriber(roomId, uid, remote_uid, session_id, err_msg);
         json resp_json = json::object();
@@ -524,7 +525,8 @@ void rtcdn_unsubscribe_handle(const http_request* request, std::shared_ptr<http_
             resp_json["desc"] = err_msg;
         }
         std::string resp_data = resp_json.dump();
-        log_infof("http unsubscribe response:%s", resp_data.c_str());
+        log_infof("http unsubscribe(%s:%s) response:%s",
+                roomId.c_str(), uid.c_str(), resp_data.c_str());
         response->write(resp_data.c_str(), resp_data.length());
     }
     catch(const std::exception& e) {

@@ -39,7 +39,8 @@ class webrtc_session : public rtc_base_session, public timer_interface, public w
 {
 public:
     webrtc_session(const std::string& roomId, const std::string& uid,
-        room_callback_interface* room, int session_direction, const rtc_media_info& media_info);
+        room_callback_interface* room, int session_direction, const rtc_media_info& media_info,
+        std::string id = "");
     virtual ~webrtc_session();
 
 public:

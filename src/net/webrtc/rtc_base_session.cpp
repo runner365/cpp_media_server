@@ -15,12 +15,18 @@ extern std::string single_candidate_ip;
 extern uint16_t single_candidate_port;
 
 rtc_base_session::rtc_base_session(const std::string& roomId, const std::string& uid,
-                    room_callback_interface* room, int session_direction, const rtc_media_info& media_info):roomId_(roomId)
+                    room_callback_interface* room, int session_direction,
+                    const rtc_media_info& media_info, std::string id):roomId_(roomId)
                             , uid_(uid)
                             , room_(room)
                             , direction_(session_direction)
                             , media_info_(media_info) {
-    id_ = make_uuid();
+    if (id.empty()) {
+        id_ = make_uuid();
+    } else {
+        id_ = id;
+    }
+    
 
     log_infof("rtc_base_session construct id:%s direction:%s, roomId:%s, uid:%s",
             id_.c_str(), (direction_ == RTC_DIRECTION_SEND) ? "send" : "receive",

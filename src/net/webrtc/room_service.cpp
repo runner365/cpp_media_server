@@ -1533,7 +1533,7 @@ int room_service::handle_http_subscribe(const std::string& uid, const std::strin
     std::shared_ptr<webrtc_session> session_ptr;
     /********************** create subscribe session **************************/
     session_ptr = std::make_shared<webrtc_session>(roomId_, uid, this,
-                                            RTC_DIRECTION_SEND, support_info);
+                                            RTC_DIRECTION_SEND, support_info, uid);
     session_ptr->set_remote_finger_print(info.finger_print);
     user_ptr->subscribe_sessions_[session_ptr->get_id()] = session_ptr;
     //log_infof("http subscribe session id:%s", session_ptr->get_id().c_str());

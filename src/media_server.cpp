@@ -6,6 +6,7 @@
 #include "net/webrtc/srtp_session.hpp"
 #include "net/webrtc/rtmp2rtc.hpp"
 #include "net/hls/hls_writer.hpp"
+#include "net/http/http_common.hpp"
 #include "utils/byte_crypto.hpp"
 #include "utils/config.hpp"
 #include "utils/av/media_stream_manager.hpp"
