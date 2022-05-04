@@ -216,13 +216,10 @@ void rtcdn_publish_response(int code, const std::string& msg, const std::string&
     json resp_json = json::object();
     json data_json = json::object();
 
-    resp_json["code"] = code;
-    resp_json["msg"]  = msg;
-    if (code == 200) {
-        data_json["sdp"]  = resp_sdp;
-        data_json["sessionid"]  = session_id;
-        resp_json["data"] = data_json;
-    }
+    resp_json["code"]   = code;
+    resp_json["server"] = "cpp_media_srver";
+    resp_json["sdp"]    = resp_sdp;
+    resp_json["sessionid"] = session_id;
 
     std::string resp_data = resp_json.dump();
     response->add_header("Vary", "Origin");
@@ -287,7 +284,7 @@ void rtcdn_publish_handle(const http_request* request, std::shared_ptr<http_resp
 
         ret = whip_publisher(roomId, uid, sdp, resp_sdp, session_id, err_msg);
         if ((ret == 0) && !resp_sdp.empty() && !session_id.empty()) {
-            rtcdn_publish_response(200, "ok", resp_sdp, session_id, response);
+            rtcdn_publish_response(0, "ok", resp_sdp, session_id, response);
         } else {
             rtcdn_publish_response(400, err_msg, resp_sdp, session_id, response);
         }
@@ -444,7 +441,7 @@ void rtcdn_subscribe_handle(const http_request* request, std::shared_ptr<http_re
 
         ret = whip_subscriber(roomId, uid, remote_uid, sdp, resp_sdp, session_id, err_msg);
         if (ret == 0) {
-            rtcdn_publish_response(200, err_msg, resp_sdp, session_id, response);
+            rtcdn_publish_response(0, err_msg, resp_sdp, session_id, response);
         } else {
             rtcdn_publish_response(400, err_msg, resp_sdp, session_id, response);
         }
@@ -561,10 +558,10 @@ void httpapi_server::run() {
     server_.add_post_handle("/rtc/v1/play", rtcdn_subscribe_handle);
     server_.add_post_handle("/rtc/v1/unplay", rtcdn_unsubscribe_handle);
 
-    server_.add_post_handle("rtc/v1/publish/", rtcdn_publish_handle);
-    server_.add_post_handle("rtc/v1/unpublish", rtcdn_unpublish_handle);
-    server_.add_post_handle("rtc/v1/play/", rtcdn_subscribe_handle);
-    server_.add_post_handle("rtc/v1/unplay/", rtcdn_unsubscribe_handle);
+    server_.add_post_handle("/rtc/v1/publish/", rtcdn_publish_handle);
+    server_.add_post_handle("/rtc/v1/unpublish/", rtcdn_unpublish_handle);
+    server_.add_post_handle("/rtc/v1/play/", rtcdn_subscribe_handle);
+    server_.add_post_handle("/rtc/v1/unplay/", rtcdn_unsubscribe_handle);
 
     /******* start: only for webrtc statics *******/
     server_.add_get_handle("/api/webrtc/publisher", httpapi_webrtc_publisher_handle);
