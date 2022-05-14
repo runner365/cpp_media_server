@@ -9,19 +9,19 @@
 /* Begin PBXAggregateTarget section */
 		1D870205E152452881BD5A0A /* install */ = {
 			isa = PBXAggregateTarget;
-			buildConfigurationList = 6E40E2DC5672489E8618AA50 /* Build configuration list for PBXAggregateTarget "install" */;
+			buildConfigurationList = 091C0A05F0744DE580211E42 /* Build configuration list for PBXAggregateTarget "install" */;
 			buildPhases = (
 				93426DA6A4AC2C2AC9CE883C /* CMake PostBuild Rules */,
 			);
 			dependencies = (
-				72EE247FC4F349C389347708 /* PBXTargetDependency */,
+				1809970FF2A94DE6A78EE93D /* PBXTargetDependency */,
 			);
 			name = install;
 			productName = install;
 		};
 		E922091AD0944DDCBB5EDF06 /* ZERO_CHECK */ = {
 			isa = PBXAggregateTarget;
-			buildConfigurationList = 733F1BE77D5E402883BB798D /* Build configuration list for PBXAggregateTarget "ZERO_CHECK" */;
+			buildConfigurationList = 5062057DB83747B5A431634A /* Build configuration list for PBXAggregateTarget "ZERO_CHECK" */;
 			buildPhases = (
 				99C20A5D6DC2F6782A00F98A /* Generate CMakeFiles/ZERO_CHECK */,
 			);
@@ -32,15 +32,15 @@
 		};
 		F533115BE7AD4D48A717579C /* ALL_BUILD */ = {
 			isa = PBXAggregateTarget;
-			buildConfigurationList = 7788DF67028A47609E6CD1A0 /* Build configuration list for PBXAggregateTarget "ALL_BUILD" */;
+			buildConfigurationList = 0E50B57CD67046F3B6E78A09 /* Build configuration list for PBXAggregateTarget "ALL_BUILD" */;
 			buildPhases = (
 				9AA029F1977C5BE72D23C33E /* Generate CMakeFiles/ALL_BUILD */,
 			);
 			dependencies = (
-				FBF05363EAFC47DF8486014A /* PBXTargetDependency */,
-				7D9DCAD29D2449E68D740797 /* PBXTargetDependency */,
-				113FC1246ECC44F8827C0B3E /* PBXTargetDependency */,
-				16D7726BAFC64A32B182D8D1 /* PBXTargetDependency */,
+				019D2ABB5C5B460EAA45C446 /* PBXTargetDependency */,
+				0C03754C1BC54386B86A9512 /* PBXTargetDependency */,
+				D2D234C6E9774898BEA26AE2 /* PBXTargetDependency */,
+				8B386BE4B2384EC9B8698EB3 /* PBXTargetDependency */,
 			);
 			name = ALL_BUILD;
 			productName = ALL_BUILD;
@@ -48,161 +48,161 @@
 /* End PBXAggregateTarget section */
 
 /* Begin PBXBuildFile section */
-		01938441D7A1475EAA053ED5 /* /Users/shiwei05/Documents/code/cpp-code/cpp_media_server/3rdparty/libsdptransform/readme-helper/CMakeLists.txt */ = {isa = PBXBuildFile; fileRef = 1BC737A29A17429A8155F5D0 /* /Users/shiwei05/Documents/code/cpp-code/cpp_media_server/3rdparty/libsdptransform/readme-helper/CMakeLists.txt */; };
-		29F811474AB0427898D90E52 /* /Users/shiwei05/Documents/code/cpp-code/cpp_media_server/3rdparty/libsdptransform/test/include/catch.hpp */ = {isa = PBXBuildFile; fileRef = C98BADEEF3B24B5FA4F3453C /* /Users/shiwei05/Documents/code/cpp-code/cpp_media_server/3rdparty/libsdptransform/test/include/catch.hpp */; };
-		2D34182DA213405CBDEB75EA /* /Users/shiwei05/Documents/code/cpp-code/cpp_media_server/3rdparty/libsdptransform/include/json.hpp */ = {isa = PBXBuildFile; fileRef = D9D86FCDEA354758A5688F2B /* /Users/shiwei05/Documents/code/cpp-code/cpp_media_server/3rdparty/libsdptransform/include/json.hpp */; };
-		332AD3468DB84E4D80766D94 /* /Users/shiwei05/Documents/code/cpp-code/cpp_media_server/3rdparty/libsdptransform/src/grammar.cpp */ = {isa = PBXBuildFile; fileRef = C08A52DFFC034F488E17C48A /* /Users/shiwei05/Documents/code/cpp-code/cpp_media_server/3rdparty/libsdptransform/src/grammar.cpp */; };
-		3F5C2A7EDF6C49DEB5765545 /* /Users/shiwei05/Documents/code/cpp-code/cpp_media_server/3rdparty/libsdptransform/CMakeLists.txt */ = {isa = PBXBuildFile; fileRef = F6DE6D70BA1D40538C411D53 /* /Users/shiwei05/Documents/code/cpp-code/cpp_media_server/3rdparty/libsdptransform/CMakeLists.txt */; };
-		583BB6D3A030472CB9C9153C /* /Users/shiwei05/Documents/code/cpp-code/cpp_media_server/3rdparty/libsdptransform/test/include/helpers.hpp */ = {isa = PBXBuildFile; fileRef = 767E02A66FA64A549DFE17FB /* /Users/shiwei05/Documents/code/cpp-code/cpp_media_server/3rdparty/libsdptransform/test/include/helpers.hpp */; };
-		76815516095E44D1ABB64933 /* /Users/shiwei05/Documents/code/cpp-code/cpp_media_server/3rdparty/libsdptransform/src/parser.cpp */ = {isa = PBXBuildFile; fileRef = 9D8318478A9D4829B6C80E0B /* /Users/shiwei05/Documents/code/cpp-code/cpp_media_server/3rdparty/libsdptransform/src/parser.cpp */; };
-		B7354D65384D466B900B9657 /* /Users/shiwei05/Documents/code/cpp-code/cpp_media_server/3rdparty/libsdptransform/include/sdptransform.hpp */ = {isa = PBXBuildFile; fileRef = 26D16BF6AAE14215ACD57768 /* /Users/shiwei05/Documents/code/cpp-code/cpp_media_server/3rdparty/libsdptransform/include/sdptransform.hpp */; };
-		C5ECB6CCF886458A88570569 /* /Users/shiwei05/Documents/code/cpp-code/cpp_media_server/3rdparty/libsdptransform/src/writer.cpp */ = {isa = PBXBuildFile; fileRef = 7393B324890F49AA80D05BC7 /* /Users/shiwei05/Documents/code/cpp-code/cpp_media_server/3rdparty/libsdptransform/src/writer.cpp */; };
-		C6FF25D23C774FFFB4595305 /* /Users/shiwei05/Documents/code/cpp-code/cpp_media_server/3rdparty/libsdptransform/test/parse.test.cpp */ = {isa = PBXBuildFile; fileRef = A1BEAF2E459449E8BEE4890C /* /Users/shiwei05/Documents/code/cpp-code/cpp_media_server/3rdparty/libsdptransform/test/parse.test.cpp */; };
-		CE150447BCA4448A9494904E /* /Users/shiwei05/Documents/code/cpp-code/cpp_media_server/3rdparty/libsdptransform/test/tests.cpp */ = {isa = PBXBuildFile; fileRef = BACC0D384B33490C9BB2719D /* /Users/shiwei05/Documents/code/cpp-code/cpp_media_server/3rdparty/libsdptransform/test/tests.cpp */; };
-		F047937533BC4771BBB56343 /* /Users/shiwei05/Documents/code/cpp-code/cpp_media_server/3rdparty/libsdptransform/test/CMakeLists.txt */ = {isa = PBXBuildFile; fileRef = E27E903DD09942F1862A75B4 /* /Users/shiwei05/Documents/code/cpp-code/cpp_media_server/3rdparty/libsdptransform/test/CMakeLists.txt */; };
-		F1A4268024184C97A9FC8601 /* /Users/shiwei05/Documents/code/cpp-code/cpp_media_server/3rdparty/libsdptransform/readme-helper/readme.cpp */ = {isa = PBXBuildFile; fileRef = 96B17CA264464D59909ECACD /* /Users/shiwei05/Documents/code/cpp-code/cpp_media_server/3rdparty/libsdptransform/readme-helper/readme.cpp */; };
+		0FD9AFBB11EC452BA95CE00F /* /Users/shiwei05/Documents/code/cpp-code/cpp_media_server/3rdparty/libsdptransform/src/parser.cpp */ = {isa = PBXBuildFile; fileRef = 446760EA38C6454384241808 /* /Users/shiwei05/Documents/code/cpp-code/cpp_media_server/3rdparty/libsdptransform/src/parser.cpp */; };
+		10A2EDDD3A834E6FA6A56AF2 /* /Users/shiwei05/Documents/code/cpp-code/cpp_media_server/3rdparty/libsdptransform/readme-helper/CMakeLists.txt */ = {isa = PBXBuildFile; fileRef = FA126115006142D7AB5AB659 /* /Users/shiwei05/Documents/code/cpp-code/cpp_media_server/3rdparty/libsdptransform/readme-helper/CMakeLists.txt */; };
+		1514F38044C648778AA8F7F4 /* /Users/shiwei05/Documents/code/cpp-code/cpp_media_server/3rdparty/libsdptransform/test/include/helpers.hpp */ = {isa = PBXBuildFile; fileRef = CD5AF2C9944C4EC2BF665AA6 /* /Users/shiwei05/Documents/code/cpp-code/cpp_media_server/3rdparty/libsdptransform/test/include/helpers.hpp */; };
+		19D97CC7355147DDBF873B49 /* /Users/shiwei05/Documents/code/cpp-code/cpp_media_server/3rdparty/libsdptransform/src/writer.cpp */ = {isa = PBXBuildFile; fileRef = FA58125FB0FC4E43AFDB7E65 /* /Users/shiwei05/Documents/code/cpp-code/cpp_media_server/3rdparty/libsdptransform/src/writer.cpp */; };
+		1AF9AD73EF5D40ABAD027333 /* /Users/shiwei05/Documents/code/cpp-code/cpp_media_server/3rdparty/libsdptransform/readme-helper/readme.cpp */ = {isa = PBXBuildFile; fileRef = 0DABBBB2E56149A68C8589AC /* /Users/shiwei05/Documents/code/cpp-code/cpp_media_server/3rdparty/libsdptransform/readme-helper/readme.cpp */; };
+		3C88A51F65574788A0DFC541 /* /Users/shiwei05/Documents/code/cpp-code/cpp_media_server/3rdparty/libsdptransform/CMakeLists.txt */ = {isa = PBXBuildFile; fileRef = 72F1339E5DD940D1BC807247 /* /Users/shiwei05/Documents/code/cpp-code/cpp_media_server/3rdparty/libsdptransform/CMakeLists.txt */; };
+		3F4A95B7BFC349E0AD185A28 /* /Users/shiwei05/Documents/code/cpp-code/cpp_media_server/3rdparty/libsdptransform/src/grammar.cpp */ = {isa = PBXBuildFile; fileRef = AEDFF2935BF64384B36B6854 /* /Users/shiwei05/Documents/code/cpp-code/cpp_media_server/3rdparty/libsdptransform/src/grammar.cpp */; };
+		566FFF42BBDE45759D1625B6 /* /Users/shiwei05/Documents/code/cpp-code/cpp_media_server/3rdparty/libsdptransform/test/tests.cpp */ = {isa = PBXBuildFile; fileRef = 95FC9600BC1244A59D89A967 /* /Users/shiwei05/Documents/code/cpp-code/cpp_media_server/3rdparty/libsdptransform/test/tests.cpp */; };
+		C62775E462D6451AB2A0896F /* /Users/shiwei05/Documents/code/cpp-code/cpp_media_server/3rdparty/libsdptransform/include/json.hpp */ = {isa = PBXBuildFile; fileRef = C0FE0F8A78A3467FBDCCFDB7 /* /Users/shiwei05/Documents/code/cpp-code/cpp_media_server/3rdparty/libsdptransform/include/json.hpp */; };
+		D95A236E0DAD496E866F47B6 /* /Users/shiwei05/Documents/code/cpp-code/cpp_media_server/3rdparty/libsdptransform/test/CMakeLists.txt */ = {isa = PBXBuildFile; fileRef = 1EFFF92F870640C4BD026DAB /* /Users/shiwei05/Documents/code/cpp-code/cpp_media_server/3rdparty/libsdptransform/test/CMakeLists.txt */; };
+		DF5745250B3347A3805F61C8 /* /Users/shiwei05/Documents/code/cpp-code/cpp_media_server/3rdparty/libsdptransform/test/include/catch.hpp */ = {isa = PBXBuildFile; fileRef = D297B9FBA6B2404E8E5AC1DA /* /Users/shiwei05/Documents/code/cpp-code/cpp_media_server/3rdparty/libsdptransform/test/include/catch.hpp */; };
+		E66BD446AC6943FCAED74BD2 /* /Users/shiwei05/Documents/code/cpp-code/cpp_media_server/3rdparty/libsdptransform/include/sdptransform.hpp */ = {isa = PBXBuildFile; fileRef = 608EC0E3F2B04199BBB1D6FA /* /Users/shiwei05/Documents/code/cpp-code/cpp_media_server/3rdparty/libsdptransform/include/sdptransform.hpp */; };
+		EA46D73B2D0245B7B3FBFB1E /* /Users/shiwei05/Documents/code/cpp-code/cpp_media_server/3rdparty/libsdptransform/test/parse.test.cpp */ = {isa = PBXBuildFile; fileRef = F174DDA5429F47FD89F29ED5 /* /Users/shiwei05/Documents/code/cpp-code/cpp_media_server/3rdparty/libsdptransform/test/parse.test.cpp */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXBuildStyle section */
-		296AF599A8EB479DACA31311 /* Debug */ = {
-			isa = PBXBuildStyle;
-			buildSettings = {
-				COPY_PHASE_STRIP = NO;
-			};
-			name = Debug;
-		};
-		5A241265B1244ABBB826160E /* MinSizeRel */ = {
+		06B83B2BF8F0411282217708 /* MinSizeRel */ = {
 			isa = PBXBuildStyle;
 			buildSettings = {
 				COPY_PHASE_STRIP = NO;
 			};
 			name = MinSizeRel;
 		};
-		8791663A59E44C72B2BC401E /* Release */ = {
+		3654199414B246C28C87FA4C /* Release */ = {
 			isa = PBXBuildStyle;
 			buildSettings = {
 				COPY_PHASE_STRIP = NO;
 			};
 			name = Release;
 		};
-		B991F28AD9244A6091FDFCD5 /* RelWithDebInfo */ = {
+		58B69A6B249A47E0888ADB62 /* RelWithDebInfo */ = {
 			isa = PBXBuildStyle;
 			buildSettings = {
 				COPY_PHASE_STRIP = NO;
 			};
 			name = RelWithDebInfo;
 		};
+		9DCEAD3D2F964E97B345DA8A /* Debug */ = {
+			isa = PBXBuildStyle;
+			buildSettings = {
+				COPY_PHASE_STRIP = NO;
+			};
+			name = Debug;
+		};
 /* End PBXBuildStyle section */
 
 /* Begin PBXContainerItemProxy section */
-		0071DE36C40D4761BC96B389 /* PBXContainerItemProxy */ = {
-			isa = PBXContainerItemProxy;
-			containerPortal = 93DBEF65453D44C2A894E508 /* Project object */;
-			proxyType = 1;
-			remoteGlobalIDString = F533115BE7AD4D48A717579C;
-			remoteInfo = ALL_BUILD;
-		};
-		19CB78BC04A2464398FE816B /* PBXContainerItemProxy */ = {
+		133B1C52C5C64291972ABAC6 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
 			containerPortal = 93DBEF65453D44C2A894E508 /* Project object */;
 			proxyType = 1;
 			remoteGlobalIDString = E922091AD0944DDCBB5EDF06;
 			remoteInfo = ZERO_CHECK;
 		};
-		2109B5A2DAE8465C95480F88 /* PBXContainerItemProxy */ = {
-			isa = PBXContainerItemProxy;
-			containerPortal = 93DBEF65453D44C2A894E508 /* Project object */;
-			proxyType = 1;
-			remoteGlobalIDString = E922091AD0944DDCBB5EDF06;
-			remoteInfo = ZERO_CHECK;
-		};
-		2D11DBE15E9746E88F9522DD /* PBXContainerItemProxy */ = {
-			isa = PBXContainerItemProxy;
-			containerPortal = 93DBEF65453D44C2A894E508 /* Project object */;
-			proxyType = 1;
-			remoteGlobalIDString = A16CFF33900B4CC5B5A50B28;
-			remoteInfo = test_sdptransform;
-		};
-		7DE4317651904835942BC95B /* PBXContainerItemProxy */ = {
-			isa = PBXContainerItemProxy;
-			containerPortal = 93DBEF65453D44C2A894E508 /* Project object */;
-			proxyType = 1;
-			remoteGlobalIDString = E922091AD0944DDCBB5EDF06;
-			remoteInfo = ZERO_CHECK;
-		};
-		9D17C7E453B1480EBA8E21FB /* PBXContainerItemProxy */ = {
+		23001ABD74574808A17334D8 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
 			containerPortal = 93DBEF65453D44C2A894E508 /* Project object */;
 			proxyType = 1;
 			remoteGlobalIDString = A5FEE27BA1484349B6889D7D;
 			remoteInfo = sdptransform;
 		};
-		BA337B5A533D471DB0AA4CB2 /* PBXContainerItemProxy */ = {
+		291B19FFA5AA42379883F040 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
 			containerPortal = 93DBEF65453D44C2A894E508 /* Project object */;
 			proxyType = 1;
 			remoteGlobalIDString = CE98B7F816C7470783E0F9E1;
 			remoteInfo = sdptransform_readme_helper;
 		};
-		CCAC9AC499C34CBC908FEABD /* PBXContainerItemProxy */ = {
+		37B1EA08D94D450EBE9FEBD1 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 93DBEF65453D44C2A894E508 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = A5FEE27BA1484349B6889D7D;
+			remoteInfo = sdptransform;
+		};
+		5D406C7895A54B01888CB4A7 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 93DBEF65453D44C2A894E508 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = F533115BE7AD4D48A717579C;
+			remoteInfo = ALL_BUILD;
+		};
+		AAB4717790074C2DABCFCE48 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
 			containerPortal = 93DBEF65453D44C2A894E508 /* Project object */;
 			proxyType = 1;
 			remoteGlobalIDString = E922091AD0944DDCBB5EDF06;
 			remoteInfo = ZERO_CHECK;
 		};
-		D5A54438E5F24BF185E2FD9E /* PBXContainerItemProxy */ = {
+		B6143BECF1F244838582C41E /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
 			containerPortal = 93DBEF65453D44C2A894E508 /* Project object */;
 			proxyType = 1;
 			remoteGlobalIDString = A5FEE27BA1484349B6889D7D;
 			remoteInfo = sdptransform;
 		};
-		D5FA0105EC624BFFAE60FC45 /* PBXContainerItemProxy */ = {
+		B7D75077344D4DFC9E840FB4 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
 			containerPortal = 93DBEF65453D44C2A894E508 /* Project object */;
 			proxyType = 1;
-			remoteGlobalIDString = A5FEE27BA1484349B6889D7D;
-			remoteInfo = sdptransform;
+			remoteGlobalIDString = E922091AD0944DDCBB5EDF06;
+			remoteInfo = ZERO_CHECK;
+		};
+		E575EF8AA1F040939D02A02B /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 93DBEF65453D44C2A894E508 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = E922091AD0944DDCBB5EDF06;
+			remoteInfo = ZERO_CHECK;
+		};
+		E6E3B8870D414F15BA5F85E1 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 93DBEF65453D44C2A894E508 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = A16CFF33900B4CC5B5A50B28;
+			remoteInfo = test_sdptransform;
 		};
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
-		1BC737A29A17429A8155F5D0 /* /Users/shiwei05/Documents/code/cpp-code/cpp_media_server/3rdparty/libsdptransform/readme-helper/CMakeLists.txt */ = {isa = PBXFileReference; explicitFileType = sourcecode.text; fileEncoding = 4; name = CMakeLists.txt; path = "readme-helper/CMakeLists.txt"; sourceTree = SOURCE_ROOT; };
-		26D16BF6AAE14215ACD57768 /* /Users/shiwei05/Documents/code/cpp-code/cpp_media_server/3rdparty/libsdptransform/include/sdptransform.hpp */ = {isa = PBXFileReference; explicitFileType = sourcecode.cpp.h; fileEncoding = 4; name = sdptransform.hpp; path = include/sdptransform.hpp; sourceTree = SOURCE_ROOT; };
-		7393B324890F49AA80D05BC7 /* /Users/shiwei05/Documents/code/cpp-code/cpp_media_server/3rdparty/libsdptransform/src/writer.cpp */ = {isa = PBXFileReference; explicitFileType = sourcecode.cpp.cpp; fileEncoding = 4; name = writer.cpp; path = src/writer.cpp; sourceTree = SOURCE_ROOT; };
-		767E02A66FA64A549DFE17FB /* /Users/shiwei05/Documents/code/cpp-code/cpp_media_server/3rdparty/libsdptransform/test/include/helpers.hpp */ = {isa = PBXFileReference; explicitFileType = sourcecode.cpp.h; fileEncoding = 4; name = helpers.hpp; path = test/include/helpers.hpp; sourceTree = SOURCE_ROOT; };
-		79F713FDFB4B4DFE8733A590 /* test_sdptransform */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; path = test_sdptransform; sourceTree = BUILT_PRODUCTS_DIR; };
-		7B1AD5668D4345F083D7DE9D /* /Users/shiwei05/Documents/code/cpp-code/cpp_media_server/3rdparty/libsdptransform/CMakeLists.txt */ = {isa = PBXFileReference; explicitFileType = sourcecode.text; fileEncoding = 4; name = CMakeLists.txt; path = CMakeLists.txt; sourceTree = SOURCE_ROOT; };
-		96B17CA264464D59909ECACD /* /Users/shiwei05/Documents/code/cpp-code/cpp_media_server/3rdparty/libsdptransform/readme-helper/readme.cpp */ = {isa = PBXFileReference; explicitFileType = sourcecode.cpp.cpp; fileEncoding = 4; name = readme.cpp; path = "readme-helper/readme.cpp"; sourceTree = SOURCE_ROOT; };
-		9D8318478A9D4829B6C80E0B /* /Users/shiwei05/Documents/code/cpp-code/cpp_media_server/3rdparty/libsdptransform/src/parser.cpp */ = {isa = PBXFileReference; explicitFileType = sourcecode.cpp.cpp; fileEncoding = 4; name = parser.cpp; path = src/parser.cpp; sourceTree = SOURCE_ROOT; };
-		A1BEAF2E459449E8BEE4890C /* /Users/shiwei05/Documents/code/cpp-code/cpp_media_server/3rdparty/libsdptransform/test/parse.test.cpp */ = {isa = PBXFileReference; explicitFileType = sourcecode.cpp.cpp; fileEncoding = 4; name = parse.test.cpp; path = test/parse.test.cpp; sourceTree = SOURCE_ROOT; };
-		BACC0D384B33490C9BB2719D /* /Users/shiwei05/Documents/code/cpp-code/cpp_media_server/3rdparty/libsdptransform/test/tests.cpp */ = {isa = PBXFileReference; explicitFileType = sourcecode.cpp.cpp; fileEncoding = 4; name = tests.cpp; path = test/tests.cpp; sourceTree = SOURCE_ROOT; };
-		C08A52DFFC034F488E17C48A /* /Users/shiwei05/Documents/code/cpp-code/cpp_media_server/3rdparty/libsdptransform/src/grammar.cpp */ = {isa = PBXFileReference; explicitFileType = sourcecode.cpp.cpp; fileEncoding = 4; name = grammar.cpp; path = src/grammar.cpp; sourceTree = SOURCE_ROOT; };
-		C98BADEEF3B24B5FA4F3453C /* /Users/shiwei05/Documents/code/cpp-code/cpp_media_server/3rdparty/libsdptransform/test/include/catch.hpp */ = {isa = PBXFileReference; explicitFileType = sourcecode.cpp.h; fileEncoding = 4; name = catch.hpp; path = test/include/catch.hpp; sourceTree = SOURCE_ROOT; };
-		D0FD2FEBE52C4F24AEF05053 /* sdptransform */ = {isa = PBXFileReference; explicitFileType = archive.ar; path = libsdptransform.a; sourceTree = BUILT_PRODUCTS_DIR; };
-		D9D86FCDEA354758A5688F2B /* /Users/shiwei05/Documents/code/cpp-code/cpp_media_server/3rdparty/libsdptransform/include/json.hpp */ = {isa = PBXFileReference; explicitFileType = sourcecode.cpp.h; fileEncoding = 4; name = json.hpp; path = include/json.hpp; sourceTree = SOURCE_ROOT; };
-		E27E903DD09942F1862A75B4 /* /Users/shiwei05/Documents/code/cpp-code/cpp_media_server/3rdparty/libsdptransform/test/CMakeLists.txt */ = {isa = PBXFileReference; explicitFileType = sourcecode.text; fileEncoding = 4; name = CMakeLists.txt; path = test/CMakeLists.txt; sourceTree = SOURCE_ROOT; };
-		F6DE6D70BA1D40538C411D53 /* /Users/shiwei05/Documents/code/cpp-code/cpp_media_server/3rdparty/libsdptransform/CMakeLists.txt */ = {isa = PBXFileReference; explicitFileType = sourcecode.text; fileEncoding = 4; name = CMakeLists.txt; path = CMakeLists.txt; sourceTree = SOURCE_ROOT; };
-		F9E637069DA44F6E99167484 /* sdptransform_readme_helper */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; path = sdptransform_readme_helper; sourceTree = BUILT_PRODUCTS_DIR; };
+		0DABBBB2E56149A68C8589AC /* /Users/shiwei05/Documents/code/cpp-code/cpp_media_server/3rdparty/libsdptransform/readme-helper/readme.cpp */ = {isa = PBXFileReference; explicitFileType = sourcecode.cpp.cpp; fileEncoding = 4; name = readme.cpp; path = "readme-helper/readme.cpp"; sourceTree = SOURCE_ROOT; };
+		1EFFF92F870640C4BD026DAB /* /Users/shiwei05/Documents/code/cpp-code/cpp_media_server/3rdparty/libsdptransform/test/CMakeLists.txt */ = {isa = PBXFileReference; explicitFileType = sourcecode.text; fileEncoding = 4; name = CMakeLists.txt; path = test/CMakeLists.txt; sourceTree = SOURCE_ROOT; };
+		446760EA38C6454384241808 /* /Users/shiwei05/Documents/code/cpp-code/cpp_media_server/3rdparty/libsdptransform/src/parser.cpp */ = {isa = PBXFileReference; explicitFileType = sourcecode.cpp.cpp; fileEncoding = 4; name = parser.cpp; path = src/parser.cpp; sourceTree = SOURCE_ROOT; };
+		5BB23C6CE3B042F5B863BDEE /* sdptransform_readme_helper */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; path = sdptransform_readme_helper; sourceTree = BUILT_PRODUCTS_DIR; };
+		608EC0E3F2B04199BBB1D6FA /* /Users/shiwei05/Documents/code/cpp-code/cpp_media_server/3rdparty/libsdptransform/include/sdptransform.hpp */ = {isa = PBXFileReference; explicitFileType = sourcecode.cpp.h; fileEncoding = 4; name = sdptransform.hpp; path = include/sdptransform.hpp; sourceTree = SOURCE_ROOT; };
+		6712EAAB017844A4BF65BCAA /* /Users/shiwei05/Documents/code/cpp-code/cpp_media_server/3rdparty/libsdptransform/CMakeLists.txt */ = {isa = PBXFileReference; explicitFileType = sourcecode.text; fileEncoding = 4; name = CMakeLists.txt; path = CMakeLists.txt; sourceTree = SOURCE_ROOT; };
+		72F1339E5DD940D1BC807247 /* /Users/shiwei05/Documents/code/cpp-code/cpp_media_server/3rdparty/libsdptransform/CMakeLists.txt */ = {isa = PBXFileReference; explicitFileType = sourcecode.text; fileEncoding = 4; name = CMakeLists.txt; path = CMakeLists.txt; sourceTree = SOURCE_ROOT; };
+		95FC9600BC1244A59D89A967 /* /Users/shiwei05/Documents/code/cpp-code/cpp_media_server/3rdparty/libsdptransform/test/tests.cpp */ = {isa = PBXFileReference; explicitFileType = sourcecode.cpp.cpp; fileEncoding = 4; name = tests.cpp; path = test/tests.cpp; sourceTree = SOURCE_ROOT; };
+		AEDFF2935BF64384B36B6854 /* /Users/shiwei05/Documents/code/cpp-code/cpp_media_server/3rdparty/libsdptransform/src/grammar.cpp */ = {isa = PBXFileReference; explicitFileType = sourcecode.cpp.cpp; fileEncoding = 4; name = grammar.cpp; path = src/grammar.cpp; sourceTree = SOURCE_ROOT; };
+		C0FE0F8A78A3467FBDCCFDB7 /* /Users/shiwei05/Documents/code/cpp-code/cpp_media_server/3rdparty/libsdptransform/include/json.hpp */ = {isa = PBXFileReference; explicitFileType = sourcecode.cpp.h; fileEncoding = 4; name = json.hpp; path = include/json.hpp; sourceTree = SOURCE_ROOT; };
+		CD5AF2C9944C4EC2BF665AA6 /* /Users/shiwei05/Documents/code/cpp-code/cpp_media_server/3rdparty/libsdptransform/test/include/helpers.hpp */ = {isa = PBXFileReference; explicitFileType = sourcecode.cpp.h; fileEncoding = 4; name = helpers.hpp; path = test/include/helpers.hpp; sourceTree = SOURCE_ROOT; };
+		D297B9FBA6B2404E8E5AC1DA /* /Users/shiwei05/Documents/code/cpp-code/cpp_media_server/3rdparty/libsdptransform/test/include/catch.hpp */ = {isa = PBXFileReference; explicitFileType = sourcecode.cpp.h; fileEncoding = 4; name = catch.hpp; path = test/include/catch.hpp; sourceTree = SOURCE_ROOT; };
+		F174DDA5429F47FD89F29ED5 /* /Users/shiwei05/Documents/code/cpp-code/cpp_media_server/3rdparty/libsdptransform/test/parse.test.cpp */ = {isa = PBXFileReference; explicitFileType = sourcecode.cpp.cpp; fileEncoding = 4; name = parse.test.cpp; path = test/parse.test.cpp; sourceTree = SOURCE_ROOT; };
+		F75B9E767A434BB0A4B95DBB /* test_sdptransform */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; path = test_sdptransform; sourceTree = BUILT_PRODUCTS_DIR; };
+		F9ECCBE73B2641588DC310F2 /* sdptransform */ = {isa = PBXFileReference; explicitFileType = archive.ar; path = libsdptransform.a; sourceTree = BUILT_PRODUCTS_DIR; };
+		FA126115006142D7AB5AB659 /* /Users/shiwei05/Documents/code/cpp-code/cpp_media_server/3rdparty/libsdptransform/readme-helper/CMakeLists.txt */ = {isa = PBXFileReference; explicitFileType = sourcecode.text; fileEncoding = 4; name = CMakeLists.txt; path = "readme-helper/CMakeLists.txt"; sourceTree = SOURCE_ROOT; };
+		FA58125FB0FC4E43AFDB7E65 /* /Users/shiwei05/Documents/code/cpp-code/cpp_media_server/3rdparty/libsdptransform/src/writer.cpp */ = {isa = PBXFileReference; explicitFileType = sourcecode.cpp.cpp; fileEncoding = 4; name = writer.cpp; path = src/writer.cpp; sourceTree = SOURCE_ROOT; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
-		1B5C23EDD13D45078FD9C337 /* Frameworks */ = {
+		4E7F512D7D7A4676AB2356D9 /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
-		76AAB2F5B27842BCB5867D86 /* Frameworks */ = {
+		624C0043D546486D9942D93C /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
-		C8D84A405B9944B988631BAC /* Frameworks */ = {
+		C308AF118D0B499A9CB76220 /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -212,123 +212,123 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
-		0C9E4E5EC226449C95A2A34F = {
+		0E2652DAB6E54665B501D685 /* Source Files */ = {
 			isa = PBXGroup;
 			children = (
-				5E36D3AB99C1411885AC28F3 /* sdptransform */,
-				30CB5AC96A9E425699E35560 /* ALL_BUILD */,
-				8E97728EC99A4914A2D061F3 /* test_sdptransform */,
-				C37E6CC7E96047608CED9721 /* sdptransform_readme_helper */,
-				8E7BD61A65094D05A6157850 /* Products */,
-				605D2B175E9849F9A5152641 /* Frameworks */,
-			);
-			sourceTree = "<group>";
-		};
-		28A341F8FACE4381A0293FB4 /* Source Files */ = {
-			isa = PBXGroup;
-			children = (
-				C08A52DFFC034F488E17C48A /* /Users/shiwei05/Documents/code/cpp-code/cpp_media_server/3rdparty/libsdptransform/src/grammar.cpp */,
-				9D8318478A9D4829B6C80E0B /* /Users/shiwei05/Documents/code/cpp-code/cpp_media_server/3rdparty/libsdptransform/src/parser.cpp */,
-				7393B324890F49AA80D05BC7 /* /Users/shiwei05/Documents/code/cpp-code/cpp_media_server/3rdparty/libsdptransform/src/writer.cpp */,
+				AEDFF2935BF64384B36B6854 /* /Users/shiwei05/Documents/code/cpp-code/cpp_media_server/3rdparty/libsdptransform/src/grammar.cpp */,
+				446760EA38C6454384241808 /* /Users/shiwei05/Documents/code/cpp-code/cpp_media_server/3rdparty/libsdptransform/src/parser.cpp */,
+				FA58125FB0FC4E43AFDB7E65 /* /Users/shiwei05/Documents/code/cpp-code/cpp_media_server/3rdparty/libsdptransform/src/writer.cpp */,
 			);
 			name = "Source Files";
 			sourceTree = "<group>";
 		};
-		30CB5AC96A9E425699E35560 /* ALL_BUILD */ = {
+		17F49B092E3B44D386BFDFCA /* Header Files */ = {
 			isa = PBXGroup;
 			children = (
-				F1C5AFC76E704F979B67BD9F /* CMake Rules */,
-				7B1AD5668D4345F083D7DE9D /* /Users/shiwei05/Documents/code/cpp-code/cpp_media_server/3rdparty/libsdptransform/CMakeLists.txt */,
+				C0FE0F8A78A3467FBDCCFDB7 /* /Users/shiwei05/Documents/code/cpp-code/cpp_media_server/3rdparty/libsdptransform/include/json.hpp */,
+				608EC0E3F2B04199BBB1D6FA /* /Users/shiwei05/Documents/code/cpp-code/cpp_media_server/3rdparty/libsdptransform/include/sdptransform.hpp */,
+			);
+			name = "Header Files";
+			sourceTree = "<group>";
+		};
+		29D08F34D6014923968CB1A8 /* ALL_BUILD */ = {
+			isa = PBXGroup;
+			children = (
+				4A9232D86383490F98B31FB5 /* CMake Rules */,
+				6712EAAB017844A4BF65BCAA /* /Users/shiwei05/Documents/code/cpp-code/cpp_media_server/3rdparty/libsdptransform/CMakeLists.txt */,
 			);
 			name = ALL_BUILD;
 			sourceTree = "<group>";
 		};
-		39D1D3B197944F72B9604AB1 /* Source Files */ = {
+		317D737C3C1A4C7F9D21B65D /* test_sdptransform */ = {
 			isa = PBXGroup;
 			children = (
-				96B17CA264464D59909ECACD /* /Users/shiwei05/Documents/code/cpp-code/cpp_media_server/3rdparty/libsdptransform/readme-helper/readme.cpp */,
+				933C7FF5578940E3B9E70446 /* Source Files */,
+				728F4881D2B14205AA313986 /* Header Files */,
+				1EFFF92F870640C4BD026DAB /* /Users/shiwei05/Documents/code/cpp-code/cpp_media_server/3rdparty/libsdptransform/test/CMakeLists.txt */,
+			);
+			name = test_sdptransform;
+			sourceTree = "<group>";
+		};
+		4A9232D86383490F98B31FB5 /* CMake Rules */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			name = "CMake Rules";
+			sourceTree = "<group>";
+		};
+		728F4881D2B14205AA313986 /* Header Files */ = {
+			isa = PBXGroup;
+			children = (
+				D297B9FBA6B2404E8E5AC1DA /* /Users/shiwei05/Documents/code/cpp-code/cpp_media_server/3rdparty/libsdptransform/test/include/catch.hpp */,
+				CD5AF2C9944C4EC2BF665AA6 /* /Users/shiwei05/Documents/code/cpp-code/cpp_media_server/3rdparty/libsdptransform/test/include/helpers.hpp */,
+			);
+			name = "Header Files";
+			sourceTree = "<group>";
+		};
+		846422C2DF274400995B6823 = {
+			isa = PBXGroup;
+			children = (
+				9E584DC3F8CF46E480A55390 /* sdptransform */,
+				29D08F34D6014923968CB1A8 /* ALL_BUILD */,
+				317D737C3C1A4C7F9D21B65D /* test_sdptransform */,
+				872F609158E24F04ADAE9EF2 /* sdptransform_readme_helper */,
+				E94C0DC96AB14462A0C6EAA0 /* Products */,
+				AC759DC603234D47B811EC48 /* Frameworks */,
+			);
+			sourceTree = "<group>";
+		};
+		872F609158E24F04ADAE9EF2 /* sdptransform_readme_helper */ = {
+			isa = PBXGroup;
+			children = (
+				8B0FF8387D834151A98B883B /* Source Files */,
+				FA126115006142D7AB5AB659 /* /Users/shiwei05/Documents/code/cpp-code/cpp_media_server/3rdparty/libsdptransform/readme-helper/CMakeLists.txt */,
+			);
+			name = sdptransform_readme_helper;
+			sourceTree = "<group>";
+		};
+		8B0FF8387D834151A98B883B /* Source Files */ = {
+			isa = PBXGroup;
+			children = (
+				0DABBBB2E56149A68C8589AC /* /Users/shiwei05/Documents/code/cpp-code/cpp_media_server/3rdparty/libsdptransform/readme-helper/readme.cpp */,
 			);
 			name = "Source Files";
 			sourceTree = "<group>";
 		};
-		5E36D3AB99C1411885AC28F3 /* sdptransform */ = {
+		933C7FF5578940E3B9E70446 /* Source Files */ = {
 			isa = PBXGroup;
 			children = (
-				28A341F8FACE4381A0293FB4 /* Source Files */,
-				E41117B2D2214593A890204F /* Header Files */,
-				F6DE6D70BA1D40538C411D53 /* /Users/shiwei05/Documents/code/cpp-code/cpp_media_server/3rdparty/libsdptransform/CMakeLists.txt */,
+				F174DDA5429F47FD89F29ED5 /* /Users/shiwei05/Documents/code/cpp-code/cpp_media_server/3rdparty/libsdptransform/test/parse.test.cpp */,
+				95FC9600BC1244A59D89A967 /* /Users/shiwei05/Documents/code/cpp-code/cpp_media_server/3rdparty/libsdptransform/test/tests.cpp */,
+			);
+			name = "Source Files";
+			sourceTree = "<group>";
+		};
+		9E584DC3F8CF46E480A55390 /* sdptransform */ = {
+			isa = PBXGroup;
+			children = (
+				0E2652DAB6E54665B501D685 /* Source Files */,
+				17F49B092E3B44D386BFDFCA /* Header Files */,
+				72F1339E5DD940D1BC807247 /* /Users/shiwei05/Documents/code/cpp-code/cpp_media_server/3rdparty/libsdptransform/CMakeLists.txt */,
 			);
 			name = sdptransform;
 			sourceTree = "<group>";
 		};
-		605D2B175E9849F9A5152641 /* Frameworks */ = {
+		AC759DC603234D47B811EC48 /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
 			);
 			name = Frameworks;
 			sourceTree = "<group>";
 		};
-		62FF7C0FC0E6415899894B03 /* Header Files */ = {
+		E94C0DC96AB14462A0C6EAA0 /* Products */ = {
 			isa = PBXGroup;
 			children = (
-				C98BADEEF3B24B5FA4F3453C /* /Users/shiwei05/Documents/code/cpp-code/cpp_media_server/3rdparty/libsdptransform/test/include/catch.hpp */,
-				767E02A66FA64A549DFE17FB /* /Users/shiwei05/Documents/code/cpp-code/cpp_media_server/3rdparty/libsdptransform/test/include/helpers.hpp */,
-			);
-			name = "Header Files";
-			sourceTree = "<group>";
-		};
-		89CD3E64C8F94EC6B31B0C57 /* Source Files */ = {
-			isa = PBXGroup;
-			children = (
-				A1BEAF2E459449E8BEE4890C /* /Users/shiwei05/Documents/code/cpp-code/cpp_media_server/3rdparty/libsdptransform/test/parse.test.cpp */,
-				BACC0D384B33490C9BB2719D /* /Users/shiwei05/Documents/code/cpp-code/cpp_media_server/3rdparty/libsdptransform/test/tests.cpp */,
-			);
-			name = "Source Files";
-			sourceTree = "<group>";
-		};
-		8E7BD61A65094D05A6157850 /* Products */ = {
-			isa = PBXGroup;
-			children = (
-				D0FD2FEBE52C4F24AEF05053 /* sdptransform */,
-				F9E637069DA44F6E99167484 /* sdptransform_readme_helper */,
-				79F713FDFB4B4DFE8733A590 /* test_sdptransform */,
+				F9ECCBE73B2641588DC310F2 /* sdptransform */,
+				5BB23C6CE3B042F5B863BDEE /* sdptransform_readme_helper */,
+				F75B9E767A434BB0A4B95DBB /* test_sdptransform */,
 			);
 			name = Products;
-			sourceTree = "<group>";
-		};
-		8E97728EC99A4914A2D061F3 /* test_sdptransform */ = {
-			isa = PBXGroup;
-			children = (
-				89CD3E64C8F94EC6B31B0C57 /* Source Files */,
-				62FF7C0FC0E6415899894B03 /* Header Files */,
-				E27E903DD09942F1862A75B4 /* /Users/shiwei05/Documents/code/cpp-code/cpp_media_server/3rdparty/libsdptransform/test/CMakeLists.txt */,
-			);
-			name = test_sdptransform;
-			sourceTree = "<group>";
-		};
-		C37E6CC7E96047608CED9721 /* sdptransform_readme_helper */ = {
-			isa = PBXGroup;
-			children = (
-				39D1D3B197944F72B9604AB1 /* Source Files */,
-				1BC737A29A17429A8155F5D0 /* /Users/shiwei05/Documents/code/cpp-code/cpp_media_server/3rdparty/libsdptransform/readme-helper/CMakeLists.txt */,
-			);
-			name = sdptransform_readme_helper;
-			sourceTree = "<group>";
-		};
-		E41117B2D2214593A890204F /* Header Files */ = {
-			isa = PBXGroup;
-			children = (
-				D9D86FCDEA354758A5688F2B /* /Users/shiwei05/Documents/code/cpp-code/cpp_media_server/3rdparty/libsdptransform/include/json.hpp */,
-				26D16BF6AAE14215ACD57768 /* /Users/shiwei05/Documents/code/cpp-code/cpp_media_server/3rdparty/libsdptransform/include/sdptransform.hpp */,
-			);
-			name = "Header Files";
-			sourceTree = "<group>";
-		};
-		F1C5AFC76E704F979B67BD9F /* CMake Rules */ = {
-			isa = PBXGroup;
-			children = (
-			);
-			name = "CMake Rules";
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -336,55 +336,55 @@
 /* Begin PBXNativeTarget section */
 		A16CFF33900B4CC5B5A50B28 /* test_sdptransform */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = 65D206EFC1234C15AEAFB1BE /* Build configuration list for PBXNativeTarget "test_sdptransform" */;
+			buildConfigurationList = 13CB7A7C675E428ABA5C276A /* Build configuration list for PBXNativeTarget "test_sdptransform" */;
 			buildPhases = (
-				79F027D1FBE84D4F9EB81220 /* Sources */,
-				76AAB2F5B27842BCB5867D86 /* Frameworks */,
+				20E1D2547BE84B17A51BD324 /* Sources */,
+				C308AF118D0B499A9CB76220 /* Frameworks */,
 			);
 			buildRules = (
 			);
 			dependencies = (
-				02CDF5CE51F140D0BDBDCC98 /* PBXTargetDependency */,
-				AE3E96AC79FA498893044E45 /* PBXTargetDependency */,
+				9DF924D398714459934018CC /* PBXTargetDependency */,
+				EBE47F6014D24411A9FEB1A8 /* PBXTargetDependency */,
 			);
 			name = test_sdptransform;
 			productName = test_sdptransform;
-			productReference = 79F713FDFB4B4DFE8733A590 /* test_sdptransform */;
+			productReference = F75B9E767A434BB0A4B95DBB /* test_sdptransform */;
 			productType = "com.apple.product-type.tool";
 		};
 		A5FEE27BA1484349B6889D7D /* sdptransform */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = 6459A7C6F18349B9BDD2CE6E /* Build configuration list for PBXNativeTarget "sdptransform" */;
+			buildConfigurationList = 81AD9711A9F944C2A8947413 /* Build configuration list for PBXNativeTarget "sdptransform" */;
 			buildPhases = (
-				8BAA737116B84C7A8198E3FF /* Sources */,
-				C8D84A405B9944B988631BAC /* Frameworks */,
+				2B1683D897B947A09785DD43 /* Sources */,
+				624C0043D546486D9942D93C /* Frameworks */,
 			);
 			buildRules = (
 			);
 			dependencies = (
-				6A9D69AC797F44BB91F089C8 /* PBXTargetDependency */,
+				A76DCACA591E435D897629AD /* PBXTargetDependency */,
 			);
 			name = sdptransform;
 			productName = sdptransform;
-			productReference = D0FD2FEBE52C4F24AEF05053 /* sdptransform */;
+			productReference = F9ECCBE73B2641588DC310F2 /* sdptransform */;
 			productType = "com.apple.product-type.library.static";
 		};
 		CE98B7F816C7470783E0F9E1 /* sdptransform_readme_helper */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = 52DABE68C19B4993BD0CEB50 /* Build configuration list for PBXNativeTarget "sdptransform_readme_helper" */;
+			buildConfigurationList = 996E207B97994E879A6F4585 /* Build configuration list for PBXNativeTarget "sdptransform_readme_helper" */;
 			buildPhases = (
-				AA6E9862AFA44F3A9ABD371A /* Sources */,
-				1B5C23EDD13D45078FD9C337 /* Frameworks */,
+				22FE70A806FC46D2A205E6C3 /* Sources */,
+				4E7F512D7D7A4676AB2356D9 /* Frameworks */,
 			);
 			buildRules = (
 			);
 			dependencies = (
-				B19B55E591BC45719E972C3A /* PBXTargetDependency */,
-				46B396F71FA649D9B32ED3B6 /* PBXTargetDependency */,
+				744CEFC3088945DC94FC13A1 /* PBXTargetDependency */,
+				4137B425498C4042AFE71081 /* PBXTargetDependency */,
 			);
 			name = sdptransform_readme_helper;
 			productName = sdptransform_readme_helper;
-			productReference = F9E637069DA44F6E99167484 /* sdptransform_readme_helper */;
+			productReference = 5BB23C6CE3B042F5B863BDEE /* sdptransform_readme_helper */;
 			productType = "com.apple.product-type.tool";
 		};
 /* End PBXNativeTarget section */
@@ -396,18 +396,18 @@
 				BuildIndependentTargetsInParallel = YES;
 				LastUpgradeCheck = 1330;
 			};
-			buildConfigurationList = EBBB47D5D73A44C8AFF92E17 /* Build configuration list for PBXProject "sdptransform" */;
+			buildConfigurationList = 55A2592DD13F43FFA2B9F737 /* Build configuration list for PBXProject "sdptransform" */;
 			buildSettings = {
 			};
 			buildStyles = (
-				296AF599A8EB479DACA31311 /* Debug */,
-				8791663A59E44C72B2BC401E /* Release */,
-				5A241265B1244ABBB826160E /* MinSizeRel */,
-				B991F28AD9244A6091FDFCD5 /* RelWithDebInfo */,
+				9DCEAD3D2F964E97B345DA8A /* Debug */,
+				3654199414B246C28C87FA4C /* Release */,
+				06B83B2BF8F0411282217708 /* MinSizeRel */,
+				58B69A6B249A47E0888ADB62 /* RelWithDebInfo */,
 			);
 			compatibilityVersion = "Xcode 3.2";
 			hasScannedForEncodings = 0;
-			mainGroup = 0C9E4E5EC226449C95A2A34F;
+			mainGroup = 846422C2DF274400995B6823;
 			projectDirPath = .;
 			projectRoot = "";
 			targets = (
@@ -567,372 +567,90 @@ exit 0";
 /* End PBXShellScriptBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
-		79F027D1FBE84D4F9EB81220 /* Sources */ = {
+		20E1D2547BE84B17A51BD324 /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				C6FF25D23C774FFFB4595305 /* /Users/shiwei05/Documents/code/cpp-code/cpp_media_server/3rdparty/libsdptransform/test/parse.test.cpp */,
-				CE150447BCA4448A9494904E /* /Users/shiwei05/Documents/code/cpp-code/cpp_media_server/3rdparty/libsdptransform/test/tests.cpp */,
+				EA46D73B2D0245B7B3FBFB1E /* /Users/shiwei05/Documents/code/cpp-code/cpp_media_server/3rdparty/libsdptransform/test/parse.test.cpp */,
+				566FFF42BBDE45759D1625B6 /* /Users/shiwei05/Documents/code/cpp-code/cpp_media_server/3rdparty/libsdptransform/test/tests.cpp */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
-		8BAA737116B84C7A8198E3FF /* Sources */ = {
+		22FE70A806FC46D2A205E6C3 /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				332AD3468DB84E4D80766D94 /* /Users/shiwei05/Documents/code/cpp-code/cpp_media_server/3rdparty/libsdptransform/src/grammar.cpp */,
-				76815516095E44D1ABB64933 /* /Users/shiwei05/Documents/code/cpp-code/cpp_media_server/3rdparty/libsdptransform/src/parser.cpp */,
-				C5ECB6CCF886458A88570569 /* /Users/shiwei05/Documents/code/cpp-code/cpp_media_server/3rdparty/libsdptransform/src/writer.cpp */,
+				1AF9AD73EF5D40ABAD027333 /* /Users/shiwei05/Documents/code/cpp-code/cpp_media_server/3rdparty/libsdptransform/readme-helper/readme.cpp */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
-		AA6E9862AFA44F3A9ABD371A /* Sources */ = {
+		2B1683D897B947A09785DD43 /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				F1A4268024184C97A9FC8601 /* /Users/shiwei05/Documents/code/cpp-code/cpp_media_server/3rdparty/libsdptransform/readme-helper/readme.cpp */,
+				3F4A95B7BFC349E0AD185A28 /* /Users/shiwei05/Documents/code/cpp-code/cpp_media_server/3rdparty/libsdptransform/src/grammar.cpp */,
+				0FD9AFBB11EC452BA95CE00F /* /Users/shiwei05/Documents/code/cpp-code/cpp_media_server/3rdparty/libsdptransform/src/parser.cpp */,
+				19D97CC7355147DDBF873B49 /* /Users/shiwei05/Documents/code/cpp-code/cpp_media_server/3rdparty/libsdptransform/src/writer.cpp */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXSourcesBuildPhase section */
 
 /* Begin PBXTargetDependency section */
-		02CDF5CE51F140D0BDBDCC98 /* PBXTargetDependency */ = {
+		019D2ABB5C5B460EAA45C446 /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
 			target = A5FEE27BA1484349B6889D7D /* sdptransform */;
-			targetProxy = D5FA0105EC624BFFAE60FC45 /* PBXContainerItemProxy */;
+			targetProxy = 23001ABD74574808A17334D8 /* PBXContainerItemProxy */;
 		};
-		113FC1246ECC44F8827C0B3E /* PBXTargetDependency */ = {
-			isa = PBXTargetDependency;
-			target = CE98B7F816C7470783E0F9E1 /* sdptransform_readme_helper */;
-			targetProxy = BA337B5A533D471DB0AA4CB2 /* PBXContainerItemProxy */;
-		};
-		16D7726BAFC64A32B182D8D1 /* PBXTargetDependency */ = {
-			isa = PBXTargetDependency;
-			target = E922091AD0944DDCBB5EDF06 /* ZERO_CHECK */;
-			targetProxy = 19CB78BC04A2464398FE816B /* PBXContainerItemProxy */;
-		};
-		46B396F71FA649D9B32ED3B6 /* PBXTargetDependency */ = {
-			isa = PBXTargetDependency;
-			target = E922091AD0944DDCBB5EDF06 /* ZERO_CHECK */;
-			targetProxy = 7DE4317651904835942BC95B /* PBXContainerItemProxy */;
-		};
-		6A9D69AC797F44BB91F089C8 /* PBXTargetDependency */ = {
-			isa = PBXTargetDependency;
-			target = E922091AD0944DDCBB5EDF06 /* ZERO_CHECK */;
-			targetProxy = CCAC9AC499C34CBC908FEABD /* PBXContainerItemProxy */;
-		};
-		72EE247FC4F349C389347708 /* PBXTargetDependency */ = {
-			isa = PBXTargetDependency;
-			target = F533115BE7AD4D48A717579C /* ALL_BUILD */;
-			targetProxy = 0071DE36C40D4761BC96B389 /* PBXContainerItemProxy */;
-		};
-		7D9DCAD29D2449E68D740797 /* PBXTargetDependency */ = {
+		0C03754C1BC54386B86A9512 /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
 			target = A16CFF33900B4CC5B5A50B28 /* test_sdptransform */;
-			targetProxy = 2D11DBE15E9746E88F9522DD /* PBXContainerItemProxy */;
+			targetProxy = E6E3B8870D414F15BA5F85E1 /* PBXContainerItemProxy */;
 		};
-		AE3E96AC79FA498893044E45 /* PBXTargetDependency */ = {
+		1809970FF2A94DE6A78EE93D /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = F533115BE7AD4D48A717579C /* ALL_BUILD */;
+			targetProxy = 5D406C7895A54B01888CB4A7 /* PBXContainerItemProxy */;
+		};
+		4137B425498C4042AFE71081 /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
 			target = E922091AD0944DDCBB5EDF06 /* ZERO_CHECK */;
-			targetProxy = 2109B5A2DAE8465C95480F88 /* PBXContainerItemProxy */;
+			targetProxy = AAB4717790074C2DABCFCE48 /* PBXContainerItemProxy */;
 		};
-		B19B55E591BC45719E972C3A /* PBXTargetDependency */ = {
+		744CEFC3088945DC94FC13A1 /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
 			target = A5FEE27BA1484349B6889D7D /* sdptransform */;
-			targetProxy = 9D17C7E453B1480EBA8E21FB /* PBXContainerItemProxy */;
+			targetProxy = 37B1EA08D94D450EBE9FEBD1 /* PBXContainerItemProxy */;
 		};
-		FBF05363EAFC47DF8486014A /* PBXTargetDependency */ = {
+		8B386BE4B2384EC9B8698EB3 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = E922091AD0944DDCBB5EDF06 /* ZERO_CHECK */;
+			targetProxy = E575EF8AA1F040939D02A02B /* PBXContainerItemProxy */;
+		};
+		9DF924D398714459934018CC /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
 			target = A5FEE27BA1484349B6889D7D /* sdptransform */;
-			targetProxy = D5A54438E5F24BF185E2FD9E /* PBXContainerItemProxy */;
+			targetProxy = B6143BECF1F244838582C41E /* PBXContainerItemProxy */;
+		};
+		A76DCACA591E435D897629AD /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = E922091AD0944DDCBB5EDF06 /* ZERO_CHECK */;
+			targetProxy = 133B1C52C5C64291972ABAC6 /* PBXContainerItemProxy */;
+		};
+		D2D234C6E9774898BEA26AE2 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = CE98B7F816C7470783E0F9E1 /* sdptransform_readme_helper */;
+			targetProxy = 291B19FFA5AA42379883F040 /* PBXContainerItemProxy */;
+		};
+		EBE47F6014D24411A9FEB1A8 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = E922091AD0944DDCBB5EDF06 /* ZERO_CHECK */;
+			targetProxy = B7D75077344D4DFC9E840FB4 /* PBXContainerItemProxy */;
 		};
 /* End PBXTargetDependency section */
 
 /* Begin XCBuildConfiguration section */
-		0C5FFA1FD735448D81F97105 /* Release */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				COMBINE_HIDPI_IMAGES = YES;
-				GCC_GENERATE_DEBUGGING_SYMBOLS = YES;
-				GCC_INLINES_ARE_PRIVATE_EXTERN = NO;
-				GCC_OPTIMIZATION_LEVEL = 0;
-				GCC_PREPROCESSOR_DEFINITIONS = ("'CMAKE_INTDIR=\"$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)\"'","$(inherited)");
-				GCC_SYMBOLS_PRIVATE_EXTERN = NO;
-				INSTALL_PATH = "";
-				OTHER_LDFLAGS = ("","$(inherited)");
-				OTHER_REZFLAGS = "";
-				PRODUCT_NAME = ZERO_CHECK;
-				SECTORDER_FLAGS = "";
-				SYMROOT = "/Users/shiwei05/Documents/code/cpp-code/cpp_media_server/3rdparty/libsdptransform";
-				USE_HEADERMAP = NO;
-				WARNING_CFLAGS = ("$(inherited)");
-			};
-			name = Release;
-		};
-		1BA42668BBD04CBFA1B86BAB /* Debug */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				COMBINE_HIDPI_IMAGES = YES;
-				EXECUTABLE_PREFIX = "";
-				EXECUTABLE_SUFFIX = "";
-				GCC_GENERATE_DEBUGGING_SYMBOLS = YES;
-				GCC_INLINES_ARE_PRIVATE_EXTERN = NO;
-				GCC_OPTIMIZATION_LEVEL = 0;
-				GCC_PREPROCESSOR_DEFINITIONS = ("'CMAKE_INTDIR=\"$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)\"'","$(inherited)");
-				GCC_SYMBOLS_PRIVATE_EXTERN = NO;
-				HEADER_SEARCH_PATHS = ("/Users/shiwei05/Documents/code/cpp-code/cpp_media_server/src","/Users/shiwei05/Documents/code/cpp-code/cpp_media_server/src/net","/Users/shiwei05/Documents/code/cpp-code/cpp_media_server/src/net/http","/Users/shiwei05/Documents/code/cpp-code/cpp_media_server/src/net/rtmp","/Users/shiwei05/Documents/code/cpp-code/cpp_media_server/src/net/websocket","/Users/shiwei05/Documents/code/cpp-code/cpp_media_server/src/net/websocket/wsimple","/Users/shiwei05/Documents/code/cpp-code/cpp_media_server/src/net/tcp","/Users/shiwei05/Documents/code/cpp-code/cpp_media_server/src/net/stun","/Users/shiwei05/Documents/code/cpp-code/cpp_media_server/src/net/httpflv","/Users/shiwei05/Documents/code/cpp-code/cpp_media_server/src/net/rtprtcp","/Users/shiwei05/Documents/code/cpp-code/cpp_media_server/src/net/hls","/Users/shiwei05/Documents/code/cpp-code/cpp_media_server/src/net/webrtc","/Users/shiwei05/Documents/code/cpp-code/cpp_media_server/src/net/webrtc/libwebrtc","/Users/shiwei05/Documents/code/cpp-code/cpp_media_server/src/format","/Users/shiwei05/Documents/code/cpp-code/cpp_media_server/src/format/flv","/Users/shiwei05/Documents/code/cpp-code/cpp_media_server/src/utils","/Users/shiwei05/Documents/code/cpp-code/cpp_media_server/src/utils/av","/Users/shiwei05/Documents/code/cpp-code/cpp_media_server/3rdparty/libsdptransform/include","/Users/shiwei05/Documents/code/cpp-code/cpp_media_server/output/include","/Users/shiwei05/Documents/code/cpp-code/cpp_media_server/output/include/srtp2","/Users/shiwei05/Documents/code/cpp-code/cpp_media_server/output/include/openssl",/usr/local/include,"$(inherited)");
-				INSTALL_PATH = "";
-				LD_RUNPATH_SEARCH_PATHS = ("/Users/shiwei05/Documents/code/cpp-code/cpp_media_server/output/lib /usr/local/lib64 /usr/local/lib","$(inherited)");
-				LIBRARY_SEARCH_PATHS = ("/Users/shiwei05/Documents/code/cpp-code/cpp_media_server/output/lib/$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)","/Users/shiwei05/Documents/code/cpp-code/cpp_media_server/output/lib","/usr/local/lib64/$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)",/usr/local/lib64,"/usr/local/lib/$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)",/usr/local/lib,"$(inherited)");
-				OTHER_CPLUSPLUSFLAGS = " -std=c++11    -Wno-deprecated -Wno-deprecated-declarations -Wno-reorder -Wall -fexceptions -frtti -D__STDC_FORMAT_MACROS -fPIC    '-std=c++11' '-std=c++11' ";
-				OTHER_LDFLAGS = (" -Wl,-search_paths_first -Wl,-headerpad_max_install_names","/Users/shiwei05/Documents/code/cpp-code/cpp_media_server/output/lib/Debug/libsdptransform.a","$(inherited)");
-				OTHER_REZFLAGS = "";
-				PRODUCT_NAME = sdptransform_readme_helper;
-				SECTORDER_FLAGS = "";
-				SYMROOT = "/Users/shiwei05/Documents/code/cpp-code/cpp_media_server/3rdparty/libsdptransform/readme-helper";
-				USE_HEADERMAP = NO;
-				WARNING_CFLAGS = ("$(inherited)");
-			};
-			name = Debug;
-		};
-		2517DEF60F524085ADAF04CC /* Release */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				ARCHS = "$(NATIVE_ARCH_ACTUAL)";
-				ONLY_ACTIVE_ARCH = YES;
-				SDKROOT = /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX12.3.sdk;
-				SYMROOT = "/Users/shiwei05/Documents/code/cpp-code/cpp_media_server/3rdparty/libsdptransform/build";
-			};
-			name = Release;
-		};
-		26B87A8FD704492A942A2914 /* MinSizeRel */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				COMBINE_HIDPI_IMAGES = YES;
-				GCC_GENERATE_DEBUGGING_SYMBOLS = YES;
-				GCC_INLINES_ARE_PRIVATE_EXTERN = NO;
-				GCC_OPTIMIZATION_LEVEL = 0;
-				GCC_PREPROCESSOR_DEFINITIONS = ("'CMAKE_INTDIR=\"$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)\"'","$(inherited)");
-				GCC_SYMBOLS_PRIVATE_EXTERN = NO;
-				INSTALL_PATH = "";
-				OTHER_LDFLAGS = ("","$(inherited)");
-				OTHER_REZFLAGS = "";
-				PRODUCT_NAME = install;
-				SECTORDER_FLAGS = "";
-				SYMROOT = "/Users/shiwei05/Documents/code/cpp-code/cpp_media_server/3rdparty/libsdptransform";
-				USE_HEADERMAP = NO;
-				WARNING_CFLAGS = ("$(inherited)");
-			};
-			name = MinSizeRel;
-		};
-		2A29936FE4BF43359B380353 /* RelWithDebInfo */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				COMBINE_HIDPI_IMAGES = YES;
-				GCC_GENERATE_DEBUGGING_SYMBOLS = YES;
-				GCC_INLINES_ARE_PRIVATE_EXTERN = NO;
-				GCC_OPTIMIZATION_LEVEL = 0;
-				GCC_PREPROCESSOR_DEFINITIONS = ("'CMAKE_INTDIR=\"$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)\"'","$(inherited)");
-				GCC_SYMBOLS_PRIVATE_EXTERN = NO;
-				INSTALL_PATH = "";
-				OTHER_LDFLAGS = ("","$(inherited)");
-				OTHER_REZFLAGS = "";
-				PRODUCT_NAME = ALL_BUILD;
-				SECTORDER_FLAGS = "";
-				SYMROOT = "/Users/shiwei05/Documents/code/cpp-code/cpp_media_server/3rdparty/libsdptransform";
-				USE_HEADERMAP = NO;
-				WARNING_CFLAGS = ("$(inherited)");
-			};
-			name = RelWithDebInfo;
-		};
-		2B916E686FB8419291F3478E /* MinSizeRel */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				COMBINE_HIDPI_IMAGES = YES;
-				GCC_GENERATE_DEBUGGING_SYMBOLS = YES;
-				GCC_INLINES_ARE_PRIVATE_EXTERN = NO;
-				GCC_OPTIMIZATION_LEVEL = 0;
-				GCC_PREPROCESSOR_DEFINITIONS = ("'CMAKE_INTDIR=\"$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)\"'","$(inherited)");
-				GCC_SYMBOLS_PRIVATE_EXTERN = NO;
-				INSTALL_PATH = "";
-				OTHER_LDFLAGS = ("","$(inherited)");
-				OTHER_REZFLAGS = "";
-				PRODUCT_NAME = ALL_BUILD;
-				SECTORDER_FLAGS = "";
-				SYMROOT = "/Users/shiwei05/Documents/code/cpp-code/cpp_media_server/3rdparty/libsdptransform";
-				USE_HEADERMAP = NO;
-				WARNING_CFLAGS = ("$(inherited)");
-			};
-			name = MinSizeRel;
-		};
-		3F9E6EBD06754669B77E0978 /* RelWithDebInfo */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				ARCHS = "$(NATIVE_ARCH_ACTUAL)";
-				ONLY_ACTIVE_ARCH = YES;
-				SDKROOT = /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX12.3.sdk;
-				SYMROOT = "/Users/shiwei05/Documents/code/cpp-code/cpp_media_server/3rdparty/libsdptransform/build";
-			};
-			name = RelWithDebInfo;
-		};
-		57354B40D45D4C4DBBB3CDCF /* RelWithDebInfo */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				COMBINE_HIDPI_IMAGES = YES;
-				GCC_GENERATE_DEBUGGING_SYMBOLS = YES;
-				GCC_INLINES_ARE_PRIVATE_EXTERN = NO;
-				GCC_OPTIMIZATION_LEVEL = 0;
-				GCC_PREPROCESSOR_DEFINITIONS = ("'CMAKE_INTDIR=\"$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)\"'","$(inherited)");
-				GCC_SYMBOLS_PRIVATE_EXTERN = NO;
-				INSTALL_PATH = "";
-				OTHER_LDFLAGS = ("","$(inherited)");
-				OTHER_REZFLAGS = "";
-				PRODUCT_NAME = ZERO_CHECK;
-				SECTORDER_FLAGS = "";
-				SYMROOT = "/Users/shiwei05/Documents/code/cpp-code/cpp_media_server/3rdparty/libsdptransform";
-				USE_HEADERMAP = NO;
-				WARNING_CFLAGS = ("$(inherited)");
-			};
-			name = RelWithDebInfo;
-		};
-		65474B0E8964433A81595CCA /* Debug */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				COMBINE_HIDPI_IMAGES = YES;
-				GCC_GENERATE_DEBUGGING_SYMBOLS = YES;
-				GCC_INLINES_ARE_PRIVATE_EXTERN = NO;
-				GCC_OPTIMIZATION_LEVEL = 0;
-				GCC_PREPROCESSOR_DEFINITIONS = ("'CMAKE_INTDIR=\"$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)\"'","$(inherited)");
-				GCC_SYMBOLS_PRIVATE_EXTERN = NO;
-				INSTALL_PATH = "";
-				OTHER_LDFLAGS = ("","$(inherited)");
-				OTHER_REZFLAGS = "";
-				PRODUCT_NAME = ALL_BUILD;
-				SECTORDER_FLAGS = "";
-				SYMROOT = "/Users/shiwei05/Documents/code/cpp-code/cpp_media_server/3rdparty/libsdptransform";
-				USE_HEADERMAP = NO;
-				WARNING_CFLAGS = ("$(inherited)");
-			};
-			name = Debug;
-		};
-		750891CD1E4448B0B34F9C4B /* Debug */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				ARCHS = "$(NATIVE_ARCH_ACTUAL)";
-				ONLY_ACTIVE_ARCH = YES;
-				SDKROOT = /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX12.3.sdk;
-				SYMROOT = "/Users/shiwei05/Documents/code/cpp-code/cpp_media_server/3rdparty/libsdptransform/build";
-			};
-			name = Debug;
-		};
-		8A22F1382D8140F4A3AA5BF6 /* MinSizeRel */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				COMBINE_HIDPI_IMAGES = YES;
-				GCC_GENERATE_DEBUGGING_SYMBOLS = YES;
-				GCC_INLINES_ARE_PRIVATE_EXTERN = NO;
-				GCC_OPTIMIZATION_LEVEL = 0;
-				GCC_PREPROCESSOR_DEFINITIONS = ("'CMAKE_INTDIR=\"$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)\"'","$(inherited)");
-				GCC_SYMBOLS_PRIVATE_EXTERN = NO;
-				INSTALL_PATH = "";
-				OTHER_LDFLAGS = ("","$(inherited)");
-				OTHER_REZFLAGS = "";
-				PRODUCT_NAME = ZERO_CHECK;
-				SECTORDER_FLAGS = "";
-				SYMROOT = "/Users/shiwei05/Documents/code/cpp-code/cpp_media_server/3rdparty/libsdptransform";
-				USE_HEADERMAP = NO;
-				WARNING_CFLAGS = ("$(inherited)");
-			};
-			name = MinSizeRel;
-		};
-		92EC59147EB74E17854E62EC /* MinSizeRel */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				COMBINE_HIDPI_IMAGES = YES;
-				CONFIGURATION_BUILD_DIR = "/Users/shiwei05/Documents/code/cpp-code/cpp_media_server/output/lib/MinSizeRel";
-				EXECUTABLE_PREFIX = lib;
-				EXECUTABLE_SUFFIX = .a;
-				GCC_GENERATE_DEBUGGING_SYMBOLS = YES;
-				GCC_INLINES_ARE_PRIVATE_EXTERN = NO;
-				GCC_OPTIMIZATION_LEVEL = s;
-				GCC_PREPROCESSOR_DEFINITIONS = ("'CMAKE_INTDIR=\"$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)\"'","$(inherited)");
-				GCC_SYMBOLS_PRIVATE_EXTERN = NO;
-				HEADER_SEARCH_PATHS = ("/Users/shiwei05/Documents/code/cpp-code/cpp_media_server/src","/Users/shiwei05/Documents/code/cpp-code/cpp_media_server/src/net","/Users/shiwei05/Documents/code/cpp-code/cpp_media_server/src/net/http","/Users/shiwei05/Documents/code/cpp-code/cpp_media_server/src/net/rtmp","/Users/shiwei05/Documents/code/cpp-code/cpp_media_server/src/net/websocket","/Users/shiwei05/Documents/code/cpp-code/cpp_media_server/src/net/websocket/wsimple","/Users/shiwei05/Documents/code/cpp-code/cpp_media_server/src/net/tcp","/Users/shiwei05/Documents/code/cpp-code/cpp_media_server/src/net/stun","/Users/shiwei05/Documents/code/cpp-code/cpp_media_server/src/net/httpflv","/Users/shiwei05/Documents/code/cpp-code/cpp_media_server/src/net/rtprtcp","/Users/shiwei05/Documents/code/cpp-code/cpp_media_server/src/net/hls","/Users/shiwei05/Documents/code/cpp-code/cpp_media_server/src/net/webrtc","/Users/shiwei05/Documents/code/cpp-code/cpp_media_server/src/net/webrtc/libwebrtc","/Users/shiwei05/Documents/code/cpp-code/cpp_media_server/src/format","/Users/shiwei05/Documents/code/cpp-code/cpp_media_server/src/format/flv","/Users/shiwei05/Documents/code/cpp-code/cpp_media_server/src/utils","/Users/shiwei05/Documents/code/cpp-code/cpp_media_server/src/utils/av","/Users/shiwei05/Documents/code/cpp-code/cpp_media_server/3rdparty/libsdptransform/include","/Users/shiwei05/Documents/code/cpp-code/cpp_media_server/output/include","/Users/shiwei05/Documents/code/cpp-code/cpp_media_server/output/include/srtp2","/Users/shiwei05/Documents/code/cpp-code/cpp_media_server/output/include/openssl",/usr/local/include,"$(inherited)");
-				INSTALL_PATH = "";
-				LIBRARY_STYLE = STATIC;
-				OTHER_CPLUSPLUSFLAGS = " -std=c++11    -Wno-deprecated -Wno-deprecated-declarations -Wno-reorder -Wall -fexceptions -frtti -D__STDC_FORMAT_MACROS -fPIC     -DNDEBUG '-std=c++11' '-std=c++11' ";
-				OTHER_LIBTOOLFLAGS = ("");
-				OTHER_REZFLAGS = "";
-				PRODUCT_NAME = sdptransform;
-				SECTORDER_FLAGS = "";
-				SYMROOT = "/Users/shiwei05/Documents/code/cpp-code/cpp_media_server/3rdparty/libsdptransform";
-				USE_HEADERMAP = NO;
-				WARNING_CFLAGS = ("$(inherited)");
-			};
-			name = MinSizeRel;
-		};
-		A7D5E2955D2B492683BC7D7D /* Release */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				COMBINE_HIDPI_IMAGES = YES;
-				GCC_GENERATE_DEBUGGING_SYMBOLS = YES;
-				GCC_INLINES_ARE_PRIVATE_EXTERN = NO;
-				GCC_OPTIMIZATION_LEVEL = 0;
-				GCC_PREPROCESSOR_DEFINITIONS = ("'CMAKE_INTDIR=\"$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)\"'","$(inherited)");
-				GCC_SYMBOLS_PRIVATE_EXTERN = NO;
-				INSTALL_PATH = "";
-				OTHER_LDFLAGS = ("","$(inherited)");
-				OTHER_REZFLAGS = "";
-				PRODUCT_NAME = install;
-				SECTORDER_FLAGS = "";
-				SYMROOT = "/Users/shiwei05/Documents/code/cpp-code/cpp_media_server/3rdparty/libsdptransform";
-				USE_HEADERMAP = NO;
-				WARNING_CFLAGS = ("$(inherited)");
-			};
-			name = Release;
-		};
-		B82A97D0F0D14972BEB45454 /* Debug */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				COMBINE_HIDPI_IMAGES = YES;
-				GCC_GENERATE_DEBUGGING_SYMBOLS = YES;
-				GCC_INLINES_ARE_PRIVATE_EXTERN = NO;
-				GCC_OPTIMIZATION_LEVEL = 0;
-				GCC_PREPROCESSOR_DEFINITIONS = ("'CMAKE_INTDIR=\"$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)\"'","$(inherited)");
-				GCC_SYMBOLS_PRIVATE_EXTERN = NO;
-				INSTALL_PATH = "";
-				OTHER_LDFLAGS = ("","$(inherited)");
-				OTHER_REZFLAGS = "";
-				PRODUCT_NAME = ZERO_CHECK;
-				SECTORDER_FLAGS = "";
-				SYMROOT = "/Users/shiwei05/Documents/code/cpp-code/cpp_media_server/3rdparty/libsdptransform";
-				USE_HEADERMAP = NO;
-				WARNING_CFLAGS = ("$(inherited)");
-			};
-			name = Debug;
-		};
-		BC316108E13747FE9486CCAE /* Debug */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				COMBINE_HIDPI_IMAGES = YES;
-				GCC_GENERATE_DEBUGGING_SYMBOLS = YES;
-				GCC_INLINES_ARE_PRIVATE_EXTERN = NO;
-				GCC_OPTIMIZATION_LEVEL = 0;
-				GCC_PREPROCESSOR_DEFINITIONS = ("'CMAKE_INTDIR=\"$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)\"'","$(inherited)");
-				GCC_SYMBOLS_PRIVATE_EXTERN = NO;
-				INSTALL_PATH = "";
-				OTHER_LDFLAGS = ("","$(inherited)");
-				OTHER_REZFLAGS = "";
-				PRODUCT_NAME = install;
-				SECTORDER_FLAGS = "";
-				SYMROOT = "/Users/shiwei05/Documents/code/cpp-code/cpp_media_server/3rdparty/libsdptransform";
-				USE_HEADERMAP = NO;
-				WARNING_CFLAGS = ("$(inherited)");
-			};
-			name = Debug;
-		};
-		BF24E218458740BCA8D5324F /* Release */ = {
+		142404B192694C169DAA62EB /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				COMBINE_HIDPI_IMAGES = YES;
@@ -958,7 +676,7 @@ exit 0";
 			};
 			name = Release;
 		};
-		BFBB7AE7BCE2433F84307EFC /* RelWithDebInfo */ = {
+		14B885593172408AB7A6ECCB /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				COMBINE_HIDPI_IMAGES = YES;
@@ -966,195 +684,25 @@ exit 0";
 				EXECUTABLE_SUFFIX = "";
 				GCC_GENERATE_DEBUGGING_SYMBOLS = YES;
 				GCC_INLINES_ARE_PRIVATE_EXTERN = NO;
-				GCC_OPTIMIZATION_LEVEL = 2;
-				GCC_PREPROCESSOR_DEFINITIONS = ("'CMAKE_INTDIR=\"$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)\"'","$(inherited)");
-				GCC_SYMBOLS_PRIVATE_EXTERN = NO;
-				HEADER_SEARCH_PATHS = ("/Users/shiwei05/Documents/code/cpp-code/cpp_media_server/src","/Users/shiwei05/Documents/code/cpp-code/cpp_media_server/src/net","/Users/shiwei05/Documents/code/cpp-code/cpp_media_server/src/net/http","/Users/shiwei05/Documents/code/cpp-code/cpp_media_server/src/net/rtmp","/Users/shiwei05/Documents/code/cpp-code/cpp_media_server/src/net/websocket","/Users/shiwei05/Documents/code/cpp-code/cpp_media_server/src/net/websocket/wsimple","/Users/shiwei05/Documents/code/cpp-code/cpp_media_server/src/net/tcp","/Users/shiwei05/Documents/code/cpp-code/cpp_media_server/src/net/stun","/Users/shiwei05/Documents/code/cpp-code/cpp_media_server/src/net/httpflv","/Users/shiwei05/Documents/code/cpp-code/cpp_media_server/src/net/rtprtcp","/Users/shiwei05/Documents/code/cpp-code/cpp_media_server/src/net/hls","/Users/shiwei05/Documents/code/cpp-code/cpp_media_server/src/net/webrtc","/Users/shiwei05/Documents/code/cpp-code/cpp_media_server/src/net/webrtc/libwebrtc","/Users/shiwei05/Documents/code/cpp-code/cpp_media_server/src/format","/Users/shiwei05/Documents/code/cpp-code/cpp_media_server/src/format/flv","/Users/shiwei05/Documents/code/cpp-code/cpp_media_server/src/utils","/Users/shiwei05/Documents/code/cpp-code/cpp_media_server/src/utils/av","/Users/shiwei05/Documents/code/cpp-code/cpp_media_server/3rdparty/libsdptransform/include","/Users/shiwei05/Documents/code/cpp-code/cpp_media_server/output/include","/Users/shiwei05/Documents/code/cpp-code/cpp_media_server/output/include/srtp2","/Users/shiwei05/Documents/code/cpp-code/cpp_media_server/output/include/openssl",/usr/local/include,"/Users/shiwei05/Documents/code/cpp-code/cpp_media_server/3rdparty/libsdptransform/test/include","$(inherited)");
-				INSTALL_PATH = "";
-				LD_RUNPATH_SEARCH_PATHS = ("/Users/shiwei05/Documents/code/cpp-code/cpp_media_server/output/lib /usr/local/lib64 /usr/local/lib","$(inherited)");
-				LIBRARY_SEARCH_PATHS = ("/Users/shiwei05/Documents/code/cpp-code/cpp_media_server/output/lib/$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)","/Users/shiwei05/Documents/code/cpp-code/cpp_media_server/output/lib","/usr/local/lib64/$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)",/usr/local/lib64,"/usr/local/lib/$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)",/usr/local/lib,"$(inherited)");
-				OTHER_CPLUSPLUSFLAGS = " -std=c++11    -Wno-deprecated -Wno-deprecated-declarations -Wno-reorder -Wall -fexceptions -frtti -D__STDC_FORMAT_MACROS -fPIC        -DNDEBUG '-std=c++11' '-std=c++11' ";
-				OTHER_LDFLAGS = (" -Wl,-search_paths_first -Wl,-headerpad_max_install_names","/Users/shiwei05/Documents/code/cpp-code/cpp_media_server/output/lib/RelWithDebInfo/libsdptransform.a","$(inherited)");
-				OTHER_REZFLAGS = "";
-				PRODUCT_NAME = test_sdptransform;
-				SECTORDER_FLAGS = "";
-				SYMROOT = "/Users/shiwei05/Documents/code/cpp-code/cpp_media_server/3rdparty/libsdptransform/test";
-				USE_HEADERMAP = NO;
-				WARNING_CFLAGS = ("$(inherited)");
-			};
-			name = RelWithDebInfo;
-		};
-		C25E628F4DC141939E3BBACC /* RelWithDebInfo */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				COMBINE_HIDPI_IMAGES = YES;
-				EXECUTABLE_PREFIX = "";
-				EXECUTABLE_SUFFIX = "";
-				GCC_GENERATE_DEBUGGING_SYMBOLS = YES;
-				GCC_INLINES_ARE_PRIVATE_EXTERN = NO;
-				GCC_OPTIMIZATION_LEVEL = 2;
+				GCC_OPTIMIZATION_LEVEL = 0;
 				GCC_PREPROCESSOR_DEFINITIONS = ("'CMAKE_INTDIR=\"$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)\"'","$(inherited)");
 				GCC_SYMBOLS_PRIVATE_EXTERN = NO;
 				HEADER_SEARCH_PATHS = ("/Users/shiwei05/Documents/code/cpp-code/cpp_media_server/src","/Users/shiwei05/Documents/code/cpp-code/cpp_media_server/src/net","/Users/shiwei05/Documents/code/cpp-code/cpp_media_server/src/net/http","/Users/shiwei05/Documents/code/cpp-code/cpp_media_server/src/net/rtmp","/Users/shiwei05/Documents/code/cpp-code/cpp_media_server/src/net/websocket","/Users/shiwei05/Documents/code/cpp-code/cpp_media_server/src/net/websocket/wsimple","/Users/shiwei05/Documents/code/cpp-code/cpp_media_server/src/net/tcp","/Users/shiwei05/Documents/code/cpp-code/cpp_media_server/src/net/stun","/Users/shiwei05/Documents/code/cpp-code/cpp_media_server/src/net/httpflv","/Users/shiwei05/Documents/code/cpp-code/cpp_media_server/src/net/rtprtcp","/Users/shiwei05/Documents/code/cpp-code/cpp_media_server/src/net/hls","/Users/shiwei05/Documents/code/cpp-code/cpp_media_server/src/net/webrtc","/Users/shiwei05/Documents/code/cpp-code/cpp_media_server/src/net/webrtc/libwebrtc","/Users/shiwei05/Documents/code/cpp-code/cpp_media_server/src/format","/Users/shiwei05/Documents/code/cpp-code/cpp_media_server/src/format/flv","/Users/shiwei05/Documents/code/cpp-code/cpp_media_server/src/utils","/Users/shiwei05/Documents/code/cpp-code/cpp_media_server/src/utils/av","/Users/shiwei05/Documents/code/cpp-code/cpp_media_server/3rdparty/libsdptransform/include","/Users/shiwei05/Documents/code/cpp-code/cpp_media_server/output/include","/Users/shiwei05/Documents/code/cpp-code/cpp_media_server/output/include/srtp2","/Users/shiwei05/Documents/code/cpp-code/cpp_media_server/output/include/openssl",/usr/local/include,"$(inherited)");
-				INSTALL_PATH = "";
-				LD_RUNPATH_SEARCH_PATHS = ("/Users/shiwei05/Documents/code/cpp-code/cpp_media_server/output/lib /usr/local/lib64 /usr/local/lib","$(inherited)");
-				LIBRARY_SEARCH_PATHS = ("/Users/shiwei05/Documents/code/cpp-code/cpp_media_server/output/lib/$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)","/Users/shiwei05/Documents/code/cpp-code/cpp_media_server/output/lib","/usr/local/lib64/$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)",/usr/local/lib64,"/usr/local/lib/$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)",/usr/local/lib,"$(inherited)");
-				OTHER_CPLUSPLUSFLAGS = " -std=c++11    -Wno-deprecated -Wno-deprecated-declarations -Wno-reorder -Wall -fexceptions -frtti -D__STDC_FORMAT_MACROS -fPIC        -DNDEBUG '-std=c++11' '-std=c++11' ";
-				OTHER_LDFLAGS = (" -Wl,-search_paths_first -Wl,-headerpad_max_install_names","/Users/shiwei05/Documents/code/cpp-code/cpp_media_server/output/lib/RelWithDebInfo/libsdptransform.a","$(inherited)");
-				OTHER_REZFLAGS = "";
-				PRODUCT_NAME = sdptransform_readme_helper;
-				SECTORDER_FLAGS = "";
-				SYMROOT = "/Users/shiwei05/Documents/code/cpp-code/cpp_media_server/3rdparty/libsdptransform/readme-helper";
-				USE_HEADERMAP = NO;
-				WARNING_CFLAGS = ("$(inherited)");
-			};
-			name = RelWithDebInfo;
-		};
-		CB4F51570AA84A03980F6697 /* Release */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				COMBINE_HIDPI_IMAGES = YES;
-				GCC_GENERATE_DEBUGGING_SYMBOLS = YES;
-				GCC_INLINES_ARE_PRIVATE_EXTERN = NO;
-				GCC_OPTIMIZATION_LEVEL = 0;
-				GCC_PREPROCESSOR_DEFINITIONS = ("'CMAKE_INTDIR=\"$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)\"'","$(inherited)");
-				GCC_SYMBOLS_PRIVATE_EXTERN = NO;
-				INSTALL_PATH = "";
-				OTHER_LDFLAGS = ("","$(inherited)");
-				OTHER_REZFLAGS = "";
-				PRODUCT_NAME = ALL_BUILD;
-				SECTORDER_FLAGS = "";
-				SYMROOT = "/Users/shiwei05/Documents/code/cpp-code/cpp_media_server/3rdparty/libsdptransform";
-				USE_HEADERMAP = NO;
-				WARNING_CFLAGS = ("$(inherited)");
-			};
-			name = Release;
-		};
-		D1F8FB58A79A4B9699AF82FB /* Debug */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				COMBINE_HIDPI_IMAGES = YES;
-				EXECUTABLE_PREFIX = "";
-				EXECUTABLE_SUFFIX = "";
-				GCC_GENERATE_DEBUGGING_SYMBOLS = YES;
-				GCC_INLINES_ARE_PRIVATE_EXTERN = NO;
-				GCC_OPTIMIZATION_LEVEL = 0;
-				GCC_PREPROCESSOR_DEFINITIONS = ("'CMAKE_INTDIR=\"$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)\"'","$(inherited)");
-				GCC_SYMBOLS_PRIVATE_EXTERN = NO;
-				HEADER_SEARCH_PATHS = ("/Users/shiwei05/Documents/code/cpp-code/cpp_media_server/src","/Users/shiwei05/Documents/code/cpp-code/cpp_media_server/src/net","/Users/shiwei05/Documents/code/cpp-code/cpp_media_server/src/net/http","/Users/shiwei05/Documents/code/cpp-code/cpp_media_server/src/net/rtmp","/Users/shiwei05/Documents/code/cpp-code/cpp_media_server/src/net/websocket","/Users/shiwei05/Documents/code/cpp-code/cpp_media_server/src/net/websocket/wsimple","/Users/shiwei05/Documents/code/cpp-code/cpp_media_server/src/net/tcp","/Users/shiwei05/Documents/code/cpp-code/cpp_media_server/src/net/stun","/Users/shiwei05/Documents/code/cpp-code/cpp_media_server/src/net/httpflv","/Users/shiwei05/Documents/code/cpp-code/cpp_media_server/src/net/rtprtcp","/Users/shiwei05/Documents/code/cpp-code/cpp_media_server/src/net/hls","/Users/shiwei05/Documents/code/cpp-code/cpp_media_server/src/net/webrtc","/Users/shiwei05/Documents/code/cpp-code/cpp_media_server/src/net/webrtc/libwebrtc","/Users/shiwei05/Documents/code/cpp-code/cpp_media_server/src/format","/Users/shiwei05/Documents/code/cpp-code/cpp_media_server/src/format/flv","/Users/shiwei05/Documents/code/cpp-code/cpp_media_server/src/utils","/Users/shiwei05/Documents/code/cpp-code/cpp_media_server/src/utils/av","/Users/shiwei05/Documents/code/cpp-code/cpp_media_server/3rdparty/libsdptransform/include","/Users/shiwei05/Documents/code/cpp-code/cpp_media_server/output/include","/Users/shiwei05/Documents/code/cpp-code/cpp_media_server/output/include/srtp2","/Users/shiwei05/Documents/code/cpp-code/cpp_media_server/output/include/openssl",/usr/local/include,"/Users/shiwei05/Documents/code/cpp-code/cpp_media_server/3rdparty/libsdptransform/test/include","$(inherited)");
 				INSTALL_PATH = "";
 				LD_RUNPATH_SEARCH_PATHS = ("/Users/shiwei05/Documents/code/cpp-code/cpp_media_server/output/lib /usr/local/lib64 /usr/local/lib","$(inherited)");
 				LIBRARY_SEARCH_PATHS = ("/Users/shiwei05/Documents/code/cpp-code/cpp_media_server/output/lib/$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)","/Users/shiwei05/Documents/code/cpp-code/cpp_media_server/output/lib","/usr/local/lib64/$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)",/usr/local/lib64,"/usr/local/lib/$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)",/usr/local/lib,"$(inherited)");
 				OTHER_CPLUSPLUSFLAGS = " -std=c++11    -Wno-deprecated -Wno-deprecated-declarations -Wno-reorder -Wall -fexceptions -frtti -D__STDC_FORMAT_MACROS -fPIC    '-std=c++11' '-std=c++11' ";
 				OTHER_LDFLAGS = (" -Wl,-search_paths_first -Wl,-headerpad_max_install_names","/Users/shiwei05/Documents/code/cpp-code/cpp_media_server/output/lib/Debug/libsdptransform.a","$(inherited)");
 				OTHER_REZFLAGS = "";
-				PRODUCT_NAME = test_sdptransform;
+				PRODUCT_NAME = sdptransform_readme_helper;
 				SECTORDER_FLAGS = "";
-				SYMROOT = "/Users/shiwei05/Documents/code/cpp-code/cpp_media_server/3rdparty/libsdptransform/test";
+				SYMROOT = "/Users/shiwei05/Documents/code/cpp-code/cpp_media_server/3rdparty/libsdptransform/readme-helper";
 				USE_HEADERMAP = NO;
 				WARNING_CFLAGS = ("$(inherited)");
 			};
 			name = Debug;
 		};
-		D6450CA247DA42EB9D22F06D /* Release */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				COMBINE_HIDPI_IMAGES = YES;
-				EXECUTABLE_PREFIX = "";
-				EXECUTABLE_SUFFIX = "";
-				GCC_GENERATE_DEBUGGING_SYMBOLS = YES;
-				GCC_INLINES_ARE_PRIVATE_EXTERN = NO;
-				GCC_OPTIMIZATION_LEVEL = 3;
-				GCC_PREPROCESSOR_DEFINITIONS = ("'CMAKE_INTDIR=\"$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)\"'","$(inherited)");
-				GCC_SYMBOLS_PRIVATE_EXTERN = NO;
-				HEADER_SEARCH_PATHS = ("/Users/shiwei05/Documents/code/cpp-code/cpp_media_server/src","/Users/shiwei05/Documents/code/cpp-code/cpp_media_server/src/net","/Users/shiwei05/Documents/code/cpp-code/cpp_media_server/src/net/http","/Users/shiwei05/Documents/code/cpp-code/cpp_media_server/src/net/rtmp","/Users/shiwei05/Documents/code/cpp-code/cpp_media_server/src/net/websocket","/Users/shiwei05/Documents/code/cpp-code/cpp_media_server/src/net/websocket/wsimple","/Users/shiwei05/Documents/code/cpp-code/cpp_media_server/src/net/tcp","/Users/shiwei05/Documents/code/cpp-code/cpp_media_server/src/net/stun","/Users/shiwei05/Documents/code/cpp-code/cpp_media_server/src/net/httpflv","/Users/shiwei05/Documents/code/cpp-code/cpp_media_server/src/net/rtprtcp","/Users/shiwei05/Documents/code/cpp-code/cpp_media_server/src/net/hls","/Users/shiwei05/Documents/code/cpp-code/cpp_media_server/src/net/webrtc","/Users/shiwei05/Documents/code/cpp-code/cpp_media_server/src/net/webrtc/libwebrtc","/Users/shiwei05/Documents/code/cpp-code/cpp_media_server/src/format","/Users/shiwei05/Documents/code/cpp-code/cpp_media_server/src/format/flv","/Users/shiwei05/Documents/code/cpp-code/cpp_media_server/src/utils","/Users/shiwei05/Documents/code/cpp-code/cpp_media_server/src/utils/av","/Users/shiwei05/Documents/code/cpp-code/cpp_media_server/3rdparty/libsdptransform/include","/Users/shiwei05/Documents/code/cpp-code/cpp_media_server/output/include","/Users/shiwei05/Documents/code/cpp-code/cpp_media_server/output/include/srtp2","/Users/shiwei05/Documents/code/cpp-code/cpp_media_server/output/include/openssl",/usr/local/include,"/Users/shiwei05/Documents/code/cpp-code/cpp_media_server/3rdparty/libsdptransform/test/include","$(inherited)");
-				INSTALL_PATH = "";
-				LD_RUNPATH_SEARCH_PATHS = ("/Users/shiwei05/Documents/code/cpp-code/cpp_media_server/output/lib /usr/local/lib64 /usr/local/lib","$(inherited)");
-				LIBRARY_SEARCH_PATHS = ("/Users/shiwei05/Documents/code/cpp-code/cpp_media_server/output/lib/$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)","/Users/shiwei05/Documents/code/cpp-code/cpp_media_server/output/lib","/usr/local/lib64/$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)",/usr/local/lib64,"/usr/local/lib/$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)",/usr/local/lib,"$(inherited)");
-				OTHER_CPLUSPLUSFLAGS = " -std=c++11    -Wno-deprecated -Wno-deprecated-declarations -Wno-reorder -Wall -fexceptions -frtti -D__STDC_FORMAT_MACROS -fPIC     -DNDEBUG '-std=c++11' '-std=c++11' ";
-				OTHER_LDFLAGS = (" -Wl,-search_paths_first -Wl,-headerpad_max_install_names","/Users/shiwei05/Documents/code/cpp-code/cpp_media_server/output/lib/Release/libsdptransform.a","$(inherited)");
-				OTHER_REZFLAGS = "";
-				PRODUCT_NAME = test_sdptransform;
-				SECTORDER_FLAGS = "";
-				SYMROOT = "/Users/shiwei05/Documents/code/cpp-code/cpp_media_server/3rdparty/libsdptransform/test";
-				USE_HEADERMAP = NO;
-				WARNING_CFLAGS = ("$(inherited)");
-			};
-			name = Release;
-		};
-		E09E30AAC9DB4259B9145BAE /* RelWithDebInfo */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				COMBINE_HIDPI_IMAGES = YES;
-				GCC_GENERATE_DEBUGGING_SYMBOLS = YES;
-				GCC_INLINES_ARE_PRIVATE_EXTERN = NO;
-				GCC_OPTIMIZATION_LEVEL = 0;
-				GCC_PREPROCESSOR_DEFINITIONS = ("'CMAKE_INTDIR=\"$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)\"'","$(inherited)");
-				GCC_SYMBOLS_PRIVATE_EXTERN = NO;
-				INSTALL_PATH = "";
-				OTHER_LDFLAGS = ("","$(inherited)");
-				OTHER_REZFLAGS = "";
-				PRODUCT_NAME = install;
-				SECTORDER_FLAGS = "";
-				SYMROOT = "/Users/shiwei05/Documents/code/cpp-code/cpp_media_server/3rdparty/libsdptransform";
-				USE_HEADERMAP = NO;
-				WARNING_CFLAGS = ("$(inherited)");
-			};
-			name = RelWithDebInfo;
-		};
-		E3A7C70EB4B643669368F50A /* Release */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				COMBINE_HIDPI_IMAGES = YES;
-				EXECUTABLE_PREFIX = "";
-				EXECUTABLE_SUFFIX = "";
-				GCC_GENERATE_DEBUGGING_SYMBOLS = YES;
-				GCC_INLINES_ARE_PRIVATE_EXTERN = NO;
-				GCC_OPTIMIZATION_LEVEL = 3;
-				GCC_PREPROCESSOR_DEFINITIONS = ("'CMAKE_INTDIR=\"$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)\"'","$(inherited)");
-				GCC_SYMBOLS_PRIVATE_EXTERN = NO;
-				HEADER_SEARCH_PATHS = ("/Users/shiwei05/Documents/code/cpp-code/cpp_media_server/src","/Users/shiwei05/Documents/code/cpp-code/cpp_media_server/src/net","/Users/shiwei05/Documents/code/cpp-code/cpp_media_server/src/net/http","/Users/shiwei05/Documents/code/cpp-code/cpp_media_server/src/net/rtmp","/Users/shiwei05/Documents/code/cpp-code/cpp_media_server/src/net/websocket","/Users/shiwei05/Documents/code/cpp-code/cpp_media_server/src/net/websocket/wsimple","/Users/shiwei05/Documents/code/cpp-code/cpp_media_server/src/net/tcp","/Users/shiwei05/Documents/code/cpp-code/cpp_media_server/src/net/stun","/Users/shiwei05/Documents/code/cpp-code/cpp_media_server/src/net/httpflv","/Users/shiwei05/Documents/code/cpp-code/cpp_media_server/src/net/rtprtcp","/Users/shiwei05/Documents/code/cpp-code/cpp_media_server/src/net/hls","/Users/shiwei05/Documents/code/cpp-code/cpp_media_server/src/net/webrtc","/Users/shiwei05/Documents/code/cpp-code/cpp_media_server/src/net/webrtc/libwebrtc","/Users/shiwei05/Documents/code/cpp-code/cpp_media_server/src/format","/Users/shiwei05/Documents/code/cpp-code/cpp_media_server/src/format/flv","/Users/shiwei05/Documents/code/cpp-code/cpp_media_server/src/utils","/Users/shiwei05/Documents/code/cpp-code/cpp_media_server/src/utils/av","/Users/shiwei05/Documents/code/cpp-code/cpp_media_server/3rdparty/libsdptransform/include","/Users/shiwei05/Documents/code/cpp-code/cpp_media_server/output/include","/Users/shiwei05/Documents/code/cpp-code/cpp_media_server/output/include/srtp2","/Users/shiwei05/Documents/code/cpp-code/cpp_media_server/output/include/openssl",/usr/local/include,"$(inherited)");
-				INSTALL_PATH = "";
-				LD_RUNPATH_SEARCH_PATHS = ("/Users/shiwei05/Documents/code/cpp-code/cpp_media_server/output/lib /usr/local/lib64 /usr/local/lib","$(inherited)");
-				LIBRARY_SEARCH_PATHS = ("/Users/shiwei05/Documents/code/cpp-code/cpp_media_server/output/lib/$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)","/Users/shiwei05/Documents/code/cpp-code/cpp_media_server/output/lib","/usr/local/lib64/$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)",/usr/local/lib64,"/usr/local/lib/$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)",/usr/local/lib,"$(inherited)");
-				OTHER_CPLUSPLUSFLAGS = " -std=c++11    -Wno-deprecated -Wno-deprecated-declarations -Wno-reorder -Wall -fexceptions -frtti -D__STDC_FORMAT_MACROS -fPIC     -DNDEBUG '-std=c++11' '-std=c++11' ";
-				OTHER_LDFLAGS = (" -Wl,-search_paths_first -Wl,-headerpad_max_install_names","/Users/shiwei05/Documents/code/cpp-code/cpp_media_server/output/lib/Release/libsdptransform.a","$(inherited)");
-				OTHER_REZFLAGS = "";
-				PRODUCT_NAME = sdptransform_readme_helper;
-				SECTORDER_FLAGS = "";
-				SYMROOT = "/Users/shiwei05/Documents/code/cpp-code/cpp_media_server/3rdparty/libsdptransform/readme-helper";
-				USE_HEADERMAP = NO;
-				WARNING_CFLAGS = ("$(inherited)");
-			};
-			name = Release;
-		};
-		E4C0F57D1844481D8DFEB954 /* MinSizeRel */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				COMBINE_HIDPI_IMAGES = YES;
-				EXECUTABLE_PREFIX = "";
-				EXECUTABLE_SUFFIX = "";
-				GCC_GENERATE_DEBUGGING_SYMBOLS = YES;
-				GCC_INLINES_ARE_PRIVATE_EXTERN = NO;
-				GCC_OPTIMIZATION_LEVEL = s;
-				GCC_PREPROCESSOR_DEFINITIONS = ("'CMAKE_INTDIR=\"$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)\"'","$(inherited)");
-				GCC_SYMBOLS_PRIVATE_EXTERN = NO;
-				HEADER_SEARCH_PATHS = ("/Users/shiwei05/Documents/code/cpp-code/cpp_media_server/src","/Users/shiwei05/Documents/code/cpp-code/cpp_media_server/src/net","/Users/shiwei05/Documents/code/cpp-code/cpp_media_server/src/net/http","/Users/shiwei05/Documents/code/cpp-code/cpp_media_server/src/net/rtmp","/Users/shiwei05/Documents/code/cpp-code/cpp_media_server/src/net/websocket","/Users/shiwei05/Documents/code/cpp-code/cpp_media_server/src/net/websocket/wsimple","/Users/shiwei05/Documents/code/cpp-code/cpp_media_server/src/net/tcp","/Users/shiwei05/Documents/code/cpp-code/cpp_media_server/src/net/stun","/Users/shiwei05/Documents/code/cpp-code/cpp_media_server/src/net/httpflv","/Users/shiwei05/Documents/code/cpp-code/cpp_media_server/src/net/rtprtcp","/Users/shiwei05/Documents/code/cpp-code/cpp_media_server/src/net/hls","/Users/shiwei05/Documents/code/cpp-code/cpp_media_server/src/net/webrtc","/Users/shiwei05/Documents/code/cpp-code/cpp_media_server/src/net/webrtc/libwebrtc","/Users/shiwei05/Documents/code/cpp-code/cpp_media_server/src/format","/Users/shiwei05/Documents/code/cpp-code/cpp_media_server/src/format/flv","/Users/shiwei05/Documents/code/cpp-code/cpp_media_server/src/utils","/Users/shiwei05/Documents/code/cpp-code/cpp_media_server/src/utils/av","/Users/shiwei05/Documents/code/cpp-code/cpp_media_server/3rdparty/libsdptransform/include","/Users/shiwei05/Documents/code/cpp-code/cpp_media_server/output/include","/Users/shiwei05/Documents/code/cpp-code/cpp_media_server/output/include/srtp2","/Users/shiwei05/Documents/code/cpp-code/cpp_media_server/output/include/openssl",/usr/local/include,"$(inherited)");
-				INSTALL_PATH = "";
-				LD_RUNPATH_SEARCH_PATHS = ("/Users/shiwei05/Documents/code/cpp-code/cpp_media_server/output/lib /usr/local/lib64 /usr/local/lib","$(inherited)");
-				LIBRARY_SEARCH_PATHS = ("/Users/shiwei05/Documents/code/cpp-code/cpp_media_server/output/lib/$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)","/Users/shiwei05/Documents/code/cpp-code/cpp_media_server/output/lib","/usr/local/lib64/$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)",/usr/local/lib64,"/usr/local/lib/$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)",/usr/local/lib,"$(inherited)");
-				OTHER_CPLUSPLUSFLAGS = " -std=c++11    -Wno-deprecated -Wno-deprecated-declarations -Wno-reorder -Wall -fexceptions -frtti -D__STDC_FORMAT_MACROS -fPIC     -DNDEBUG '-std=c++11' '-std=c++11' ";
-				OTHER_LDFLAGS = (" -Wl,-search_paths_first -Wl,-headerpad_max_install_names","/Users/shiwei05/Documents/code/cpp-code/cpp_media_server/output/lib/MinSizeRel/libsdptransform.a","$(inherited)");
-				OTHER_REZFLAGS = "";
-				PRODUCT_NAME = sdptransform_readme_helper;
-				SECTORDER_FLAGS = "";
-				SYMROOT = "/Users/shiwei05/Documents/code/cpp-code/cpp_media_server/3rdparty/libsdptransform/readme-helper";
-				USE_HEADERMAP = NO;
-				WARNING_CFLAGS = ("$(inherited)");
-			};
-			name = MinSizeRel;
-		};
-		E795043A36F3407B80EBB57C /* Debug */ = {
+		14B9725F1C924EADB0E0BD02 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				COMBINE_HIDPI_IMAGES = YES;
@@ -1180,43 +728,7 @@ exit 0";
 			};
 			name = Debug;
 		};
-		E8FD51CF673D493FAD9F32AD /* MinSizeRel */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				ARCHS = "$(NATIVE_ARCH_ACTUAL)";
-				ONLY_ACTIVE_ARCH = YES;
-				SDKROOT = /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX12.3.sdk;
-				SYMROOT = "/Users/shiwei05/Documents/code/cpp-code/cpp_media_server/3rdparty/libsdptransform/build";
-			};
-			name = MinSizeRel;
-		};
-		ED1FB07CF2D545CB8FC39221 /* MinSizeRel */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				COMBINE_HIDPI_IMAGES = YES;
-				EXECUTABLE_PREFIX = "";
-				EXECUTABLE_SUFFIX = "";
-				GCC_GENERATE_DEBUGGING_SYMBOLS = YES;
-				GCC_INLINES_ARE_PRIVATE_EXTERN = NO;
-				GCC_OPTIMIZATION_LEVEL = s;
-				GCC_PREPROCESSOR_DEFINITIONS = ("'CMAKE_INTDIR=\"$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)\"'","$(inherited)");
-				GCC_SYMBOLS_PRIVATE_EXTERN = NO;
-				HEADER_SEARCH_PATHS = ("/Users/shiwei05/Documents/code/cpp-code/cpp_media_server/src","/Users/shiwei05/Documents/code/cpp-code/cpp_media_server/src/net","/Users/shiwei05/Documents/code/cpp-code/cpp_media_server/src/net/http","/Users/shiwei05/Documents/code/cpp-code/cpp_media_server/src/net/rtmp","/Users/shiwei05/Documents/code/cpp-code/cpp_media_server/src/net/websocket","/Users/shiwei05/Documents/code/cpp-code/cpp_media_server/src/net/websocket/wsimple","/Users/shiwei05/Documents/code/cpp-code/cpp_media_server/src/net/tcp","/Users/shiwei05/Documents/code/cpp-code/cpp_media_server/src/net/stun","/Users/shiwei05/Documents/code/cpp-code/cpp_media_server/src/net/httpflv","/Users/shiwei05/Documents/code/cpp-code/cpp_media_server/src/net/rtprtcp","/Users/shiwei05/Documents/code/cpp-code/cpp_media_server/src/net/hls","/Users/shiwei05/Documents/code/cpp-code/cpp_media_server/src/net/webrtc","/Users/shiwei05/Documents/code/cpp-code/cpp_media_server/src/net/webrtc/libwebrtc","/Users/shiwei05/Documents/code/cpp-code/cpp_media_server/src/format","/Users/shiwei05/Documents/code/cpp-code/cpp_media_server/src/format/flv","/Users/shiwei05/Documents/code/cpp-code/cpp_media_server/src/utils","/Users/shiwei05/Documents/code/cpp-code/cpp_media_server/src/utils/av","/Users/shiwei05/Documents/code/cpp-code/cpp_media_server/3rdparty/libsdptransform/include","/Users/shiwei05/Documents/code/cpp-code/cpp_media_server/output/include","/Users/shiwei05/Documents/code/cpp-code/cpp_media_server/output/include/srtp2","/Users/shiwei05/Documents/code/cpp-code/cpp_media_server/output/include/openssl",/usr/local/include,"/Users/shiwei05/Documents/code/cpp-code/cpp_media_server/3rdparty/libsdptransform/test/include","$(inherited)");
-				INSTALL_PATH = "";
-				LD_RUNPATH_SEARCH_PATHS = ("/Users/shiwei05/Documents/code/cpp-code/cpp_media_server/output/lib /usr/local/lib64 /usr/local/lib","$(inherited)");
-				LIBRARY_SEARCH_PATHS = ("/Users/shiwei05/Documents/code/cpp-code/cpp_media_server/output/lib/$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)","/Users/shiwei05/Documents/code/cpp-code/cpp_media_server/output/lib","/usr/local/lib64/$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)",/usr/local/lib64,"/usr/local/lib/$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)",/usr/local/lib,"$(inherited)");
-				OTHER_CPLUSPLUSFLAGS = " -std=c++11    -Wno-deprecated -Wno-deprecated-declarations -Wno-reorder -Wall -fexceptions -frtti -D__STDC_FORMAT_MACROS -fPIC     -DNDEBUG '-std=c++11' '-std=c++11' ";
-				OTHER_LDFLAGS = (" -Wl,-search_paths_first -Wl,-headerpad_max_install_names","/Users/shiwei05/Documents/code/cpp-code/cpp_media_server/output/lib/MinSizeRel/libsdptransform.a","$(inherited)");
-				OTHER_REZFLAGS = "";
-				PRODUCT_NAME = test_sdptransform;
-				SECTORDER_FLAGS = "";
-				SYMROOT = "/Users/shiwei05/Documents/code/cpp-code/cpp_media_server/3rdparty/libsdptransform/test";
-				USE_HEADERMAP = NO;
-				WARNING_CFLAGS = ("$(inherited)");
-			};
-			name = MinSizeRel;
-		};
-		FD5F8056B402499C9448D0B1 /* RelWithDebInfo */ = {
+		2A3CC1F523F84DBD98F65597 /* RelWithDebInfo */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				COMBINE_HIDPI_IMAGES = YES;
@@ -1242,82 +754,570 @@ exit 0";
 			};
 			name = RelWithDebInfo;
 		};
+		2B346D98A5804585B3186A4D /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				COMBINE_HIDPI_IMAGES = YES;
+				GCC_GENERATE_DEBUGGING_SYMBOLS = YES;
+				GCC_INLINES_ARE_PRIVATE_EXTERN = NO;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = ("'CMAKE_INTDIR=\"$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)\"'","$(inherited)");
+				GCC_SYMBOLS_PRIVATE_EXTERN = NO;
+				INSTALL_PATH = "";
+				OTHER_LDFLAGS = ("","$(inherited)");
+				OTHER_REZFLAGS = "";
+				PRODUCT_NAME = install;
+				SECTORDER_FLAGS = "";
+				SYMROOT = "/Users/shiwei05/Documents/code/cpp-code/cpp_media_server/3rdparty/libsdptransform";
+				USE_HEADERMAP = NO;
+				WARNING_CFLAGS = ("$(inherited)");
+			};
+			name = Release;
+		};
+		3208C1835F874E3BA7E6746C /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				COMBINE_HIDPI_IMAGES = YES;
+				GCC_GENERATE_DEBUGGING_SYMBOLS = YES;
+				GCC_INLINES_ARE_PRIVATE_EXTERN = NO;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = ("'CMAKE_INTDIR=\"$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)\"'","$(inherited)");
+				GCC_SYMBOLS_PRIVATE_EXTERN = NO;
+				INSTALL_PATH = "";
+				OTHER_LDFLAGS = ("","$(inherited)");
+				OTHER_REZFLAGS = "";
+				PRODUCT_NAME = install;
+				SECTORDER_FLAGS = "";
+				SYMROOT = "/Users/shiwei05/Documents/code/cpp-code/cpp_media_server/3rdparty/libsdptransform";
+				USE_HEADERMAP = NO;
+				WARNING_CFLAGS = ("$(inherited)");
+			};
+			name = Debug;
+		};
+		442B41C0FEC54E3B9AA66749 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ARCHS = "$(NATIVE_ARCH_ACTUAL)";
+				ONLY_ACTIVE_ARCH = YES;
+				SDKROOT = /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX12.3.sdk;
+				SYMROOT = "/Users/shiwei05/Documents/code/cpp-code/cpp_media_server/3rdparty/libsdptransform/build";
+			};
+			name = Release;
+		};
+		5E65C6220638415A947C664B /* MinSizeRel */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				COMBINE_HIDPI_IMAGES = YES;
+				GCC_GENERATE_DEBUGGING_SYMBOLS = YES;
+				GCC_INLINES_ARE_PRIVATE_EXTERN = NO;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = ("'CMAKE_INTDIR=\"$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)\"'","$(inherited)");
+				GCC_SYMBOLS_PRIVATE_EXTERN = NO;
+				INSTALL_PATH = "";
+				OTHER_LDFLAGS = ("","$(inherited)");
+				OTHER_REZFLAGS = "";
+				PRODUCT_NAME = ALL_BUILD;
+				SECTORDER_FLAGS = "";
+				SYMROOT = "/Users/shiwei05/Documents/code/cpp-code/cpp_media_server/3rdparty/libsdptransform";
+				USE_HEADERMAP = NO;
+				WARNING_CFLAGS = ("$(inherited)");
+			};
+			name = MinSizeRel;
+		};
+		643BC89402C6453B8FBF75D5 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ARCHS = "$(NATIVE_ARCH_ACTUAL)";
+				ONLY_ACTIVE_ARCH = YES;
+				SDKROOT = /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX12.3.sdk;
+				SYMROOT = "/Users/shiwei05/Documents/code/cpp-code/cpp_media_server/3rdparty/libsdptransform/build";
+			};
+			name = Debug;
+		};
+		65349B9A3F8241ABB8BC4A41 /* RelWithDebInfo */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				COMBINE_HIDPI_IMAGES = YES;
+				GCC_GENERATE_DEBUGGING_SYMBOLS = YES;
+				GCC_INLINES_ARE_PRIVATE_EXTERN = NO;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = ("'CMAKE_INTDIR=\"$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)\"'","$(inherited)");
+				GCC_SYMBOLS_PRIVATE_EXTERN = NO;
+				INSTALL_PATH = "";
+				OTHER_LDFLAGS = ("","$(inherited)");
+				OTHER_REZFLAGS = "";
+				PRODUCT_NAME = ZERO_CHECK;
+				SECTORDER_FLAGS = "";
+				SYMROOT = "/Users/shiwei05/Documents/code/cpp-code/cpp_media_server/3rdparty/libsdptransform";
+				USE_HEADERMAP = NO;
+				WARNING_CFLAGS = ("$(inherited)");
+			};
+			name = RelWithDebInfo;
+		};
+		6B1207E9B622446C8158B817 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				COMBINE_HIDPI_IMAGES = YES;
+				GCC_GENERATE_DEBUGGING_SYMBOLS = YES;
+				GCC_INLINES_ARE_PRIVATE_EXTERN = NO;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = ("'CMAKE_INTDIR=\"$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)\"'","$(inherited)");
+				GCC_SYMBOLS_PRIVATE_EXTERN = NO;
+				INSTALL_PATH = "";
+				OTHER_LDFLAGS = ("","$(inherited)");
+				OTHER_REZFLAGS = "";
+				PRODUCT_NAME = ALL_BUILD;
+				SECTORDER_FLAGS = "";
+				SYMROOT = "/Users/shiwei05/Documents/code/cpp-code/cpp_media_server/3rdparty/libsdptransform";
+				USE_HEADERMAP = NO;
+				WARNING_CFLAGS = ("$(inherited)");
+			};
+			name = Debug;
+		};
+		799B18AA72104DA9B3DA59A7 /* MinSizeRel */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				COMBINE_HIDPI_IMAGES = YES;
+				CONFIGURATION_BUILD_DIR = "/Users/shiwei05/Documents/code/cpp-code/cpp_media_server/output/lib/MinSizeRel";
+				EXECUTABLE_PREFIX = lib;
+				EXECUTABLE_SUFFIX = .a;
+				GCC_GENERATE_DEBUGGING_SYMBOLS = YES;
+				GCC_INLINES_ARE_PRIVATE_EXTERN = NO;
+				GCC_OPTIMIZATION_LEVEL = s;
+				GCC_PREPROCESSOR_DEFINITIONS = ("'CMAKE_INTDIR=\"$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)\"'","$(inherited)");
+				GCC_SYMBOLS_PRIVATE_EXTERN = NO;
+				HEADER_SEARCH_PATHS = ("/Users/shiwei05/Documents/code/cpp-code/cpp_media_server/src","/Users/shiwei05/Documents/code/cpp-code/cpp_media_server/src/net","/Users/shiwei05/Documents/code/cpp-code/cpp_media_server/src/net/http","/Users/shiwei05/Documents/code/cpp-code/cpp_media_server/src/net/rtmp","/Users/shiwei05/Documents/code/cpp-code/cpp_media_server/src/net/websocket","/Users/shiwei05/Documents/code/cpp-code/cpp_media_server/src/net/websocket/wsimple","/Users/shiwei05/Documents/code/cpp-code/cpp_media_server/src/net/tcp","/Users/shiwei05/Documents/code/cpp-code/cpp_media_server/src/net/stun","/Users/shiwei05/Documents/code/cpp-code/cpp_media_server/src/net/httpflv","/Users/shiwei05/Documents/code/cpp-code/cpp_media_server/src/net/rtprtcp","/Users/shiwei05/Documents/code/cpp-code/cpp_media_server/src/net/hls","/Users/shiwei05/Documents/code/cpp-code/cpp_media_server/src/net/webrtc","/Users/shiwei05/Documents/code/cpp-code/cpp_media_server/src/net/webrtc/libwebrtc","/Users/shiwei05/Documents/code/cpp-code/cpp_media_server/src/format","/Users/shiwei05/Documents/code/cpp-code/cpp_media_server/src/format/flv","/Users/shiwei05/Documents/code/cpp-code/cpp_media_server/src/utils","/Users/shiwei05/Documents/code/cpp-code/cpp_media_server/src/utils/av","/Users/shiwei05/Documents/code/cpp-code/cpp_media_server/3rdparty/libsdptransform/include","/Users/shiwei05/Documents/code/cpp-code/cpp_media_server/output/include","/Users/shiwei05/Documents/code/cpp-code/cpp_media_server/output/include/srtp2","/Users/shiwei05/Documents/code/cpp-code/cpp_media_server/output/include/openssl",/usr/local/include,"$(inherited)");
+				INSTALL_PATH = "";
+				LIBRARY_STYLE = STATIC;
+				OTHER_CPLUSPLUSFLAGS = " -std=c++11    -Wno-deprecated -Wno-deprecated-declarations -Wno-reorder -Wall -fexceptions -frtti -D__STDC_FORMAT_MACROS -fPIC     -DNDEBUG '-std=c++11' '-std=c++11' ";
+				OTHER_LIBTOOLFLAGS = ("");
+				OTHER_REZFLAGS = "";
+				PRODUCT_NAME = sdptransform;
+				SECTORDER_FLAGS = "";
+				SYMROOT = "/Users/shiwei05/Documents/code/cpp-code/cpp_media_server/3rdparty/libsdptransform";
+				USE_HEADERMAP = NO;
+				WARNING_CFLAGS = ("$(inherited)");
+			};
+			name = MinSizeRel;
+		};
+		7B61278A81004E74B3FA0C25 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				COMBINE_HIDPI_IMAGES = YES;
+				GCC_GENERATE_DEBUGGING_SYMBOLS = YES;
+				GCC_INLINES_ARE_PRIVATE_EXTERN = NO;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = ("'CMAKE_INTDIR=\"$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)\"'","$(inherited)");
+				GCC_SYMBOLS_PRIVATE_EXTERN = NO;
+				INSTALL_PATH = "";
+				OTHER_LDFLAGS = ("","$(inherited)");
+				OTHER_REZFLAGS = "";
+				PRODUCT_NAME = ALL_BUILD;
+				SECTORDER_FLAGS = "";
+				SYMROOT = "/Users/shiwei05/Documents/code/cpp-code/cpp_media_server/3rdparty/libsdptransform";
+				USE_HEADERMAP = NO;
+				WARNING_CFLAGS = ("$(inherited)");
+			};
+			name = Release;
+		};
+		7EEA0A8F40A54CF5BE62CE95 /* RelWithDebInfo */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				COMBINE_HIDPI_IMAGES = YES;
+				GCC_GENERATE_DEBUGGING_SYMBOLS = YES;
+				GCC_INLINES_ARE_PRIVATE_EXTERN = NO;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = ("'CMAKE_INTDIR=\"$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)\"'","$(inherited)");
+				GCC_SYMBOLS_PRIVATE_EXTERN = NO;
+				INSTALL_PATH = "";
+				OTHER_LDFLAGS = ("","$(inherited)");
+				OTHER_REZFLAGS = "";
+				PRODUCT_NAME = ALL_BUILD;
+				SECTORDER_FLAGS = "";
+				SYMROOT = "/Users/shiwei05/Documents/code/cpp-code/cpp_media_server/3rdparty/libsdptransform";
+				USE_HEADERMAP = NO;
+				WARNING_CFLAGS = ("$(inherited)");
+			};
+			name = RelWithDebInfo;
+		};
+		8EFC53201F9E465283C6AC06 /* RelWithDebInfo */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				COMBINE_HIDPI_IMAGES = YES;
+				GCC_GENERATE_DEBUGGING_SYMBOLS = YES;
+				GCC_INLINES_ARE_PRIVATE_EXTERN = NO;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = ("'CMAKE_INTDIR=\"$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)\"'","$(inherited)");
+				GCC_SYMBOLS_PRIVATE_EXTERN = NO;
+				INSTALL_PATH = "";
+				OTHER_LDFLAGS = ("","$(inherited)");
+				OTHER_REZFLAGS = "";
+				PRODUCT_NAME = install;
+				SECTORDER_FLAGS = "";
+				SYMROOT = "/Users/shiwei05/Documents/code/cpp-code/cpp_media_server/3rdparty/libsdptransform";
+				USE_HEADERMAP = NO;
+				WARNING_CFLAGS = ("$(inherited)");
+			};
+			name = RelWithDebInfo;
+		};
+		90053E10414647C7A92D6F6D /* MinSizeRel */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ARCHS = "$(NATIVE_ARCH_ACTUAL)";
+				ONLY_ACTIVE_ARCH = YES;
+				SDKROOT = /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX12.3.sdk;
+				SYMROOT = "/Users/shiwei05/Documents/code/cpp-code/cpp_media_server/3rdparty/libsdptransform/build";
+			};
+			name = MinSizeRel;
+		};
+		9021C309BCA84870A425A4D8 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				COMBINE_HIDPI_IMAGES = YES;
+				GCC_GENERATE_DEBUGGING_SYMBOLS = YES;
+				GCC_INLINES_ARE_PRIVATE_EXTERN = NO;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = ("'CMAKE_INTDIR=\"$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)\"'","$(inherited)");
+				GCC_SYMBOLS_PRIVATE_EXTERN = NO;
+				INSTALL_PATH = "";
+				OTHER_LDFLAGS = ("","$(inherited)");
+				OTHER_REZFLAGS = "";
+				PRODUCT_NAME = ZERO_CHECK;
+				SECTORDER_FLAGS = "";
+				SYMROOT = "/Users/shiwei05/Documents/code/cpp-code/cpp_media_server/3rdparty/libsdptransform";
+				USE_HEADERMAP = NO;
+				WARNING_CFLAGS = ("$(inherited)");
+			};
+			name = Release;
+		};
+		9955DC3CB6C04CCB9FC408B7 /* RelWithDebInfo */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				COMBINE_HIDPI_IMAGES = YES;
+				EXECUTABLE_PREFIX = "";
+				EXECUTABLE_SUFFIX = "";
+				GCC_GENERATE_DEBUGGING_SYMBOLS = YES;
+				GCC_INLINES_ARE_PRIVATE_EXTERN = NO;
+				GCC_OPTIMIZATION_LEVEL = 2;
+				GCC_PREPROCESSOR_DEFINITIONS = ("'CMAKE_INTDIR=\"$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)\"'","$(inherited)");
+				GCC_SYMBOLS_PRIVATE_EXTERN = NO;
+				HEADER_SEARCH_PATHS = ("/Users/shiwei05/Documents/code/cpp-code/cpp_media_server/src","/Users/shiwei05/Documents/code/cpp-code/cpp_media_server/src/net","/Users/shiwei05/Documents/code/cpp-code/cpp_media_server/src/net/http","/Users/shiwei05/Documents/code/cpp-code/cpp_media_server/src/net/rtmp","/Users/shiwei05/Documents/code/cpp-code/cpp_media_server/src/net/websocket","/Users/shiwei05/Documents/code/cpp-code/cpp_media_server/src/net/websocket/wsimple","/Users/shiwei05/Documents/code/cpp-code/cpp_media_server/src/net/tcp","/Users/shiwei05/Documents/code/cpp-code/cpp_media_server/src/net/stun","/Users/shiwei05/Documents/code/cpp-code/cpp_media_server/src/net/httpflv","/Users/shiwei05/Documents/code/cpp-code/cpp_media_server/src/net/rtprtcp","/Users/shiwei05/Documents/code/cpp-code/cpp_media_server/src/net/hls","/Users/shiwei05/Documents/code/cpp-code/cpp_media_server/src/net/webrtc","/Users/shiwei05/Documents/code/cpp-code/cpp_media_server/src/net/webrtc/libwebrtc","/Users/shiwei05/Documents/code/cpp-code/cpp_media_server/src/format","/Users/shiwei05/Documents/code/cpp-code/cpp_media_server/src/format/flv","/Users/shiwei05/Documents/code/cpp-code/cpp_media_server/src/utils","/Users/shiwei05/Documents/code/cpp-code/cpp_media_server/src/utils/av","/Users/shiwei05/Documents/code/cpp-code/cpp_media_server/3rdparty/libsdptransform/include","/Users/shiwei05/Documents/code/cpp-code/cpp_media_server/output/include","/Users/shiwei05/Documents/code/cpp-code/cpp_media_server/output/include/srtp2","/Users/shiwei05/Documents/code/cpp-code/cpp_media_server/output/include/openssl",/usr/local/include,"$(inherited)");
+				INSTALL_PATH = "";
+				LD_RUNPATH_SEARCH_PATHS = ("/Users/shiwei05/Documents/code/cpp-code/cpp_media_server/output/lib /usr/local/lib64 /usr/local/lib","$(inherited)");
+				LIBRARY_SEARCH_PATHS = ("/Users/shiwei05/Documents/code/cpp-code/cpp_media_server/output/lib/$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)","/Users/shiwei05/Documents/code/cpp-code/cpp_media_server/output/lib","/usr/local/lib64/$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)",/usr/local/lib64,"/usr/local/lib/$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)",/usr/local/lib,"$(inherited)");
+				OTHER_CPLUSPLUSFLAGS = " -std=c++11    -Wno-deprecated -Wno-deprecated-declarations -Wno-reorder -Wall -fexceptions -frtti -D__STDC_FORMAT_MACROS -fPIC        -DNDEBUG '-std=c++11' '-std=c++11' ";
+				OTHER_LDFLAGS = (" -Wl,-search_paths_first -Wl,-headerpad_max_install_names","/Users/shiwei05/Documents/code/cpp-code/cpp_media_server/output/lib/RelWithDebInfo/libsdptransform.a","$(inherited)");
+				OTHER_REZFLAGS = "";
+				PRODUCT_NAME = sdptransform_readme_helper;
+				SECTORDER_FLAGS = "";
+				SYMROOT = "/Users/shiwei05/Documents/code/cpp-code/cpp_media_server/3rdparty/libsdptransform/readme-helper";
+				USE_HEADERMAP = NO;
+				WARNING_CFLAGS = ("$(inherited)");
+			};
+			name = RelWithDebInfo;
+		};
+		9F23C0170D9B4A20A29EE2B6 /* MinSizeRel */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				COMBINE_HIDPI_IMAGES = YES;
+				GCC_GENERATE_DEBUGGING_SYMBOLS = YES;
+				GCC_INLINES_ARE_PRIVATE_EXTERN = NO;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = ("'CMAKE_INTDIR=\"$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)\"'","$(inherited)");
+				GCC_SYMBOLS_PRIVATE_EXTERN = NO;
+				INSTALL_PATH = "";
+				OTHER_LDFLAGS = ("","$(inherited)");
+				OTHER_REZFLAGS = "";
+				PRODUCT_NAME = install;
+				SECTORDER_FLAGS = "";
+				SYMROOT = "/Users/shiwei05/Documents/code/cpp-code/cpp_media_server/3rdparty/libsdptransform";
+				USE_HEADERMAP = NO;
+				WARNING_CFLAGS = ("$(inherited)");
+			};
+			name = MinSizeRel;
+		};
+		B6627E9A728A4E3AB114EE1D /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				COMBINE_HIDPI_IMAGES = YES;
+				EXECUTABLE_PREFIX = "";
+				EXECUTABLE_SUFFIX = "";
+				GCC_GENERATE_DEBUGGING_SYMBOLS = YES;
+				GCC_INLINES_ARE_PRIVATE_EXTERN = NO;
+				GCC_OPTIMIZATION_LEVEL = 3;
+				GCC_PREPROCESSOR_DEFINITIONS = ("'CMAKE_INTDIR=\"$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)\"'","$(inherited)");
+				GCC_SYMBOLS_PRIVATE_EXTERN = NO;
+				HEADER_SEARCH_PATHS = ("/Users/shiwei05/Documents/code/cpp-code/cpp_media_server/src","/Users/shiwei05/Documents/code/cpp-code/cpp_media_server/src/net","/Users/shiwei05/Documents/code/cpp-code/cpp_media_server/src/net/http","/Users/shiwei05/Documents/code/cpp-code/cpp_media_server/src/net/rtmp","/Users/shiwei05/Documents/code/cpp-code/cpp_media_server/src/net/websocket","/Users/shiwei05/Documents/code/cpp-code/cpp_media_server/src/net/websocket/wsimple","/Users/shiwei05/Documents/code/cpp-code/cpp_media_server/src/net/tcp","/Users/shiwei05/Documents/code/cpp-code/cpp_media_server/src/net/stun","/Users/shiwei05/Documents/code/cpp-code/cpp_media_server/src/net/httpflv","/Users/shiwei05/Documents/code/cpp-code/cpp_media_server/src/net/rtprtcp","/Users/shiwei05/Documents/code/cpp-code/cpp_media_server/src/net/hls","/Users/shiwei05/Documents/code/cpp-code/cpp_media_server/src/net/webrtc","/Users/shiwei05/Documents/code/cpp-code/cpp_media_server/src/net/webrtc/libwebrtc","/Users/shiwei05/Documents/code/cpp-code/cpp_media_server/src/format","/Users/shiwei05/Documents/code/cpp-code/cpp_media_server/src/format/flv","/Users/shiwei05/Documents/code/cpp-code/cpp_media_server/src/utils","/Users/shiwei05/Documents/code/cpp-code/cpp_media_server/src/utils/av","/Users/shiwei05/Documents/code/cpp-code/cpp_media_server/3rdparty/libsdptransform/include","/Users/shiwei05/Documents/code/cpp-code/cpp_media_server/output/include","/Users/shiwei05/Documents/code/cpp-code/cpp_media_server/output/include/srtp2","/Users/shiwei05/Documents/code/cpp-code/cpp_media_server/output/include/openssl",/usr/local/include,"$(inherited)");
+				INSTALL_PATH = "";
+				LD_RUNPATH_SEARCH_PATHS = ("/Users/shiwei05/Documents/code/cpp-code/cpp_media_server/output/lib /usr/local/lib64 /usr/local/lib","$(inherited)");
+				LIBRARY_SEARCH_PATHS = ("/Users/shiwei05/Documents/code/cpp-code/cpp_media_server/output/lib/$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)","/Users/shiwei05/Documents/code/cpp-code/cpp_media_server/output/lib","/usr/local/lib64/$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)",/usr/local/lib64,"/usr/local/lib/$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)",/usr/local/lib,"$(inherited)");
+				OTHER_CPLUSPLUSFLAGS = " -std=c++11    -Wno-deprecated -Wno-deprecated-declarations -Wno-reorder -Wall -fexceptions -frtti -D__STDC_FORMAT_MACROS -fPIC     -DNDEBUG '-std=c++11' '-std=c++11' ";
+				OTHER_LDFLAGS = (" -Wl,-search_paths_first -Wl,-headerpad_max_install_names","/Users/shiwei05/Documents/code/cpp-code/cpp_media_server/output/lib/Release/libsdptransform.a","$(inherited)");
+				OTHER_REZFLAGS = "";
+				PRODUCT_NAME = sdptransform_readme_helper;
+				SECTORDER_FLAGS = "";
+				SYMROOT = "/Users/shiwei05/Documents/code/cpp-code/cpp_media_server/3rdparty/libsdptransform/readme-helper";
+				USE_HEADERMAP = NO;
+				WARNING_CFLAGS = ("$(inherited)");
+			};
+			name = Release;
+		};
+		BC83D167873A41DE9277CC35 /* RelWithDebInfo */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				COMBINE_HIDPI_IMAGES = YES;
+				EXECUTABLE_PREFIX = "";
+				EXECUTABLE_SUFFIX = "";
+				GCC_GENERATE_DEBUGGING_SYMBOLS = YES;
+				GCC_INLINES_ARE_PRIVATE_EXTERN = NO;
+				GCC_OPTIMIZATION_LEVEL = 2;
+				GCC_PREPROCESSOR_DEFINITIONS = ("'CMAKE_INTDIR=\"$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)\"'","$(inherited)");
+				GCC_SYMBOLS_PRIVATE_EXTERN = NO;
+				HEADER_SEARCH_PATHS = ("/Users/shiwei05/Documents/code/cpp-code/cpp_media_server/src","/Users/shiwei05/Documents/code/cpp-code/cpp_media_server/src/net","/Users/shiwei05/Documents/code/cpp-code/cpp_media_server/src/net/http","/Users/shiwei05/Documents/code/cpp-code/cpp_media_server/src/net/rtmp","/Users/shiwei05/Documents/code/cpp-code/cpp_media_server/src/net/websocket","/Users/shiwei05/Documents/code/cpp-code/cpp_media_server/src/net/websocket/wsimple","/Users/shiwei05/Documents/code/cpp-code/cpp_media_server/src/net/tcp","/Users/shiwei05/Documents/code/cpp-code/cpp_media_server/src/net/stun","/Users/shiwei05/Documents/code/cpp-code/cpp_media_server/src/net/httpflv","/Users/shiwei05/Documents/code/cpp-code/cpp_media_server/src/net/rtprtcp","/Users/shiwei05/Documents/code/cpp-code/cpp_media_server/src/net/hls","/Users/shiwei05/Documents/code/cpp-code/cpp_media_server/src/net/webrtc","/Users/shiwei05/Documents/code/cpp-code/cpp_media_server/src/net/webrtc/libwebrtc","/Users/shiwei05/Documents/code/cpp-code/cpp_media_server/src/format","/Users/shiwei05/Documents/code/cpp-code/cpp_media_server/src/format/flv","/Users/shiwei05/Documents/code/cpp-code/cpp_media_server/src/utils","/Users/shiwei05/Documents/code/cpp-code/cpp_media_server/src/utils/av","/Users/shiwei05/Documents/code/cpp-code/cpp_media_server/3rdparty/libsdptransform/include","/Users/shiwei05/Documents/code/cpp-code/cpp_media_server/output/include","/Users/shiwei05/Documents/code/cpp-code/cpp_media_server/output/include/srtp2","/Users/shiwei05/Documents/code/cpp-code/cpp_media_server/output/include/openssl",/usr/local/include,"/Users/shiwei05/Documents/code/cpp-code/cpp_media_server/3rdparty/libsdptransform/test/include","$(inherited)");
+				INSTALL_PATH = "";
+				LD_RUNPATH_SEARCH_PATHS = ("/Users/shiwei05/Documents/code/cpp-code/cpp_media_server/output/lib /usr/local/lib64 /usr/local/lib","$(inherited)");
+				LIBRARY_SEARCH_PATHS = ("/Users/shiwei05/Documents/code/cpp-code/cpp_media_server/output/lib/$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)","/Users/shiwei05/Documents/code/cpp-code/cpp_media_server/output/lib","/usr/local/lib64/$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)",/usr/local/lib64,"/usr/local/lib/$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)",/usr/local/lib,"$(inherited)");
+				OTHER_CPLUSPLUSFLAGS = " -std=c++11    -Wno-deprecated -Wno-deprecated-declarations -Wno-reorder -Wall -fexceptions -frtti -D__STDC_FORMAT_MACROS -fPIC        -DNDEBUG '-std=c++11' '-std=c++11' ";
+				OTHER_LDFLAGS = (" -Wl,-search_paths_first -Wl,-headerpad_max_install_names","/Users/shiwei05/Documents/code/cpp-code/cpp_media_server/output/lib/RelWithDebInfo/libsdptransform.a","$(inherited)");
+				OTHER_REZFLAGS = "";
+				PRODUCT_NAME = test_sdptransform;
+				SECTORDER_FLAGS = "";
+				SYMROOT = "/Users/shiwei05/Documents/code/cpp-code/cpp_media_server/3rdparty/libsdptransform/test";
+				USE_HEADERMAP = NO;
+				WARNING_CFLAGS = ("$(inherited)");
+			};
+			name = RelWithDebInfo;
+		};
+		C401E9E71BFE41D2BA0BCF4F /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				COMBINE_HIDPI_IMAGES = YES;
+				EXECUTABLE_PREFIX = "";
+				EXECUTABLE_SUFFIX = "";
+				GCC_GENERATE_DEBUGGING_SYMBOLS = YES;
+				GCC_INLINES_ARE_PRIVATE_EXTERN = NO;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = ("'CMAKE_INTDIR=\"$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)\"'","$(inherited)");
+				GCC_SYMBOLS_PRIVATE_EXTERN = NO;
+				HEADER_SEARCH_PATHS = ("/Users/shiwei05/Documents/code/cpp-code/cpp_media_server/src","/Users/shiwei05/Documents/code/cpp-code/cpp_media_server/src/net","/Users/shiwei05/Documents/code/cpp-code/cpp_media_server/src/net/http","/Users/shiwei05/Documents/code/cpp-code/cpp_media_server/src/net/rtmp","/Users/shiwei05/Documents/code/cpp-code/cpp_media_server/src/net/websocket","/Users/shiwei05/Documents/code/cpp-code/cpp_media_server/src/net/websocket/wsimple","/Users/shiwei05/Documents/code/cpp-code/cpp_media_server/src/net/tcp","/Users/shiwei05/Documents/code/cpp-code/cpp_media_server/src/net/stun","/Users/shiwei05/Documents/code/cpp-code/cpp_media_server/src/net/httpflv","/Users/shiwei05/Documents/code/cpp-code/cpp_media_server/src/net/rtprtcp","/Users/shiwei05/Documents/code/cpp-code/cpp_media_server/src/net/hls","/Users/shiwei05/Documents/code/cpp-code/cpp_media_server/src/net/webrtc","/Users/shiwei05/Documents/code/cpp-code/cpp_media_server/src/net/webrtc/libwebrtc","/Users/shiwei05/Documents/code/cpp-code/cpp_media_server/src/format","/Users/shiwei05/Documents/code/cpp-code/cpp_media_server/src/format/flv","/Users/shiwei05/Documents/code/cpp-code/cpp_media_server/src/utils","/Users/shiwei05/Documents/code/cpp-code/cpp_media_server/src/utils/av","/Users/shiwei05/Documents/code/cpp-code/cpp_media_server/3rdparty/libsdptransform/include","/Users/shiwei05/Documents/code/cpp-code/cpp_media_server/output/include","/Users/shiwei05/Documents/code/cpp-code/cpp_media_server/output/include/srtp2","/Users/shiwei05/Documents/code/cpp-code/cpp_media_server/output/include/openssl",/usr/local/include,"/Users/shiwei05/Documents/code/cpp-code/cpp_media_server/3rdparty/libsdptransform/test/include","$(inherited)");
+				INSTALL_PATH = "";
+				LD_RUNPATH_SEARCH_PATHS = ("/Users/shiwei05/Documents/code/cpp-code/cpp_media_server/output/lib /usr/local/lib64 /usr/local/lib","$(inherited)");
+				LIBRARY_SEARCH_PATHS = ("/Users/shiwei05/Documents/code/cpp-code/cpp_media_server/output/lib/$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)","/Users/shiwei05/Documents/code/cpp-code/cpp_media_server/output/lib","/usr/local/lib64/$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)",/usr/local/lib64,"/usr/local/lib/$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)",/usr/local/lib,"$(inherited)");
+				OTHER_CPLUSPLUSFLAGS = " -std=c++11    -Wno-deprecated -Wno-deprecated-declarations -Wno-reorder -Wall -fexceptions -frtti -D__STDC_FORMAT_MACROS -fPIC    '-std=c++11' '-std=c++11' ";
+				OTHER_LDFLAGS = (" -Wl,-search_paths_first -Wl,-headerpad_max_install_names","/Users/shiwei05/Documents/code/cpp-code/cpp_media_server/output/lib/Debug/libsdptransform.a","$(inherited)");
+				OTHER_REZFLAGS = "";
+				PRODUCT_NAME = test_sdptransform;
+				SECTORDER_FLAGS = "";
+				SYMROOT = "/Users/shiwei05/Documents/code/cpp-code/cpp_media_server/3rdparty/libsdptransform/test";
+				USE_HEADERMAP = NO;
+				WARNING_CFLAGS = ("$(inherited)");
+			};
+			name = Debug;
+		};
+		C5AAD39D29034E54B2ADF161 /* RelWithDebInfo */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ARCHS = "$(NATIVE_ARCH_ACTUAL)";
+				ONLY_ACTIVE_ARCH = YES;
+				SDKROOT = /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX12.3.sdk;
+				SYMROOT = "/Users/shiwei05/Documents/code/cpp-code/cpp_media_server/3rdparty/libsdptransform/build";
+			};
+			name = RelWithDebInfo;
+		};
+		CF343A75A24442989CA51DE6 /* MinSizeRel */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				COMBINE_HIDPI_IMAGES = YES;
+				EXECUTABLE_PREFIX = "";
+				EXECUTABLE_SUFFIX = "";
+				GCC_GENERATE_DEBUGGING_SYMBOLS = YES;
+				GCC_INLINES_ARE_PRIVATE_EXTERN = NO;
+				GCC_OPTIMIZATION_LEVEL = s;
+				GCC_PREPROCESSOR_DEFINITIONS = ("'CMAKE_INTDIR=\"$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)\"'","$(inherited)");
+				GCC_SYMBOLS_PRIVATE_EXTERN = NO;
+				HEADER_SEARCH_PATHS = ("/Users/shiwei05/Documents/code/cpp-code/cpp_media_server/src","/Users/shiwei05/Documents/code/cpp-code/cpp_media_server/src/net","/Users/shiwei05/Documents/code/cpp-code/cpp_media_server/src/net/http","/Users/shiwei05/Documents/code/cpp-code/cpp_media_server/src/net/rtmp","/Users/shiwei05/Documents/code/cpp-code/cpp_media_server/src/net/websocket","/Users/shiwei05/Documents/code/cpp-code/cpp_media_server/src/net/websocket/wsimple","/Users/shiwei05/Documents/code/cpp-code/cpp_media_server/src/net/tcp","/Users/shiwei05/Documents/code/cpp-code/cpp_media_server/src/net/stun","/Users/shiwei05/Documents/code/cpp-code/cpp_media_server/src/net/httpflv","/Users/shiwei05/Documents/code/cpp-code/cpp_media_server/src/net/rtprtcp","/Users/shiwei05/Documents/code/cpp-code/cpp_media_server/src/net/hls","/Users/shiwei05/Documents/code/cpp-code/cpp_media_server/src/net/webrtc","/Users/shiwei05/Documents/code/cpp-code/cpp_media_server/src/net/webrtc/libwebrtc","/Users/shiwei05/Documents/code/cpp-code/cpp_media_server/src/format","/Users/shiwei05/Documents/code/cpp-code/cpp_media_server/src/format/flv","/Users/shiwei05/Documents/code/cpp-code/cpp_media_server/src/utils","/Users/shiwei05/Documents/code/cpp-code/cpp_media_server/src/utils/av","/Users/shiwei05/Documents/code/cpp-code/cpp_media_server/3rdparty/libsdptransform/include","/Users/shiwei05/Documents/code/cpp-code/cpp_media_server/output/include","/Users/shiwei05/Documents/code/cpp-code/cpp_media_server/output/include/srtp2","/Users/shiwei05/Documents/code/cpp-code/cpp_media_server/output/include/openssl",/usr/local/include,"$(inherited)");
+				INSTALL_PATH = "";
+				LD_RUNPATH_SEARCH_PATHS = ("/Users/shiwei05/Documents/code/cpp-code/cpp_media_server/output/lib /usr/local/lib64 /usr/local/lib","$(inherited)");
+				LIBRARY_SEARCH_PATHS = ("/Users/shiwei05/Documents/code/cpp-code/cpp_media_server/output/lib/$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)","/Users/shiwei05/Documents/code/cpp-code/cpp_media_server/output/lib","/usr/local/lib64/$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)",/usr/local/lib64,"/usr/local/lib/$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)",/usr/local/lib,"$(inherited)");
+				OTHER_CPLUSPLUSFLAGS = " -std=c++11    -Wno-deprecated -Wno-deprecated-declarations -Wno-reorder -Wall -fexceptions -frtti -D__STDC_FORMAT_MACROS -fPIC     -DNDEBUG '-std=c++11' '-std=c++11' ";
+				OTHER_LDFLAGS = (" -Wl,-search_paths_first -Wl,-headerpad_max_install_names","/Users/shiwei05/Documents/code/cpp-code/cpp_media_server/output/lib/MinSizeRel/libsdptransform.a","$(inherited)");
+				OTHER_REZFLAGS = "";
+				PRODUCT_NAME = sdptransform_readme_helper;
+				SECTORDER_FLAGS = "";
+				SYMROOT = "/Users/shiwei05/Documents/code/cpp-code/cpp_media_server/3rdparty/libsdptransform/readme-helper";
+				USE_HEADERMAP = NO;
+				WARNING_CFLAGS = ("$(inherited)");
+			};
+			name = MinSizeRel;
+		};
+		D1D68D3795304E3E8C98D8C7 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				COMBINE_HIDPI_IMAGES = YES;
+				GCC_GENERATE_DEBUGGING_SYMBOLS = YES;
+				GCC_INLINES_ARE_PRIVATE_EXTERN = NO;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = ("'CMAKE_INTDIR=\"$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)\"'","$(inherited)");
+				GCC_SYMBOLS_PRIVATE_EXTERN = NO;
+				INSTALL_PATH = "";
+				OTHER_LDFLAGS = ("","$(inherited)");
+				OTHER_REZFLAGS = "";
+				PRODUCT_NAME = ZERO_CHECK;
+				SECTORDER_FLAGS = "";
+				SYMROOT = "/Users/shiwei05/Documents/code/cpp-code/cpp_media_server/3rdparty/libsdptransform";
+				USE_HEADERMAP = NO;
+				WARNING_CFLAGS = ("$(inherited)");
+			};
+			name = Debug;
+		};
+		D32AF62FF2F940AC944EC9B1 /* MinSizeRel */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				COMBINE_HIDPI_IMAGES = YES;
+				EXECUTABLE_PREFIX = "";
+				EXECUTABLE_SUFFIX = "";
+				GCC_GENERATE_DEBUGGING_SYMBOLS = YES;
+				GCC_INLINES_ARE_PRIVATE_EXTERN = NO;
+				GCC_OPTIMIZATION_LEVEL = s;
+				GCC_PREPROCESSOR_DEFINITIONS = ("'CMAKE_INTDIR=\"$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)\"'","$(inherited)");
+				GCC_SYMBOLS_PRIVATE_EXTERN = NO;
+				HEADER_SEARCH_PATHS = ("/Users/shiwei05/Documents/code/cpp-code/cpp_media_server/src","/Users/shiwei05/Documents/code/cpp-code/cpp_media_server/src/net","/Users/shiwei05/Documents/code/cpp-code/cpp_media_server/src/net/http","/Users/shiwei05/Documents/code/cpp-code/cpp_media_server/src/net/rtmp","/Users/shiwei05/Documents/code/cpp-code/cpp_media_server/src/net/websocket","/Users/shiwei05/Documents/code/cpp-code/cpp_media_server/src/net/websocket/wsimple","/Users/shiwei05/Documents/code/cpp-code/cpp_media_server/src/net/tcp","/Users/shiwei05/Documents/code/cpp-code/cpp_media_server/src/net/stun","/Users/shiwei05/Documents/code/cpp-code/cpp_media_server/src/net/httpflv","/Users/shiwei05/Documents/code/cpp-code/cpp_media_server/src/net/rtprtcp","/Users/shiwei05/Documents/code/cpp-code/cpp_media_server/src/net/hls","/Users/shiwei05/Documents/code/cpp-code/cpp_media_server/src/net/webrtc","/Users/shiwei05/Documents/code/cpp-code/cpp_media_server/src/net/webrtc/libwebrtc","/Users/shiwei05/Documents/code/cpp-code/cpp_media_server/src/format","/Users/shiwei05/Documents/code/cpp-code/cpp_media_server/src/format/flv","/Users/shiwei05/Documents/code/cpp-code/cpp_media_server/src/utils","/Users/shiwei05/Documents/code/cpp-code/cpp_media_server/src/utils/av","/Users/shiwei05/Documents/code/cpp-code/cpp_media_server/3rdparty/libsdptransform/include","/Users/shiwei05/Documents/code/cpp-code/cpp_media_server/output/include","/Users/shiwei05/Documents/code/cpp-code/cpp_media_server/output/include/srtp2","/Users/shiwei05/Documents/code/cpp-code/cpp_media_server/output/include/openssl",/usr/local/include,"/Users/shiwei05/Documents/code/cpp-code/cpp_media_server/3rdparty/libsdptransform/test/include","$(inherited)");
+				INSTALL_PATH = "";
+				LD_RUNPATH_SEARCH_PATHS = ("/Users/shiwei05/Documents/code/cpp-code/cpp_media_server/output/lib /usr/local/lib64 /usr/local/lib","$(inherited)");
+				LIBRARY_SEARCH_PATHS = ("/Users/shiwei05/Documents/code/cpp-code/cpp_media_server/output/lib/$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)","/Users/shiwei05/Documents/code/cpp-code/cpp_media_server/output/lib","/usr/local/lib64/$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)",/usr/local/lib64,"/usr/local/lib/$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)",/usr/local/lib,"$(inherited)");
+				OTHER_CPLUSPLUSFLAGS = " -std=c++11    -Wno-deprecated -Wno-deprecated-declarations -Wno-reorder -Wall -fexceptions -frtti -D__STDC_FORMAT_MACROS -fPIC     -DNDEBUG '-std=c++11' '-std=c++11' ";
+				OTHER_LDFLAGS = (" -Wl,-search_paths_first -Wl,-headerpad_max_install_names","/Users/shiwei05/Documents/code/cpp-code/cpp_media_server/output/lib/MinSizeRel/libsdptransform.a","$(inherited)");
+				OTHER_REZFLAGS = "";
+				PRODUCT_NAME = test_sdptransform;
+				SECTORDER_FLAGS = "";
+				SYMROOT = "/Users/shiwei05/Documents/code/cpp-code/cpp_media_server/3rdparty/libsdptransform/test";
+				USE_HEADERMAP = NO;
+				WARNING_CFLAGS = ("$(inherited)");
+			};
+			name = MinSizeRel;
+		};
+		DC61C6415CFE4BAAB2A5459A /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				COMBINE_HIDPI_IMAGES = YES;
+				EXECUTABLE_PREFIX = "";
+				EXECUTABLE_SUFFIX = "";
+				GCC_GENERATE_DEBUGGING_SYMBOLS = YES;
+				GCC_INLINES_ARE_PRIVATE_EXTERN = NO;
+				GCC_OPTIMIZATION_LEVEL = 3;
+				GCC_PREPROCESSOR_DEFINITIONS = ("'CMAKE_INTDIR=\"$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)\"'","$(inherited)");
+				GCC_SYMBOLS_PRIVATE_EXTERN = NO;
+				HEADER_SEARCH_PATHS = ("/Users/shiwei05/Documents/code/cpp-code/cpp_media_server/src","/Users/shiwei05/Documents/code/cpp-code/cpp_media_server/src/net","/Users/shiwei05/Documents/code/cpp-code/cpp_media_server/src/net/http","/Users/shiwei05/Documents/code/cpp-code/cpp_media_server/src/net/rtmp","/Users/shiwei05/Documents/code/cpp-code/cpp_media_server/src/net/websocket","/Users/shiwei05/Documents/code/cpp-code/cpp_media_server/src/net/websocket/wsimple","/Users/shiwei05/Documents/code/cpp-code/cpp_media_server/src/net/tcp","/Users/shiwei05/Documents/code/cpp-code/cpp_media_server/src/net/stun","/Users/shiwei05/Documents/code/cpp-code/cpp_media_server/src/net/httpflv","/Users/shiwei05/Documents/code/cpp-code/cpp_media_server/src/net/rtprtcp","/Users/shiwei05/Documents/code/cpp-code/cpp_media_server/src/net/hls","/Users/shiwei05/Documents/code/cpp-code/cpp_media_server/src/net/webrtc","/Users/shiwei05/Documents/code/cpp-code/cpp_media_server/src/net/webrtc/libwebrtc","/Users/shiwei05/Documents/code/cpp-code/cpp_media_server/src/format","/Users/shiwei05/Documents/code/cpp-code/cpp_media_server/src/format/flv","/Users/shiwei05/Documents/code/cpp-code/cpp_media_server/src/utils","/Users/shiwei05/Documents/code/cpp-code/cpp_media_server/src/utils/av","/Users/shiwei05/Documents/code/cpp-code/cpp_media_server/3rdparty/libsdptransform/include","/Users/shiwei05/Documents/code/cpp-code/cpp_media_server/output/include","/Users/shiwei05/Documents/code/cpp-code/cpp_media_server/output/include/srtp2","/Users/shiwei05/Documents/code/cpp-code/cpp_media_server/output/include/openssl",/usr/local/include,"/Users/shiwei05/Documents/code/cpp-code/cpp_media_server/3rdparty/libsdptransform/test/include","$(inherited)");
+				INSTALL_PATH = "";
+				LD_RUNPATH_SEARCH_PATHS = ("/Users/shiwei05/Documents/code/cpp-code/cpp_media_server/output/lib /usr/local/lib64 /usr/local/lib","$(inherited)");
+				LIBRARY_SEARCH_PATHS = ("/Users/shiwei05/Documents/code/cpp-code/cpp_media_server/output/lib/$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)","/Users/shiwei05/Documents/code/cpp-code/cpp_media_server/output/lib","/usr/local/lib64/$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)",/usr/local/lib64,"/usr/local/lib/$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)",/usr/local/lib,"$(inherited)");
+				OTHER_CPLUSPLUSFLAGS = " -std=c++11    -Wno-deprecated -Wno-deprecated-declarations -Wno-reorder -Wall -fexceptions -frtti -D__STDC_FORMAT_MACROS -fPIC     -DNDEBUG '-std=c++11' '-std=c++11' ";
+				OTHER_LDFLAGS = (" -Wl,-search_paths_first -Wl,-headerpad_max_install_names","/Users/shiwei05/Documents/code/cpp-code/cpp_media_server/output/lib/Release/libsdptransform.a","$(inherited)");
+				OTHER_REZFLAGS = "";
+				PRODUCT_NAME = test_sdptransform;
+				SECTORDER_FLAGS = "";
+				SYMROOT = "/Users/shiwei05/Documents/code/cpp-code/cpp_media_server/3rdparty/libsdptransform/test";
+				USE_HEADERMAP = NO;
+				WARNING_CFLAGS = ("$(inherited)");
+			};
+			name = Release;
+		};
+		E40036F013ED4D60A62A4C6B /* MinSizeRel */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				COMBINE_HIDPI_IMAGES = YES;
+				GCC_GENERATE_DEBUGGING_SYMBOLS = YES;
+				GCC_INLINES_ARE_PRIVATE_EXTERN = NO;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = ("'CMAKE_INTDIR=\"$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)\"'","$(inherited)");
+				GCC_SYMBOLS_PRIVATE_EXTERN = NO;
+				INSTALL_PATH = "";
+				OTHER_LDFLAGS = ("","$(inherited)");
+				OTHER_REZFLAGS = "";
+				PRODUCT_NAME = ZERO_CHECK;
+				SECTORDER_FLAGS = "";
+				SYMROOT = "/Users/shiwei05/Documents/code/cpp-code/cpp_media_server/3rdparty/libsdptransform";
+				USE_HEADERMAP = NO;
+				WARNING_CFLAGS = ("$(inherited)");
+			};
+			name = MinSizeRel;
+		};
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
-		52DABE68C19B4993BD0CEB50 /* Build configuration list for PBXNativeTarget "sdptransform_readme_helper" */ = {
+		091C0A05F0744DE580211E42 /* Build configuration list for PBXAggregateTarget "install" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
-				1BA42668BBD04CBFA1B86BAB /* Debug */,
-				E3A7C70EB4B643669368F50A /* Release */,
-				E4C0F57D1844481D8DFEB954 /* MinSizeRel */,
-				C25E628F4DC141939E3BBACC /* RelWithDebInfo */,
+				3208C1835F874E3BA7E6746C /* Debug */,
+				2B346D98A5804585B3186A4D /* Release */,
+				9F23C0170D9B4A20A29EE2B6 /* MinSizeRel */,
+				8EFC53201F9E465283C6AC06 /* RelWithDebInfo */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Debug;
 		};
-		6459A7C6F18349B9BDD2CE6E /* Build configuration list for PBXNativeTarget "sdptransform" */ = {
+		0E50B57CD67046F3B6E78A09 /* Build configuration list for PBXAggregateTarget "ALL_BUILD" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
-				E795043A36F3407B80EBB57C /* Debug */,
-				BF24E218458740BCA8D5324F /* Release */,
-				92EC59147EB74E17854E62EC /* MinSizeRel */,
-				FD5F8056B402499C9448D0B1 /* RelWithDebInfo */,
+				6B1207E9B622446C8158B817 /* Debug */,
+				7B61278A81004E74B3FA0C25 /* Release */,
+				5E65C6220638415A947C664B /* MinSizeRel */,
+				7EEA0A8F40A54CF5BE62CE95 /* RelWithDebInfo */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Debug;
 		};
-		65D206EFC1234C15AEAFB1BE /* Build configuration list for PBXNativeTarget "test_sdptransform" */ = {
+		13CB7A7C675E428ABA5C276A /* Build configuration list for PBXNativeTarget "test_sdptransform" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
-				D1F8FB58A79A4B9699AF82FB /* Debug */,
-				D6450CA247DA42EB9D22F06D /* Release */,
-				ED1FB07CF2D545CB8FC39221 /* MinSizeRel */,
-				BFBB7AE7BCE2433F84307EFC /* RelWithDebInfo */,
+				C401E9E71BFE41D2BA0BCF4F /* Debug */,
+				DC61C6415CFE4BAAB2A5459A /* Release */,
+				D32AF62FF2F940AC944EC9B1 /* MinSizeRel */,
+				BC83D167873A41DE9277CC35 /* RelWithDebInfo */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Debug;
 		};
-		6E40E2DC5672489E8618AA50 /* Build configuration list for PBXAggregateTarget "install" */ = {
+		5062057DB83747B5A431634A /* Build configuration list for PBXAggregateTarget "ZERO_CHECK" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
-				BC316108E13747FE9486CCAE /* Debug */,
-				A7D5E2955D2B492683BC7D7D /* Release */,
-				26B87A8FD704492A942A2914 /* MinSizeRel */,
-				E09E30AAC9DB4259B9145BAE /* RelWithDebInfo */,
+				D1D68D3795304E3E8C98D8C7 /* Debug */,
+				9021C309BCA84870A425A4D8 /* Release */,
+				E40036F013ED4D60A62A4C6B /* MinSizeRel */,
+				65349B9A3F8241ABB8BC4A41 /* RelWithDebInfo */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Debug;
 		};
-		733F1BE77D5E402883BB798D /* Build configuration list for PBXAggregateTarget "ZERO_CHECK" */ = {
+		55A2592DD13F43FFA2B9F737 /* Build configuration list for PBXProject "sdptransform" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
-				B82A97D0F0D14972BEB45454 /* Debug */,
-				0C5FFA1FD735448D81F97105 /* Release */,
-				8A22F1382D8140F4A3AA5BF6 /* MinSizeRel */,
-				57354B40D45D4C4DBBB3CDCF /* RelWithDebInfo */,
+				643BC89402C6453B8FBF75D5 /* Debug */,
+				442B41C0FEC54E3B9AA66749 /* Release */,
+				90053E10414647C7A92D6F6D /* MinSizeRel */,
+				C5AAD39D29034E54B2ADF161 /* RelWithDebInfo */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Debug;
 		};
-		7788DF67028A47609E6CD1A0 /* Build configuration list for PBXAggregateTarget "ALL_BUILD" */ = {
+		81AD9711A9F944C2A8947413 /* Build configuration list for PBXNativeTarget "sdptransform" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
-				65474B0E8964433A81595CCA /* Debug */,
-				CB4F51570AA84A03980F6697 /* Release */,
-				2B916E686FB8419291F3478E /* MinSizeRel */,
-				2A29936FE4BF43359B380353 /* RelWithDebInfo */,
+				14B9725F1C924EADB0E0BD02 /* Debug */,
+				142404B192694C169DAA62EB /* Release */,
+				799B18AA72104DA9B3DA59A7 /* MinSizeRel */,
+				2A3CC1F523F84DBD98F65597 /* RelWithDebInfo */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Debug;
 		};
-		EBBB47D5D73A44C8AFF92E17 /* Build configuration list for PBXProject "sdptransform" */ = {
+		996E207B97994E879A6F4585 /* Build configuration list for PBXNativeTarget "sdptransform_readme_helper" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
-				750891CD1E4448B0B34F9C4B /* Debug */,
-				2517DEF60F524085ADAF04CC /* Release */,
-				E8FD51CF673D493FAD9F32AD /* MinSizeRel */,
-				3F9E6EBD06754669B77E0978 /* RelWithDebInfo */,
+				14B885593172408AB7A6ECCB /* Debug */,
+				B6627E9A728A4E3AB114EE1D /* Release */,
+				CF343A75A24442989CA51DE6 /* MinSizeRel */,
+				9955DC3CB6C04CCB9FC408B7 /* RelWithDebInfo */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Debug;

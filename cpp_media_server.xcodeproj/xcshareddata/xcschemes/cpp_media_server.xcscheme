@@ -56,7 +56,7 @@
             isEnabled = "YES">
          </CommandLineArgument>
          <CommandLineArgument
-            argument = "../conf/httpsflv_httpsapi.conf"
+            argument = "../conf/full.cfg"
             isEnabled = "YES">
          </CommandLineArgument>
       </CommandLineArguments>
