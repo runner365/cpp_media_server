@@ -1,8 +1,18 @@
 #include "http_server.hpp"
 #include "http_common.hpp"
 
-http_server::http_server(boost::asio::io_context& io_context, uint16_t port):timer_interface(io_context, 2500) {
+http_server::http_server(boost::asio::io_context& io_context, uint16_t port):timer_interface(io_context, 2500)
+{
     server_ = std::make_shared<tcp_server>(io_context, port, this);
+    server_->accept();
+    start_timer();
+}
+
+http_server::http_server(boost::asio::io_context& io_context, uint16_t port,
+            const std::string& cert_file, const std::string& key_file):timer_interface(io_context, 2500)
+{
+    server_ = std::make_shared<tcp_server>(io_context, port,
+                                    cert_file, key_file, this);
     server_->accept();
     start_timer();
 }
@@ -25,13 +35,23 @@ void http_server::on_timer() {
     auto iter = session_ptr_map_.begin();
     while (iter != session_ptr_map_.end()) {
         std::shared_ptr<http_session> session_ptr = iter->second;
-        
         if (!session_ptr->is_alive()) {
             session_ptr_map_.erase(iter++);
             continue;
         }
         iter++;
     }
+}
+
+void http_server::on_accept_ssl(int ret_code, boost::asio::ssl::stream<boost::asio::ip::tcp::socket> socket) {
+    if (ret_code == 0) {
+        std::string key;
+        make_endpoint_string(socket.lowest_layer().remote_endpoint(), key);
+        std::shared_ptr<http_session> session_ptr = std::make_shared<http_session>(std::move(socket), this);
+        session_ptr_map_.insert(std::make_pair(key, session_ptr));
+    }
+    server_->accept();
+    return;
 }
 
 void http_server::on_accept(int ret_code, boost::asio::ip::tcp::socket socket) {

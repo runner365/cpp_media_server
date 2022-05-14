@@ -24,6 +24,10 @@ public://implement tcp_server_callbackI
         session_ptr_->async_read();
     }
 
+    virtual void on_accept_ssl(int ret_code, boost::asio::ssl::stream<boost::asio::ip::tcp::socket> socket) override {
+
+    }
+
 public://implement tcp_session_callbackI
     virtual void on_write(int ret_code, size_t sent_size) override {
         log_infof("data length:%lu is sent", sent_size);

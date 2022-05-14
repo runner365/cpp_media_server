@@ -27,6 +27,7 @@ friend class http_response;
 
 public:
     http_session(boost::asio::ip::tcp::socket socket, http_callbackI* callback);
+    http_session(boost::asio::ssl::stream<boost::asio::ip::tcp::socket> socket, http_callbackI* callback);
     virtual ~http_session();
 
 public:
@@ -46,7 +47,7 @@ private:
 
 private:
     http_callbackI* callback_;
-    std::shared_ptr<tcp_session> session_ptr_;
+    std::shared_ptr<tcp_base_session> session_ptr_;
     std::shared_ptr<http_response> response_ptr_;
     data_buffer header_data_;
     data_buffer content_data_;

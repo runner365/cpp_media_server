@@ -29,6 +29,8 @@ class http_server : public tcp_server_callbackI, public http_callbackI, public t
 {
 public:
     http_server(boost::asio::io_context& io_context, uint16_t port);
+    http_server(boost::asio::io_context& io_context, uint16_t port,
+            const std::string& cert_file, const std::string& key_file);
     virtual ~http_server();
 
 public:
@@ -40,6 +42,7 @@ public:
 
 protected://tcp_server_callbackI
     virtual void on_accept(int ret_code, boost::asio::ip::tcp::socket socket) override;
+    virtual void on_accept_ssl(int ret_code, boost::asio::ssl::stream<boost::asio::ip::tcp::socket> socket) override;
 
 protected://http_callbackI
     virtual void on_close(boost::asio::ip::tcp::endpoint endpoint) override;

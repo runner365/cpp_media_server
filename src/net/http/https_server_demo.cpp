@@ -58,19 +58,29 @@ void PostDemo(const http_request* request, std::shared_ptr<http_response> respon
 
 int main(int argn, char** argv)
 {
-    if (argn < 2) {
+    std::string cert_file;
+    std::string key_file;
+
+    if (argn < 4) {
         std::cout << "input parameter error" << std::endl;
         return -1;
     }
 
     int port = atoi(argv[1]);
 
+    if (argn >= 4) {
+        cert_file = argv[2];
+        key_file  = argv[3];
+        std::cout << "ssl cert file:" << cert_file << "\r\n";
+        std::cout << "ssl key file:" << key_file << "\r\n";
+    }
+
     boost::asio::io_context io_context;
     boost::asio::io_service::work work(io_context);
 
     try {
-        http_server server(io_context, port);
-
+        http_server server(io_context, port, cert_file, key_file);
+        
         server.add_get_handle("/api/v1/getdemo", GetDemo);
         server.add_post_handle("/api/v1/postdemo", PostDemo);
         io_context.run();

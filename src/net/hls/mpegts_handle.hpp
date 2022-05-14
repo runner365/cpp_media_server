@@ -92,6 +92,7 @@ protected:
 private:
     void handle_packet(MEDIA_PACKET_PTR pkt_ptr);
     int handle_video_h264(MEDIA_PACKET_PTR pkt_ptr);
+    int handle_video_h265(MEDIA_PACKET_PTR pkt_ptr);
     int handle_video_vp8(MEDIA_PACKET_PTR pkt_ptr);
 
     int handle_audio_aac(MEDIA_PACKET_PTR pkt_ptr);
@@ -118,8 +119,10 @@ private:
     bool ready_       = false;
 
 private:
+    uint8_t vps_[1024];
     uint8_t pps_[1024];
     uint8_t sps_[1024];
+    size_t  vps_len_ = 0;
     size_t  pps_len_ = 0;
     size_t  sps_len_ = 0;
 

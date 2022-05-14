@@ -23,6 +23,7 @@ protected:
 
 protected:
     virtual void on_accept(int ret_code, boost::asio::ip::tcp::socket socket) override;
+    virtual void on_accept_ssl(int ret_code, boost::asio::ssl::stream<boost::asio::ip::tcp::socket> socket) override;
 
 private:
     void on_check_alive();

@@ -90,7 +90,12 @@ void MediaServer::create_httpflv() {
         log_infof("httpflv is disable...");
         return;
     }
-    MediaServer::httpflv_ptr = std::make_shared<httpflv_server>(MediaServer::io_context, Config::httpflv_port());
+
+    if (Config::httpflv_ssl_enable() && !Config::httpflv_cert_file().empty() && !Config::httpflv_key_file().empty()) {
+        MediaServer::httpflv_ptr = std::make_shared<httpflv_server>(MediaServer::io_context, Config::httpflv_port(), Config::httpflv_cert_file(), Config::httpflv_key_file());
+    } else {
+        MediaServer::httpflv_ptr = std::make_shared<httpflv_server>(MediaServer::io_context, Config::httpflv_port());
+    }
 
     log_infof("httpflv server is starting, listen port:%d", Config::httpflv_port());
     return;
@@ -101,7 +106,11 @@ void MediaServer::create_httpapi() {
         log_infof("httpapi is disable...");
         return;
     }
-    MediaServer::httpapi_ptr = std::make_shared<httpapi_server>(MediaServer::io_context, Config::httpapi_port());
+    if (Config::httpapi_ssl_enable() && !Config::httpapi_cert_file().empty() && !Config::httpapi_key_file().empty()) {
+        MediaServer::httpapi_ptr = std::make_shared<httpapi_server>(MediaServer::io_context, Config::httpapi_port(), Config::httpapi_cert_file(), Config::httpapi_key_file());
+    } else {
+        MediaServer::httpapi_ptr = std::make_shared<httpapi_server>(MediaServer::io_context, Config::httpapi_port());
+    }
 
     log_infof("httpapi server is starting, listen port:%d", Config::httpapi_port());
     return;
@@ -146,7 +155,10 @@ void MediaServer::Run(const std::string& cfg_file) {
 
     Logger::get_instance()->set_filename(Config::log_filename());
     Logger::get_instance()->set_level(Config::log_level());
-
+    #ifdef __APPLE__
+    //enable cosole in mac os
+    Logger::get_instance()->enable_console();
+    #endif
     log_infof("configuration file:%s", Config::dump().c_str());
     
     boost::asio::io_service::work work(io_context);

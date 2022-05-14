@@ -545,6 +545,12 @@ httpapi_server::httpapi_server(boost::asio::io_context& io_ctx, uint16_t port):s
     log_infof("http api server is listen:%d", port);
 }
 
+httpapi_server::httpapi_server(boost::asio::io_context& io_ctx, uint16_t port, const std::string& cert_file, const std::string& key_file):server_(io_ctx, port, cert_file, key_file)
+{
+    run();
+    log_infof("https api server is listen:%d, cert file:%s, key file:%s", port, cert_file.c_str(), key_file.c_str());
+}
+
 httpapi_server::~httpapi_server()
 {
 }

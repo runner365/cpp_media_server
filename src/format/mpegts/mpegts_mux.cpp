@@ -60,6 +60,19 @@ static uint32_t mpeg_crc32(uint32_t crc, const uint8_t *buffer, uint32_t size)
     return crc ;  
 }
 
+static uint8_t H264_AUD_DATA[] = {0x00, 0x00, 0x00, 0x01, 0x09, 0xff};
+static uint8_t H265_AUD_DATA[] = {0x00, 0x00, 0x00, 0x01, 0x46, 0x01, 0x50};
+
+uint8_t* get_h264_aud_data(size_t& len) {
+    len = sizeof(H264_AUD_DATA);
+    return H264_AUD_DATA;
+}
+
+uint8_t* get_h265_aud_data(size_t& len) {
+    len = sizeof(H265_AUD_DATA);
+    return H265_AUD_DATA;
+}
+
 /*
 sync_byte 8 
 transport_error_indicator 1 
@@ -275,6 +288,11 @@ int mpegts_mux::generate_pmt() {
             case MEDIA_CODEC_H264:
             {
                 video_stream_type_ = STREAM_TYPE_VIDEO_H264;
+                break;
+            }
+            case MEDIA_CODEC_H265:
+            {
+                video_stream_type_ = STREAM_TYPE_VIDEO_HEVC;
                 break;
             }
             case MEDIA_CODEC_VP8:

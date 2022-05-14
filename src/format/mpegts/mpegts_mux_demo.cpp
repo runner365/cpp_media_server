@@ -16,7 +16,6 @@ std::string flv_filename;
 std::string ts_filename;
 muxer_callback* muxer_cb_p = nullptr;
 
-static const uint8_t H264_AUD_DATA[] = {0x00, 0x00, 0x00, 0x01, 0x09, 0xff};
 
 class muxer_callback : public av_format_callback
 {
@@ -121,7 +120,9 @@ private:
             nalu_pkt_ptr->copy_properties(pkt_ptr);
             nalu_pkt_ptr->buffer_ptr_->reset();
             
-            nalu_pkt_ptr->buffer_ptr_->append_data((char*)H264_AUD_DATA, sizeof(H264_AUD_DATA));
+            size_t aud_data_len = 0;
+            uint8_t* aud_data = get_h264_aud_data(aud_data_len);
+            nalu_pkt_ptr->buffer_ptr_->append_data((char*)aud_data, aud_data_len);
             if (H264_IS_KEYFRAME(nalu_type)) {
                 nalu_pkt_ptr->buffer_ptr_->append_data((char*)sps_, sps_len_);
                 nalu_pkt_ptr->buffer_ptr_->append_data((char*)pps_, pps_len_);
@@ -134,11 +135,77 @@ private:
         return 0;
     }
 
+    int handle_h265(MEDIA_PACKET_PTR pkt_ptr) {
+        if (pkt_ptr->is_seq_hdr_) {
+            uint8_t* data   = (uint8_t*)pkt_ptr->buffer_ptr_->data();
+            size_t data_len = pkt_ptr->buffer_ptr_->data_len();
+            HEVC_DEC_CONF_RECORD hevc_info;
+
+            int ret = get_hevc_dec_info_from_extradata(&hevc_info, data, data_len);
+            if (ret == 0) {
+                ret = get_vps_sps_pps_from_hevc_dec_info(&hevc_info,
+                                vps_, vps_len_,
+                                sps_, sps_len_,
+                                pps_, pps_len_);
+                if (ret == 0) {
+                    log_info_data(vps_, vps_len_, "vps data");
+                    log_info_data(sps_, sps_len_, "sps data");
+                    log_info_data(pps_, pps_len_, "pps data");
+                }
+            }
+            return 0;
+        }
+
+        std::vector<std::shared_ptr<data_buffer>> nalus;
+        bool ret = annexb_to_nalus((uint8_t*)pkt_ptr->buffer_ptr_->data(),
+                        pkt_ptr->buffer_ptr_->data_len(), nalus);
+        if (!ret) {
+            return -1;
+        }
+
+        MEDIA_PACKET_PTR nalu_pkt_ptr = std::make_shared<MEDIA_PACKET>();
+        bool append_vps_pps_sps = false;
+
+        for (std::shared_ptr<data_buffer> item : nalus) {
+            uint8_t* data = (uint8_t*)item->data();
+            size_t data_len = (size_t)item->data_len();
+
+            uint8_t nalu_type = GET_HEVC_NALU_TYPE(data[4]);
+            if (nalu_type == NAL_UNIT_ACCESS_UNIT_DELIMITER) {
+                continue;
+            }
+
+            nalu_pkt_ptr->copy_properties(pkt_ptr);
+            nalu_pkt_ptr->buffer_ptr_->reset();
+            
+            size_t aud_data_len = 0;
+            uint8_t* aud_data = get_h265_aud_data(aud_data_len);
+            nalu_pkt_ptr->buffer_ptr_->append_data((char*)aud_data, aud_data_len);
+            if ((nalu_type >= NAL_UNIT_CODED_SLICE_BLA) && (nalu_type <= NAL_UNIT_RESERVED_23) && !append_vps_pps_sps) {
+                nalu_pkt_ptr->buffer_ptr_->append_data((char*)H264_START_CODE, sizeof(H264_START_CODE));
+                nalu_pkt_ptr->buffer_ptr_->append_data((char*)vps_, vps_len_);
+                nalu_pkt_ptr->buffer_ptr_->append_data((char*)H264_START_CODE, sizeof(H264_START_CODE));
+                nalu_pkt_ptr->buffer_ptr_->append_data((char*)sps_, sps_len_);
+                nalu_pkt_ptr->buffer_ptr_->append_data((char*)H264_START_CODE, sizeof(H264_START_CODE));
+                nalu_pkt_ptr->buffer_ptr_->append_data((char*)pps_, pps_len_);
+                append_vps_pps_sps = true;
+            }
+            nalu_pkt_ptr->buffer_ptr_->append_data((char*)H264_START_CODE, sizeof(H264_START_CODE));
+            nalu_pkt_ptr->buffer_ptr_->append_data((char*)data + 4, data_len - 4);
+            
+            muxer_.input_packet(nalu_pkt_ptr);
+        }
+        
+        return 0;
+    }
+
     int handle_video(MEDIA_PACKET_PTR pkt_ptr) {
         if (pkt_ptr->codec_type_ == MEDIA_CODEC_H264) {
             return handle_h264(pkt_ptr);
         } else if (pkt_ptr->codec_type_ == MEDIA_CODEC_VP8) {
             return handle_vp8(pkt_ptr);
+        } else if (pkt_ptr->codec_type_ == MEDIA_CODEC_H265) {
+            return handle_h265(pkt_ptr);
         } else {
             log_infof("handle video can't handle codec type:%d", pkt_ptr->codec_type_);
         }
@@ -208,8 +275,10 @@ public:
 private:
     std::string filename_;
     mpegts_mux muxer_;
+    uint8_t vps_[1024];
     uint8_t pps_[1024];
     uint8_t sps_[1024];
+    size_t  vps_len_ = 0;
     size_t  pps_len_ = 0;
     size_t  sps_len_ = 0;
 

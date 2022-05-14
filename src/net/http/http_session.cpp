@@ -39,6 +39,15 @@ http_session::http_session(boost::asio::ip::tcp::socket socket, http_callbackI* 
     try_read();
 }
 
+http_session::http_session(boost::asio::ssl::stream<boost::asio::ip::tcp::socket> socket, http_callbackI* callback) : callback_(callback)
+{
+    request_ = new http_request(this);
+    session_ptr_ = std::make_shared<tcp_ssl_session>(std::move(socket), this);
+    remote_endpoint_ = session_ptr_->get_remote_endpoint();
+
+    try_read();
+}
+
 http_session::~http_session() {
     close();
 }
@@ -126,15 +135,14 @@ int http_session::handle_request(const char* data, size_t data_size, bool& conti
         Access-Control-Max-Age: 1800
         Allow: GET, HEAD, POST, PUT, DELETE, TRACE, OPTIONS, PATCH
         */
-        response_ptr_->add_header("Vary", "Origin");
-        response_ptr_->add_header("Vary", "Access-Control-Request-Method");
-        response_ptr_->add_header("Vary", "Access-Control-Request-Headers");
         response_ptr_->add_header("Access-Control-Allow-Origin", "*");
-        response_ptr_->add_header("Access-Control-Allow-Methods", "POST");
-        response_ptr_->add_header("Access-Control-Allow-Headers", "content-type");
+        response_ptr_->add_header("Access-Control-Allow-Methods", "GET, POST, PUT");
+        response_ptr_->add_header("Access-Control-Allow-Headers", "*");
+        response_ptr_->add_header("Access-Control-Allow-Private-Network", "true");
         response_ptr_->add_header("Allow", "GET, HEAD, POST, PUT, DELETE, TRACE, OPTIONS, PATCH");
-        //response_ptr_->write(nullptr, 0);
+        response_ptr_->write(nullptr, 0);
         header_is_ready_ = false;
+        continue_flag = true;
         header_data_.reset();
         return 0;
     }

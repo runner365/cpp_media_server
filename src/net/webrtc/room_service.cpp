@@ -1447,28 +1447,14 @@ int room_service::handle_http_unpublish(const std::string& uid, std::string& err
     return 0;
 }
 
-int room_service::handle_http_subscribe(const std::string& uid, const std::string& remote_uid, const std::string& data,
-                        std::string& resp_sdp, std::string& session_id, std::string& err_msg) {
-    std::shared_ptr<user_info> user_ptr;
-    std::shared_ptr<user_info> remote_user_ptr;
+int room_service::handle_http_webrtc_subscribe(std::shared_ptr<user_info> user_ptr, std::shared_ptr<user_info> remote_user_ptr, const std::string& data,
+                    std::string& resp_sdp, std::string& session_id, std::string& err_msg) {
+    std::string uid = user_ptr->uid();
+    std::string remote_uid = remote_user_ptr->uid();
 
-    err_msg = "ok";
-
-    handle_http_join(uid);
-
-    user_ptr = get_user_info(uid);
-    if (!user_ptr) {
-        err_msg = "subscribe uid doesn't exist";
-        return -1;
-    }
-
-    remote_user_ptr = get_user_info(remote_uid);
-    if (!remote_user_ptr) {
-        err_msg = "subscriber uid doesn't exist";
-        return -1;
-    }
     if (remote_user_ptr->publish_sessions_.empty()) {
         err_msg = "subscriber pcid doesn't exist";
+        log_errorf("subscribe uid(%s) doesn't exist", uid.c_str());
         return -1;
     }
 
@@ -1572,6 +1558,207 @@ int room_service::handle_http_subscribe(const std::string& uid, const std::strin
     log_infof("subscribe sdp:%s", resp_sdp.c_str());
     
     return 0;
+}
+
+int room_service::handle_http_live_subscribe(std::shared_ptr<user_info> user_ptr, std::shared_ptr<live_user_info> remote_user_ptr, const std::string& data,
+                    std::string& resp_sdp, std::string& session_id, std::string& err_msg) {
+    std::string uid = user_ptr->uid();
+    std::string remote_uid = remote_user_ptr->uid();
+
+    std::string sdp = data;
+
+    json info_json = user_ptr->parse_remote_sdp(sdp);
+    log_infof("http subscribe sdp json:%s", info_json.dump().c_str());
+
+    rtc_media_info& info = user_ptr->parse_remote_media_info(info_json);
+    log_infof("http subscribe input media info:\r\n%s", info.dump().c_str());
+
+    rtc_media_info support_info;
+    user_ptr->get_support_media_info(info, support_info);
+
+    remote_user_ptr->make_video_cname();
+    remote_user_ptr->make_audio_cname();
+
+    /******************* add ssrc info from publisher *************************/
+    for (auto& media : support_info.medias) {
+        std::string pid;
+
+        //index == 0, video; index == 1, audio
+        for (int index = 0; index < 2; index++) {
+           SSRC_INFO ssrc_group_item;
+           SSRC_INFO rtx_ssrc_group_item;
+           SSRC_GROUPS group;
+           group.semantics = "FID";
+           std::string cname;
+
+           if ((index == 0) && (media.media_type != "video")) {
+               continue;
+           }
+
+           if ((index == 1) && (media.media_type != "audio")) {
+               continue;
+           }
+           if (index == 0) {
+               cname = remote_user_ptr->get_video_cname();
+           } else if (index == 1) {
+               cname = remote_user_ptr->get_audio_cname();
+           }
+           ssrc_group_item.attribute = "cname";
+           ssrc_group_item.value = cname;
+           rtx_ssrc_group_item.attribute = "cname";
+           rtx_ssrc_group_item.value = cname;
+
+           if (index == 0) {
+               ssrc_group_item.ssrc = remote_user_ptr->video_ssrc();
+               rtx_ssrc_group_item.ssrc = remote_user_ptr->video_rtx_ssrc();
+               media.ssrc_infos.push_back(ssrc_group_item);
+               media.ssrc_infos.push_back(rtx_ssrc_group_item);
+
+               group.ssrcs.push_back(remote_user_ptr->video_ssrc());
+               group.ssrcs.push_back(remote_user_ptr->video_rtx_ssrc());
+               media.msid = remote_user_ptr->video_msid();
+           } else if (index == 1) {
+               ssrc_group_item.ssrc = remote_user_ptr->audio_ssrc();
+               media.ssrc_infos.push_back(ssrc_group_item);
+
+               group.ssrcs.push_back(remote_user_ptr->audio_ssrc());
+               media.msid = remote_user_ptr->audio_msid();
+           }
+
+           std::stringstream ss_debug;
+           ss_debug << "ssrc infos:" << "\r\n";
+           for (auto ssrc_info_item : media.ssrc_infos) {
+               ss_debug << "attribute:" << ssrc_info_item.attribute
+                       << ", value:" << ssrc_info_item.value
+                       << ", ssrc:" << ssrc_info_item.ssrc
+                       << "\r\n";
+           }
+
+           media.ssrc_groups.push_back(group);
+           for (auto ssrc_group_item : media.ssrc_groups) {
+               ss_debug << "semantics:" << ssrc_group_item.semantics << " ";
+               ss_debug << "ssrcs: ";
+               for (auto ssrc : ssrc_group_item.ssrcs) {
+                   ss_debug << ssrc << " ";
+               }
+               ss_debug << "\r\n";
+           }
+
+           media.publisher_id  = remote_user_ptr->uid();
+           media.publisher_id += "_";
+           media.publisher_id += media.media_type;
+           if (index == 0) {
+               media.src_mid = remote_user_ptr->video_mid();
+           } else {
+               media.src_mid = remote_user_ptr->audio_mid();
+           }
+           ss_debug << "msid: " << media.msid << "\r\n";
+           ss_debug << "publisher id: " << media.publisher_id << "\r\n";
+           ss_debug << "src mid: " << media.src_mid << "\r\n";
+
+           //log_infof("live media type:%s, debug info:%s", info.media_type.c_str(), ss_debug.str().c_str());
+           break;
+        }
+    }
+
+    std::shared_ptr<webrtc_session> session_ptr;
+    /********************** create subscribe session **************************/
+    session_ptr = std::make_shared<webrtc_session>(roomId_, uid, this,
+                                            RTC_DIRECTION_SEND, support_info);
+    session_ptr->set_remote_finger_print(info.finger_print);
+    user_ptr->subscribe_sessions_[session_ptr->get_id()] = session_ptr;
+    //log_infof("live subscribe session id:%s", session_ptr->get_id().c_str());
+
+    /***************** create subscribers for the publisher *******************/
+    for (auto& media_item : support_info.medias) {
+        media_item.header_extentions.clear();
+
+        if (media_item.media_type == "video") {
+            remote_user_ptr->set_video_mid(media_item.mid);
+        } else if (media_item.media_type == "audio") {
+            remote_user_ptr->set_audio_mid(media_item.mid);
+            media_item.fmtps.clear();
+        }
+        auto subscirber_ptr = session_ptr->create_subscriber(remote_uid, media_item, media_item.publisher_id, this);
+        insert_subscriber(media_item.publisher_id, subscirber_ptr);
+        
+        subscirber_ptr->set_stream_type(LIVE_STREAM_TYPE);
+        if (media_item.media_type == "video") {
+            //log_infof("update video payload type:%d", subscirber_ptr->get_payload());
+            remote_user_ptr->set_video_payload(subscirber_ptr->get_payload());
+            remote_user_ptr->set_video_rtx_payload(subscirber_ptr->get_rtx_payload());
+            remote_user_ptr->set_video_clock(90000);
+        } else if (media_item.media_type == "audio") {
+            //log_infof("update audio payload type:%d", subscirber_ptr->get_payload());
+            remote_user_ptr->set_audio_payload(subscirber_ptr->get_payload());
+            remote_user_ptr->set_audio_clock(48000);
+        }
+    }
+
+    /********************** add ice and finger print **************************/
+    support_info.ice.ice_pwd = session_ptr->get_user_pwd();
+    support_info.ice.ice_ufrag = session_ptr->get_username_fragment();
+
+    support_info.finger_print.type = info.finger_print.type;
+    finger_print_info fingerprint = session_ptr->get_local_finger_print(info.finger_print.type);
+    support_info.finger_print.hash = fingerprint.value;
+
+    CANDIDATE_INFO candidate_data = {
+        .foundation = "0",
+        .component  = 1,
+        .transport  = "udp",
+        .priority   = 2113667327,
+        .ip         = session_ptr->get_candidates_ip(),
+        .port       = session_ptr->get_candidates_port(),
+        .type       = "host"
+    };
+
+    support_info.candidates.push_back(candidate_data);
+    log_infof("get live subscribe support media info:\r\n%s", support_info.dump().c_str());
+
+    resp_sdp = user_ptr->rtc_media_info_2_sdp(support_info);
+    session_id = session_ptr->get_id();
+    
+    log_infof("subscribe sdp:%s", resp_sdp.c_str());
+
+    return 0;
+}
+
+int room_service::handle_http_subscribe(const std::string& uid, const std::string& remote_uid, const std::string& data,
+                        std::string& resp_sdp, std::string& session_id, std::string& err_msg) {
+    std::shared_ptr<user_info> user_ptr;
+    std::shared_ptr<user_info> remote_user_ptr;
+    std::shared_ptr<live_user_info> live_remote_user_ptr;
+
+    err_msg = "ok";
+
+    handle_http_join(uid);
+
+    user_ptr = get_user_info(uid);
+    if (!user_ptr) {
+        err_msg = "subscribe uid doesn't exist";
+        log_errorf("subscribe uid(%s) doesn't exist", uid.c_str());
+        return -1;
+    }
+
+    remote_user_ptr = get_user_info(remote_uid);
+    if (!remote_user_ptr) {
+        err_msg = "webrtc subscriber uid doesn't exist";
+        log_errorf("webrtc subscribe uid(%s) doesn't exist", remote_uid.c_str());
+
+        live_remote_user_ptr = get_live_user_info(remote_uid);
+        if (!live_remote_user_ptr) {
+            err_msg = "live subscriber uid doesn't exist";
+            log_errorf("live subscribe uid(%s) doesn't exist", remote_uid.c_str());
+            return -1;
+        }
+        log_infof("get live subscriber remote uid:%s", remote_uid.c_str());
+        return handle_http_live_subscribe(user_ptr, live_remote_user_ptr, data,
+                        resp_sdp, session_id, err_msg);
+    }
+
+    return handle_http_webrtc_subscribe(user_ptr, remote_user_ptr, data,
+                        resp_sdp, session_id, err_msg);
 }
 
 int room_service::handle_http_unsubscribe(const std::string& uid, const std::string& remote_uid,

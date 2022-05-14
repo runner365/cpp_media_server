@@ -18,6 +18,7 @@ public:
 
 public://implement tcp_server_callbackI
     virtual void on_accept(int ret_code, boost::asio::ip::tcp::socket socket) override;
+    virtual void on_accept_ssl(int ret_code, boost::asio::ssl::stream<boost::asio::ip::tcp::socket> socket) override;
 
 public://implement websocket_server_callbackI
     virtual void on_close(const std::string& session_key) override;

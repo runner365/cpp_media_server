@@ -1,0 +1,3 @@
+repository='external project URL'
+module='/Users/shiwei05/Documents/code/cpp-code/cpp_media_server/3rdparty/libsrtp.tar.gz'
+tag=''

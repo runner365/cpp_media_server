@@ -49,9 +49,9 @@ add_executable(echo_demo
             src/utils/logger.cpp
             src/utils/data_buffer.cpp)
 IF (APPLE)
-target_link_libraries(echo_demo pthread dl z m boost_thread boost_system)
+target_link_libraries(echo_demo dl z m ssl crypto pthread boost_thread boost_system)
 ELSEIF (UNIX)
-target_link_libraries(echo_demo pthread rt dl z m boost_thread boost_system)
+target_link_libraries(echo_demo rt dl z m ssl crypto pthread boost_thread boost_system)
 ENDIF ()
 
 add_executable(flv_demux_demo
@@ -61,9 +61,9 @@ add_executable(flv_demux_demo
             ./src/utils/data_buffer.cpp
             ./src/utils/byte_stream.cpp)
 IF (APPLE)
-target_link_libraries(flv_demux_demo pthread dl z m boost_thread boost_system)
+target_link_libraries(flv_demux_demo pthread dl z m ssl crypto boost_thread boost_system)
 ELSEIF (UNIX)
-target_link_libraries(flv_demux_demo pthread rt dl z m boost_thread boost_system)
+target_link_libraries(flv_demux_demo pthread rt dl z m ssl crypto boost_thread boost_system)
 ENDIF ()
 
 add_executable(flv_mux_demo
@@ -74,9 +74,9 @@ add_executable(flv_mux_demo
             src/utils/data_buffer.cpp
             src/utils/byte_stream.cpp)
 IF (APPLE)
-target_link_libraries(flv_mux_demo pthread dl z m boost_thread boost_system)
+target_link_libraries(flv_mux_demo pthread dl z m ssl crypto boost_thread boost_system)
 ELSEIF (UNIX)
-target_link_libraries(flv_mux_demo pthread rt dl z m boost_thread boost_system)
+target_link_libraries(flv_mux_demo pthread rt dl z m ssl crypto boost_thread boost_system)
 ENDIF ()
 
 add_executable(mpegts_demux_demo
@@ -86,9 +86,9 @@ add_executable(mpegts_demux_demo
             src/utils/data_buffer.cpp
             src/utils/byte_stream.cpp)
 IF (APPLE)
-target_link_libraries(mpegts_demux_demo pthread dl z m boost_thread boost_system)
+target_link_libraries(mpegts_demux_demo pthread dl z m ssl crypto boost_thread boost_system)
 ELSEIF (UNIX)
-target_link_libraries(mpegts_demux_demo pthread rt dl z m boost_thread boost_system)
+target_link_libraries(mpegts_demux_demo pthread rt dl z m ssl crypto boost_thread boost_system)
 ENDIF ()
 
 add_executable(mpegts_mux_demo
@@ -99,11 +99,10 @@ add_executable(mpegts_mux_demo
             src/utils/data_buffer.cpp
             src/utils/byte_stream.cpp)
 IF (APPLE)
-target_link_libraries(mpegts_mux_demo pthread dl z m boost_thread boost_system)
+target_link_libraries(mpegts_mux_demo pthread dl z m ssl crypto boost_thread boost_system)
 ELSEIF (UNIX)
-target_link_libraries(mpegts_mux_demo pthread rt dl z m boost_thread boost_system)
+target_link_libraries(mpegts_mux_demo pthread rt dl z m ssl crypto boost_thread boost_system)
 ENDIF ()
-
 
 add_executable(http_server_demo
             src/net/http/http_server_demo.cpp
@@ -112,9 +111,21 @@ add_executable(http_server_demo
             src/utils/data_buffer.cpp
             src/utils/logger.cpp)
 IF (APPLE)
-target_link_libraries(http_server_demo pthread dl z m boost_thread boost_system)
+target_link_libraries(http_server_demo  dl z m ssl crypto pthread boost_thread boost_system)
 ELSEIF (UNIX)
-target_link_libraries(http_server_demo pthread rt dl z m boost_thread boost_system)
+target_link_libraries(http_server_demo rt dl z m ssl crypto pthread boost_thread boost_system)
+ENDIF ()
+
+add_executable(https_server_demo
+            src/net/http/https_server_demo.cpp
+            src/net/http/http_server.cpp
+            src/net/http/http_session.cpp
+            src/utils/data_buffer.cpp
+            src/utils/logger.cpp)
+IF (APPLE)
+target_link_libraries(https_server_demo dl z m ssl crypto pthread boost_thread boost_system)
+ELSEIF (UNIX)
+target_link_libraries(https_server_demo rt dl z m ssl crypto pthread boost_thread boost_system)
 ENDIF ()
 
 add_executable(rtmp_play_demo

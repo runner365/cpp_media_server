@@ -24,8 +24,7 @@ Boost.Asio为网络IO高性能并发提供好的基础，并且支持跨平台(l
 * rtmp推拉流服务(支持h264/vp8+aac/opus in rtmp/flv)
 * httpflv拉流服务(支持h264/vp8+aac/opus in rtmp/flv)
 * hls录像服务(支持h264/vp8+aac/opus in mpegts)
-* websocket推送flv直播服务(webcodec编码，websocket flv推流封装)
-
+* webobs: websocket推送flv直播服务(webcodec编码，websocket flv推流封装)
 
 ## 2. 如何编译
 [如何编译](doc/conf/0_how_to_build.md)

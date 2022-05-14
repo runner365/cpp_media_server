@@ -33,6 +33,10 @@ void rtmp_server::on_accept(int ret_code, boost::asio::ip::tcp::socket socket) {
     server_->accept();
 }
 
+void rtmp_server::on_accept_ssl(int ret_code, boost::asio::ssl::stream<boost::asio::ip::tcp::socket> socket) {
+
+}
+
 void rtmp_server::on_timer() {
     on_check_alive();
 }

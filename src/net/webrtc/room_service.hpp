@@ -77,6 +77,10 @@ public:
     int handle_http_unpublish(const std::string& uid, const std::string& sessionid, std::string& err_msg);
     int handle_http_subscribe(const std::string& my_uid, const std::string& remote_uid, const std::string& data,
                         std::string& resp_sdp, std::string& session_id, std::string& err_msg);
+    int handle_http_webrtc_subscribe(std::shared_ptr<user_info> user_ptr, std::shared_ptr<user_info> remote_user_ptr, const std::string& data,
+                        std::string& resp_sdp, std::string& session_id, std::string& err_msg);
+    int handle_http_live_subscribe(std::shared_ptr<user_info> user_ptr, std::shared_ptr<live_user_info> remote_user_ptr, const std::string& data,
+                        std::string& resp_sdp, std::string& session_id, std::string& err_msg);
     int handle_http_unsubscribe(const std::string& my_uid, const std::string& remote_uid, std::string& err_msg);
     int handle_http_unsubscribe(const std::string& my_uid, const std::string& remote_uid, const std::string& sessionid, std::string& err_msg);
 

@@ -38,6 +38,14 @@ char* Logger::get_buffer() {
     return buffer_;
 }
 
+void Logger::enable_console() {
+    console_enable_ = true;
+}
+
+void Logger::disable_console() {
+    console_enable_ = false;
+}
+
 void Logger::logf(const char* level, const char* buffer, const char* filename, int line) {
     std::stringstream ss;
     std::string name(filename);
@@ -58,6 +66,9 @@ void Logger::logf(const char* level, const char* buffer, const char* filename, i
         if (file_p) {
             fwrite(ss.str().c_str(), ss.str().length(), 1, file_p);
             fclose(file_p);
+        }
+        if (console_enable_) {
+            std::cout << ss.str();
         }
     }
     

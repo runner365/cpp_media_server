@@ -5,6 +5,9 @@
 #include "utils/av/av.hpp"
 #include "format/av_format_interface.hpp"
 
+uint8_t* get_h264_aud_data(size_t& len);
+uint8_t* get_h265_aud_data(size_t& len);
+
 class mpegts_mux
 {
 public:
@@ -24,7 +27,6 @@ public:
     void set_audio_codec(MEDIA_CODEC_TYPE codec) { audio_codec_type_ = codec; }
     MEDIA_CODEC_TYPE get_video_codec() { return video_codec_type_; }
     MEDIA_CODEC_TYPE get_audio_codec() { return audio_codec_type_; }
-
 
 private:
     int generate_pat();

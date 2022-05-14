@@ -2,7 +2,7 @@ include(ExternalProject)
 
 set(EXTRA_CFLAGS "-I${PREFIX_DIR}/include")
 set(EXTRA_LDFLAGS "-L${PREFIX_DIR}/lib")
-set(EXTRA_LIBS "-lm -lpthread -ldl")
+set(EXTRA_LIBS "-lm -pthread -ldl")
 
 add_subdirectory(libsdptransform)
 

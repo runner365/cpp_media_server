@@ -23,6 +23,8 @@ public:
 public:
     void set_filename(const std::string& filename);
     void set_level(enum LOGGER_LEVEL level);
+    void enable_console();
+    void disable_console();
     enum LOGGER_LEVEL get_level();
     char* get_buffer();
     
@@ -37,6 +39,7 @@ private:
     std::string filename_;
     enum LOGGER_LEVEL level_;
     char buffer_[LOGGER_BUFFER_SIZE];
+    bool console_enable_ = false;
 };
 
 inline void snprintbuffer(char* buffer, size_t size, const char* fmt, ...) {

@@ -39,6 +39,10 @@ websocket_server::~websocket_server()
 
 }
 
+void websocket_server::on_accept_ssl(int ret_code, boost::asio::ssl::stream<boost::asio::ip::tcp::socket> socket) {
+
+}
+
 void websocket_server::on_accept(int ret_code, boost::asio::ip::tcp::socket socket) {
     if (ret_code == 0) {
         std::string key;

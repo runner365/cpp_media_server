@@ -134,6 +134,9 @@ public:
 
         ss << "httpflv config:\r\n";
         ss << "  enable: " << httpflv_enable << "\r\n";
+        ss << "  ssl:" << ssl_enable << "\r\n";
+        ss << "  cert_file:" << cert_file << "\r\n";
+        ss << "  key_file:" << key_file << "\r\n";
         ss << "  port: " << listen_port << "\r\n";
 
         return ss.str();
@@ -141,6 +144,9 @@ public:
 
 public:
     bool httpflv_enable = false;
+    bool ssl_enable = false;
+    std::string cert_file;
+    std::string key_file;
     uint16_t listen_port = HTTPFLV_DEF_PORT;
 };
 
@@ -179,6 +185,9 @@ public:
 
         ss << "http api config:\r\n";
         ss << "  enable: " << httpapi_enable << "\r\n";
+        ss << "  ssl:" << ssl_enable << "\r\n";
+        ss << "  cert_file:" << cert_file << "\r\n";
+        ss << "  key_file:" << key_file << "\r\n";
         ss << "  port: " << listen_port << "\r\n";
 
         return ss.str();
@@ -186,6 +195,9 @@ public:
 
 public:
     bool httpapi_enable  = false;
+    bool ssl_enable = false;
+    std::string cert_file;
+    std::string key_file;
     uint16_t listen_port = HTTPAPI_DEF_PORT;
 };
 
@@ -218,10 +230,16 @@ public:
 
 public:
     static bool httpflv_is_enable();
+    static bool httpflv_ssl_enable();
+    static std::string httpflv_cert_file();
+    static std::string httpflv_key_file();
     static uint16_t httpflv_port();
 
 public:
     static bool httpapi_is_enable();
+    static bool httpapi_ssl_enable();
+    static std::string httpapi_cert_file();
+    static std::string httpapi_key_file();
     static uint16_t httpapi_port();
 
 public:
