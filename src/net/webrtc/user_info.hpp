@@ -2,7 +2,6 @@
 #define USER_INFO_HPP
 #include "net/websocket/wsimple/protoo_pub.hpp"
 #include "net/webrtc/rtc_session_pub.hpp"
-#include "transcode/transcode.hpp"
 #include "utils/av/media_packet.hpp"
 #include "utils/timeex.hpp"
 #include "sdp_analyze.hpp"
@@ -17,6 +16,7 @@
 
 std::string make_cname();
 
+class transcode;
 class user_info
 {
 public:

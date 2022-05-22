@@ -150,7 +150,7 @@ public:
         *p = (uint8_t)AMF_DATA_TYPE_NUMBER;
         p++;
 
-        uint64_t number = av_double2int(num);
+        uint64_t number = byte_double2int(num);
         write_8bytes(p, number);
         p += 8;
 
@@ -325,7 +325,7 @@ public:
                 uint64_t value = read_8bytes(data);
 
                 amf_item.set_amf_type(amf_type);
-                amf_item.number_ = av_int2double(value);
+                amf_item.number_ = byte_int2double(value);
 
                 data += 8;
                 left_len -= 8;
@@ -406,7 +406,7 @@ public:
                 amf_item.set_amf_type(AMF_DATA_TYPE_DATE);
                 uint64_t value = read_8bytes(data);
 
-                amf_item.number_ = av_int2double(value);
+                amf_item.number_ = byte_int2double(value);
 
                 data += 8;
                 left_len -= 8;

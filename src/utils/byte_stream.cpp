@@ -5,14 +5,14 @@ union av_intfloat64 {
     double   f;
 };
 
-double av_int2double(uint64_t i)
+double byte_int2double(uint64_t i)
 {
     union av_intfloat64 v;
     v.i = i;
     return v.f;
 }
 
-uint64_t av_double2int(double f)
+uint64_t byte_double2int(double f)
 {
     union av_intfloat64 v;
     v.f = f;

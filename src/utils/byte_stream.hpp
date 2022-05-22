@@ -19,11 +19,11 @@ static uint32_t av_float2int(float f)
 }
 */
 
-double av_int2double(uint64_t i);
+double byte_int2double(uint64_t i);
 /**
  * Reinterpret a double as a 64-bit integer.
  */
-uint64_t av_double2int(double f);
+uint64_t byte_double2int(double f);
 
 uint64_t read_8bytes(const uint8_t* data);
 uint32_t read_4bytes(const uint8_t* data);

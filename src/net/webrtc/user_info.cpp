@@ -3,6 +3,7 @@
 #include "utils/logger.hpp"
 #include "utils/timeex.hpp"
 #include "net/webrtc/rtp_h264_pack.hpp"
+#include "transcode/transcode.hpp"
 #include "format/h264_header.hpp"
 #include "format/audio_pub.hpp"
 #include "media_stream_manager.hpp"
