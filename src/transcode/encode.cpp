@@ -277,7 +277,7 @@ void audio_encode::reset_opus_timestamp(AVPacket* pkt) {
         log_infof("audio dts jump a lot, old dts:%ld to new dts:%ld for opus", last_pkt_dts_, pkt->dts);
         last_pkt_dts_ = pkt->dts;
     } else {
-        last_pkt_dts_ += 20*1000;
+        last_pkt_dts_ += 20;
     }
     
     pkt->dts = pkt->pts = last_pkt_dts_;
