@@ -350,23 +350,24 @@ void rtc_publisher::media_packet_output(std::shared_ptr<MEDIA_PACKET> pkt_ptr) {
     if (pkt_ptr->av_type_ == MEDIA_VIDEO_TYPE) {
         if (pkt_ptr->codec_type_ == MEDIA_CODEC_H264) {
             uint8_t nalu_len_data[4];
-            if (pkt_ptr->is_key_frame_) {
+            if (pkt_ptr->is_key_frame_ && (pps_data_.data_len() > 0) && (sps_data_.data_len() > 0)) {
                 uint8_t extra_data[2048];
                 int extra_len = 0;
-    
+
                 get_video_extradata((uint8_t*)pps_data_.data(), pps_data_.data_len(), 
                                     (uint8_t*)sps_data_.data(), sps_data_.data_len(), 
                                     extra_data, extra_len);
-    
-                std::shared_ptr<MEDIA_PACKET> seq_pkt_ptr = std::make_shared<MEDIA_PACKET>();
-                seq_pkt_ptr->buffer_ptr_->append_data((char*)extra_data, (size_t)extra_len);
-                seq_pkt_ptr->copy_properties(pkt_ptr);
-                seq_pkt_ptr->is_key_frame_ = false;
-                seq_pkt_ptr->is_seq_hdr_   = true;
-                set_rtmp_info(seq_pkt_ptr);
-                seq_pkt_ptr->fmt_type_ = MEDIA_FORMAT_FLV;
-    
-                room_->on_rtmp_callback(roomId_, uid_, stream_type_, seq_pkt_ptr);
+                if (extra_len > 0) {
+                    std::shared_ptr<MEDIA_PACKET> seq_pkt_ptr = std::make_shared<MEDIA_PACKET>();
+                    seq_pkt_ptr->buffer_ptr_->append_data((char*)extra_data, (size_t)extra_len);
+                    seq_pkt_ptr->copy_properties(pkt_ptr);
+                    seq_pkt_ptr->is_key_frame_ = false;
+                    seq_pkt_ptr->dts_ = seq_pkt_ptr->pts_ = pkt_ptr->dts_ - 5;
+                    seq_pkt_ptr->is_seq_hdr_   = true;
+                    set_rtmp_info(seq_pkt_ptr);
+                    seq_pkt_ptr->fmt_type_ = MEDIA_FORMAT_FLV;
+                    room_->on_rtmp_callback(roomId_, uid_, stream_type_, seq_pkt_ptr);
+                }
             } else if (pkt_ptr->is_seq_hdr_) {
                 uint8_t* p = (uint8_t*)pkt_ptr->buffer_ptr_->data();
                 uint8_t nalu_type = p[4] & 0x1f;
@@ -399,7 +400,6 @@ void rtc_publisher::media_packet_output(std::shared_ptr<MEDIA_PACKET> pkt_ptr) {
             first_flv_audio_ = false;
 
             header_len = make_opus_header(opus_seq_data, clock_rate_, channel_);
-            //log_info_data(opus_seq_data, header_len, "opus seq header data");
 
             for (samplerate_index = 0; samplerate_index < 16; samplerate_index++) {
                 if (clock_rate_ == mpeg4audio_sample_rates[samplerate_index])

@@ -136,6 +136,10 @@ void single_udp_session_callback::on_read(const char* data, size_t data_size, ud
             session = get_webrtc_session(username);
             if (!session) {
                 log_errorf("fail to find session by username(%s)", username.c_str());
+            if (packet) {
+                delete packet;
+                packet = nullptr;
+            }
                 return;
             }
             log_infof("insert new session, username:%s, remote address:%s",
@@ -318,6 +322,7 @@ void webrtc_session::on_recv_packet(const uint8_t* udp_data, size_t udp_data_len
         try {
             stun_packet* packet = stun_packet::parse((uint8_t*)pkt_data_, udp_data_len);
             on_handle_stun_packet(packet, address);
+            delete packet;
         }
         catch(const std::exception& e) {
             log_errorf("handle stun packet exception:%s", e.what());

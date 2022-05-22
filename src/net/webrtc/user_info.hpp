@@ -2,6 +2,7 @@
 #define USER_INFO_HPP
 #include "net/websocket/wsimple/protoo_pub.hpp"
 #include "net/webrtc/rtc_session_pub.hpp"
+#include "transcode/transcode.hpp"
 #include "utils/av/media_packet.hpp"
 #include "utils/timeex.hpp"
 #include "sdp_analyze.hpp"
@@ -39,8 +40,6 @@ public:
 public:
     void get_support_media_info(rtc_media_info& input_info, rtc_media_info& support_info);
     std::string rtc_media_info_2_sdp(const rtc_media_info& input);
-
-public:
     void on_rtmp_callback(const std::string& stream_type, MEDIA_PACKET_PTR pkt_ptr);
 
 private:
@@ -48,10 +47,14 @@ private:
     void on_rtmp_screen_callback(MEDIA_PACKET_PTR pkt_ptr);
     void update_camera_video_dts(MEDIA_PACKET_PTR pkt_ptr);
     void update_camera_audio_dts(MEDIA_PACKET_PTR pkt_ptr);
+    void send_buffer(MEDIA_PACKET_PTR pkt_ptr);
 
 public:
     std::map<std::string, std::shared_ptr<webrtc_session>> publish_sessions_;//key: pc_id, value: webrtc_session
     std::map<std::string, std::shared_ptr<webrtc_session>> subscribe_sessions_;//key: pc_id, value: webrtc_session
+
+private:
+    std::multimap<int64_t, MEDIA_PACKET_PTR> send_buffer_;
 
 private:
     std::string uid_;
@@ -69,8 +72,16 @@ private:
 private:
     int64_t camera_video_dts_base_     = -1;
     int64_t camera_audio_dts_base_     = -1;
+    int64_t camera_video_rtp_dts_base_ = -1;
+    int64_t camera_audio_rtp_dts_base_ = -1;
+
     int64_t camera_last_video_rtp_dts_ = -1;
     int64_t camera_last_audio_rtp_dts_ = -1;
+    int64_t camera_last_video_pkt_dts_ = -1;
+    int64_t camera_last_audio_pkt_dts_ = -1;
+
+private:
+    transcode* trans_ = nullptr;
 };
 
 class live_user_info
@@ -172,6 +183,12 @@ private:
 private:
     std::vector<uint8_t> pps_;
     std::vector<uint8_t> sps_;
+
+private:
+    transcode* trans_ = nullptr;
+    uint8_t aac_type_ = 0;
+    int sample_rate_  = 0;
+    uint8_t channel_  = 0;
 };
 
 #endif

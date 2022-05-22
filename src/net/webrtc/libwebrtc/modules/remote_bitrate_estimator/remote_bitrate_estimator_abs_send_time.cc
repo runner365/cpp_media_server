@@ -125,18 +125,19 @@ void RemoteBitrateEstimatorAbsSendTime::IncomingPacketInfo(
         constexpr double kDefaultBackoffFactor = 0.90;
         target_bitrate_bps = avg_bitrate_ * kDefaultBackoffFactor;
         stable_count_ = 0;
+        log_debugf("++++ overusing, target bps:%u, avg_bitrate:%ld",
+                target_bitrate_bps, avg_bitrate_);
       } else if (detector_.State() == BandwidthUsage::kBwUnderusing) {
-        constexpr double kDefaultForwardoffFactor = 1.10;
+        constexpr double kDefaultForwardoffFactor = 1.2;
         target_bitrate_bps = avg_bitrate_ * kDefaultForwardoffFactor;
         stable_count_ = 0;
+        log_debugf("---- overusing, target bps:%u, avg_bitrate:%ld",
+                target_bitrate_bps, avg_bitrate_);
       } else {
-        constexpr double kDefaultoffFactor = 1.08;
-        if (stable_count_++ > 4) {
-          stable_count_ = 0;
-          target_bitrate_bps = avg_bitrate_ * kDefaultoffFactor;
-        } else {
-          target_bitrate_bps = avg_bitrate_;
-        }
+        constexpr double kDefaultoffFactor = 1.15;
+        target_bitrate_bps = avg_bitrate_ * kDefaultoffFactor;
+        log_debugf("**** normal, target bps:%u, avg_bitrate:%ld",
+                target_bitrate_bps, avg_bitrate_);
       }
       if (observer_ != nullptr) {
         auto ssrcs = Keys(ssrcs_);

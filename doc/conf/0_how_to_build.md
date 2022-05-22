@@ -16,6 +16,11 @@ source /opt/rh/devtoolset-8/enable
 ```markup
 apt-get install -y gcc-8 g++-8
 ```
+### 0.2.3 bzip2
+```markup
+yum install -y bzip2
+yum install -y bzip2-devel
+```
 
 ## 0.3 How to build
 如何在Mac/linux内编译

@@ -1,5 +1,10 @@
 #include "byte_stream.hpp"
 
+union av_intfloat64 {
+    uint64_t i;
+    double   f;
+};
+
 double av_int2double(uint64_t i)
 {
     union av_intfloat64 v;

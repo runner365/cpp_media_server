@@ -10,10 +10,6 @@ union av_intfloat32 {
 };
 */
 
-union av_intfloat64 {
-    uint64_t i;
-    double   f;
-};
 /*
 static uint32_t av_float2int(float f)
 {
