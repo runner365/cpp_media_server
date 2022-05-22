@@ -283,7 +283,6 @@ void webrtc_session::send_xr_rrt(int64_t now_ms) {
 
 void webrtc_session::send_rtp_data_in_dtls(uint8_t* data, size_t data_len) {
     if(!write_srtp_) {
-        log_errorf("dtls writer is not ready");
         return;
     }
     

@@ -123,7 +123,7 @@ int whip_unpublisher(const std::string& roomId, const std::string& uid, const st
     return room_ptr->handle_http_unpublish(uid, sessionid, err_msg);
 }
 
-int whip_subscriber(const std::string& roomId, const std::string& uid, const std::string& remote_uid,
+int whip_subscriber(const std::string& roomId, const std::string& remote_uid,
             const std::string& data, std::string& resp_sdp, std::string& session_id, std::string& err_msg) {
     auto iter = s_rooms.find(roomId);
     if (iter == s_rooms.end()) {
@@ -139,6 +139,7 @@ int whip_subscriber(const std::string& roomId, const std::string& uid, const std
         return -1;
     }
 
+    std::string uid = make_uuid();
     return room_ptr->handle_http_subscribe(uid, remote_uid, data, resp_sdp, session_id, err_msg);
 }
 
@@ -1568,10 +1569,10 @@ int room_service::handle_http_live_subscribe(std::shared_ptr<user_info> user_ptr
     std::string sdp = data;
 
     json info_json = user_ptr->parse_remote_sdp(sdp);
-    log_infof("http subscribe sdp json:%s", info_json.dump().c_str());
+    //log_infof("http subscribe sdp json:%s", info_json.dump().c_str());
 
     rtc_media_info& info = user_ptr->parse_remote_media_info(info_json);
-    log_infof("http subscribe input media info:\r\n%s", info.dump().c_str());
+    //log_infof("http subscribe input media info:\r\n%s", info.dump().c_str());
 
     rtc_media_info support_info;
     user_ptr->get_support_media_info(info, support_info);
@@ -1714,12 +1715,12 @@ int room_service::handle_http_live_subscribe(std::shared_ptr<user_info> user_ptr
     };
 
     support_info.candidates.push_back(candidate_data);
-    log_infof("get live subscribe support media info:\r\n%s", support_info.dump().c_str());
+    //log_infof("get live subscribe support media info:\r\n%s", support_info.dump().c_str());
 
     resp_sdp = user_ptr->rtc_media_info_2_sdp(support_info);
     session_id = session_ptr->get_id();
     
-    log_infof("subscribe sdp:%s", resp_sdp.c_str());
+    //log_infof("subscribe sdp:%s", resp_sdp.c_str());
 
     return 0;
 }

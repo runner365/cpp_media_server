@@ -18,7 +18,7 @@ extern int whip_publisher(const std::string& roomId, const std::string& uid, con
                 std::string& sdp, std::string& session_id, std::string& err_msg);
 extern int whip_unpublisher(const std::string& roomId, const std::string& uid, std::string& err_msg);
 extern int whip_unpublisher(const std::string& roomId, const std::string& uid, const std::string& sessionid, std::string& err_msg);
-extern int whip_subscriber(const std::string& roomId, const std::string& uid, const std::string& remote_uid,
+extern int whip_subscriber(const std::string& roomId, const std::string& remote_uid,
                 const std::string& data, std::string& resp_sdp, std::string& session_id, std::string& err_msg);
 extern int whip_unsubscriber(const std::string& roomId, const std::string& uid, const std::string& remote_uid, std::string& err_msg);
 extern int whip_unsubscriber(const std::string& roomId, const std::string& uid, const std::string& remote_uid,
@@ -189,7 +189,7 @@ void whip_http_handle(const http_request* request, std::shared_ptr<http_response
         }
         std::string remote_uid = path_vec[3];
         std::string data(request->content_body_, request->content_length_);
-        ret = whip_subscriber(roomId, uid, remote_uid, data, resp_sdp, session_id, err_msg);
+        ret = whip_subscriber(roomId, remote_uid, data, resp_sdp, session_id, err_msg);
         ss << "/subscriber/" << session_id;
         response->add_header("Location", ss.str());
         if (ret == 0) {
@@ -416,7 +416,6 @@ void rtcdn_subscribe_handle(const http_request* request, std::shared_ptr<http_re
     std::string err_msg = "ok";
     std::string data(request->content_body_, request->content_length_);
     std::string roomId;
-    std::string uid;
     std::string remote_uid;
     std::string sdp;
 
@@ -453,9 +452,8 @@ void rtcdn_subscribe_handle(const http_request* request, std::shared_ptr<http_re
 
         roomId     = path_vec[1];
         remote_uid = path_vec[2];
-        uid        = make_uuid();
 
-        ret = whip_subscriber(roomId, uid, remote_uid, sdp, resp_sdp, session_id, err_msg);
+        ret = whip_subscriber(roomId, remote_uid, sdp, resp_sdp, session_id, err_msg);
         if (ret == 0) {
             rtcdn_publish_response(0, err_msg, resp_sdp, session_id, response);
         } else {
