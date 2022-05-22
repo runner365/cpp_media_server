@@ -13,7 +13,7 @@ webrtc推流接口
 
 方法: http post
 
-uri: http://hostname:hostport/publish/*roomId*/*uid*
+uri: http://hostname:hostport/whip/publish/*roomId*/*uid*
 
 http post body: offerSdp
 
@@ -22,7 +22,7 @@ http body: asswerSdp
 
 举例，向host=192.168.1.98:8090, roomId=2001, 自己作为uid=6547推流.
 
-url为: http://192.168.1.98:8090/publish/2001/6547
+url为: http://192.168.1.98:8090/whip/publish/2001/6547
 
 post data为offerSdp
 
@@ -37,7 +37,7 @@ webrtc关闭推流接口
 
 方法: http post
 
-uri: http://hostname:hostport/unpublish/*roomId*/*uid*
+uri: http://hostname:hostport/whip/unpublish/*roomId*/*uid*
 
 http post body: null
 
@@ -51,7 +51,7 @@ http body:
 ```
 举例，向host=192.168.1.98:8090, roomId=2001, 自己作为uid=6547关闭推流.
 
-url为: http://192.168.1.98:8090/unpublish/2001/6547
+url为: http://192.168.1.98:8090/whip/unpublish/2001/6547
 
 post data为空
 
@@ -68,7 +68,7 @@ webrtc拉流接口：
 
 方法: http post
 
-uri: http://hostname:hostport/subscribe/*roomId*/*uid*/*remoteUid*
+uri: http://hostname:hostport/whip/subscribe/*roomId*/*uid*/*remoteUid*
 
 其中uid为自己的uid，remoteUid为想要订阅的远端uid。
 
@@ -79,7 +79,7 @@ http body: asswerSdp
 
 举例，向host=192.168.1.98:8090, roomId=2001, 自己作为uid=6547，从远端remoteUid=4489拉流.
 
-url为: http://192.168.1.98:8090/subscribe/2001/6547/4489
+url为: http://192.168.1.98:8090/whip/subscribe/2001/6547/4489
 
 post data为offerSdp
 
@@ -94,7 +94,7 @@ webrtc关闭拉流接口
 
 方法: http post
 
-uri: http://hostname:hostport/unsubscribe/*roomId*/*uid*/*remoteUid*
+uri: http://hostname:hostport/whip/unsubscribe/*roomId*/*uid*/*remoteUid*
 
 http post body: null
 
@@ -108,7 +108,7 @@ http body:
 ```
 举例，向host=192.168.1.98:8090, roomId=2001, 自己作为uid=6547关闭对远端remoteUid=4489拉流.
 
-url为: http://192.168.1.98:8090/unsubscribe/2001/6547/4489
+url为: http://192.168.1.98:8090/whip/unsubscribe/2001/6547/4489
 
 post data为空
 

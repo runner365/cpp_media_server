@@ -115,6 +115,7 @@ void whip_http_handle(const http_request* request, std::shared_ptr<http_response
     std::string err_msg;
     std::string uri = request->uri_;
     std::vector<std::string> path_vec;
+    std::stringstream ss;
 
     if (uri[0] == '/') {
         uri = uri.substr(1);
@@ -122,15 +123,21 @@ void whip_http_handle(const http_request* request, std::shared_ptr<http_response
 
     string_split(uri, "/", path_vec);
 
-    if (path_vec.size() < 3) {
+    if (path_vec.size() < 4) {
+        std::string err_msg = "wrong http path";
+        response->write(err_msg.c_str(), err_msg.length());
+        return;
+    }
+    std::string whip_str = path_vec[0];
+    if (whip_str != "whip") {
         std::string err_msg = "wrong http path";
         response->write(err_msg.c_str(), err_msg.length());
         return;
     }
 
-    std::string oper   = path_vec[0];
-    std::string roomId = path_vec[1];
-    std::string uid    = path_vec[2];
+    std::string oper   = path_vec[1];
+    std::string roomId = path_vec[2];
+    std::string uid    = path_vec[3];
 
     if (oper.empty() || roomId.empty() || uid.empty()) {
         std::string err_msg = "wrong http path";
@@ -147,15 +154,21 @@ void whip_http_handle(const http_request* request, std::shared_ptr<http_response
     response->add_header("Content-Type", "text/plain;charset=utf-8");
 
     log_infof("http post uri:%s, method:%s", uri.c_str(), request->method_.c_str());
-    if (oper == "publish") {
+    bool is_delete = false;
+    if (request->method_ == "delete") {
+        is_delete = true;
+    }
+    if ((oper == "publish") && !is_delete) {
         std::string data(request->content_body_, request->content_length_);
         ret = whip_publisher(roomId, uid, data, resp_sdp, session_id, err_msg);
+        ss << "/publisher/" << session_id;
+        response->add_header("Location", ss.str());
         if (ret == 0) {
             response->write(resp_sdp.c_str(), resp_sdp.length());
         } else {
             response->write(err_msg.c_str(), err_msg.length());
         }
-    } else if (oper == "unpublish") {
+    } else if ((oper == "unpublish") || ((oper == "publish") && is_delete)) {
         ret = whip_unpublisher(roomId, uid, err_msg);
         json resp_json = json::object();
         if (ret == 0) {
@@ -168,7 +181,7 @@ void whip_http_handle(const http_request* request, std::shared_ptr<http_response
         std::string resp_data = resp_json.dump();
         log_infof("http unpublish response:%s", resp_data.c_str());
         response->write(resp_data.c_str(), resp_data.length());
-    } else if (oper == "subscribe") {
+    } else if ((oper == "subscribe") && !is_delete) {
         if (path_vec.size() != 4) {
             std::string err_msg = "wrong http path";
             response->write(err_msg.c_str(), err_msg.length());
@@ -177,12 +190,14 @@ void whip_http_handle(const http_request* request, std::shared_ptr<http_response
         std::string remote_uid = path_vec[3];
         std::string data(request->content_body_, request->content_length_);
         ret = whip_subscriber(roomId, uid, remote_uid, data, resp_sdp, session_id, err_msg);
+        ss << "/subscriber/" << session_id;
+        response->add_header("Location", ss.str());
         if (ret == 0) {
             response->write(resp_sdp.c_str(), resp_sdp.length());
         } else {
             response->write(err_msg.c_str(), err_msg.length());
         }
-    } else if (oper == "unsubscribe") {
+    } else if ((oper == "unsubscribe") || ((oper == "subscribe") && is_delete)) {
         if (path_vec.size() != 4) {
             std::string err_msg = "wrong http path";
             response->write(err_msg.c_str(), err_msg.length());
