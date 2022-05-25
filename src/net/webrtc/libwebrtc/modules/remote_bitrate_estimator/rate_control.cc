@@ -17,22 +17,34 @@ RateControl::~RateControl()
 {
 }
 
+/*
+  "overusing"-->"normal": get min rate; keep hold
+  "underusing"-->"normal": get max rate; keep hold
+  "normal"-->"normal": increase a littel;
+
+  "overusing"-->"overusing": decrease a lot;
+  "underusing"-->"overusing": descrease;
+  "normal"-->"overusing": descrease;
+
+  "overusing"-->"underusing": increase;
+  "underusing"-->"underusing": increase a lot;
+  "normal"-->"underusing": increase;
+*/
 bool RateControl::update(int64_t rate, BandwidthUsage state) {
     bool ret = false;
-    int64_t min_rate = 0;
+    int64_t min_rate = (target_bitrate_ > rate) ? rate : target_bitrate_;
+    int64_t max_rate = (target_bitrate_ < rate) ? rate : target_bitrate_;
 
     if (state == BandwidthUsage::kBwNormal) {
         if (last_state_ == BandwidthUsage::kBwOverusing) {
-            min_rate        = (target_bitrate_ > rate) ? rate : target_bitrate_;
-            max_bitrate_    = min_rate * 1.2;//update max rate when "normal" --> "overusing"
+            min_bitrate_    = target_bitrate_;//update min rate when "overusing" --> "normal"
             target_bitrate_ = target_bitrate_ * 1.0;//keep hold
         } else if (last_state_ == BandwidthUsage::kBwUnderusing) {
             min_bitrate_    = (target_bitrate_ > rate) ? rate : target_bitrate_;
             target_bitrate_ = target_bitrate_ * 1.0;//keep hold
         } else {
             //"normal" --> "normal", increase a little
-            target_bitrate_ = (target_bitrate_ > rate) ? target_bitrate_ : rate;
-            target_bitrate_ = target_bitrate_ + 10*1000;
+            target_bitrate_ = max_rate + 10*1000;
             ret = true;
         }
     } else if (state == BandwidthUsage::kBwOverusing) {
@@ -46,13 +58,13 @@ bool RateControl::update(int64_t rate, BandwidthUsage state) {
         ret = true;
     } else {//kBwUnderusing
         if (last_state_ == BandwidthUsage::kBwOverusing) {
-            target_bitrate_ = min_rate * INCR_RATE;
+            target_bitrate_ = max_rate * INCR_RATE;
             ret = true;
         } else if (last_state_ == BandwidthUsage::kBwUnderusing) {
-            target_bitrate_ = min_rate * INCR_RATE + 40*1000;
+            target_bitrate_ = max_rate * INCR_RATE + 40*1000;
             ret = true;
         } else {
-            target_bitrate_ = target_bitrate_ * 1.0;
+            target_bitrate_ = max_rate * INCR_RATE;
         }
     }
     
