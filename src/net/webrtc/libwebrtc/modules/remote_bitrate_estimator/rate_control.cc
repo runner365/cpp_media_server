@@ -44,7 +44,7 @@ bool RateControl::update(int64_t rate, BandwidthUsage state) {
             target_bitrate_ = target_bitrate_ * 1.0;//keep hold
         } else {
             //"normal" --> "normal", increase a little
-            target_bitrate_ = max_rate + 10*1000;
+            target_bitrate_ = max_rate + 1*1000;
             ret = true;
         }
     } else if (state == BandwidthUsage::kBwOverusing) {

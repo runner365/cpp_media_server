@@ -117,14 +117,11 @@ void RemoteBitrateEstimatorAbsSendTime::IncomingPacketInfo(
       target_bitrate_bps = rate_ctrl_.get_target_bitrate();
       if (observer_ != nullptr) {
         auto ssrcs = Keys(ssrcs_);
-        log_infof("remb bitrate:%ld, state:%s", target_bitrate_bps, detector_.GetState().c_str());
         observer_->OnRembServerAvailableBitrate(
                this,
                ssrcs,
                target_bitrate_bps);
       }
-      log_debugf("detector state:%d, slope:%.02f, offset:%.02f, var_noise:%.02f, target_bitrate_bps:%u, avg_bitrate:%ld, incoming_rate:%ld",
-              detector_.State(), estimator_->slope(), estimator_->offset(), estimator_->var_noise(), target_bitrate_bps, avg_bitrate_, incoming_rate);
     }
   }
   return;
