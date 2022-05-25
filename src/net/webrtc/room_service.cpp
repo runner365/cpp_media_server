@@ -2,6 +2,7 @@
 #include "rtc_subscriber.hpp"
 #include "net/http/http_common.hpp"
 #include "utils/logger.hpp"
+#include "utils/byte_crypto.hpp"
 #include "utils/av/media_stream_manager.hpp"
 #include "json.hpp"
 #include "utils/uuid.hpp"
@@ -605,7 +606,11 @@ void room_service::on_rtppacket_publisher2room(const std::string& publisher_id,
     auto subs_map_it = pid2subscribers_.find(publisher_id);
     if (subs_map_it != pid2subscribers_.end()) {
         for (auto subscribe_item : subs_map_it->second) {
-            subscribe_item.second->send_rtp_packet(roomId_, media_type, publisher_id, pkt);
+            std::shared_ptr<rtc_subscriber> subscriber_ptr = subscribe_item.second;
+            if (!subscriber_ptr) {
+                continue;
+            }
+            subscriber_ptr->send_rtp_packet(roomId_, media_type, publisher_id, pkt);
         }
     }
     delete pkt;
@@ -1027,19 +1032,23 @@ void room_service::handle_live_subscribe(const std::string& id, const json& data
                 rtx_ssrc_group_item.value = cname;
 
                 if (info.media_type == "video") {
-                    ssrc_group_item.ssrc = remote_user_ptr->video_ssrc();
-                    rtx_ssrc_group_item.ssrc = remote_user_ptr->video_rtx_ssrc();
+                    uint32_t video_ssrc     = remote_user_ptr->video_ssrc() + byte_crypto::get_random_uint(1, 5000);
+                    uint32_t video_rtx_ssrc = video_ssrc + 1;
+
+                    ssrc_group_item.ssrc     = video_ssrc;
+                    rtx_ssrc_group_item.ssrc = video_rtx_ssrc;
                     media.ssrc_infos.push_back(ssrc_group_item);
                     media.ssrc_infos.push_back(rtx_ssrc_group_item);
 
-                    group.ssrcs.push_back(remote_user_ptr->video_ssrc());
-                    group.ssrcs.push_back(remote_user_ptr->video_rtx_ssrc());
+                    group.ssrcs.push_back(video_ssrc);
+                    group.ssrcs.push_back(video_rtx_ssrc);
                     media.msid = remote_user_ptr->video_msid();
                 } else if (info.media_type == "audio") {
-                    ssrc_group_item.ssrc = remote_user_ptr->audio_ssrc();
+                    uint32_t audio_ssrc = remote_user_ptr->audio_ssrc() + byte_crypto::get_random_uint(1, 5000);
+                    ssrc_group_item.ssrc = audio_ssrc;
                     media.ssrc_infos.push_back(ssrc_group_item);
 
-                    group.ssrcs.push_back(remote_user_ptr->audio_ssrc());
+                    group.ssrcs.push_back(audio_ssrc);
                     media.msid = remote_user_ptr->audio_msid();
                 } else {
                     log_errorf("media type(%s) error", info.media_type.c_str());
@@ -1972,6 +1981,7 @@ void room_service::notify_userin_to_others(const std::string& uid, const std::st
         }
         std::shared_ptr<user_info> other_user = iter.second;
         if (other_user->user_type() != "websocket") {
+            log_infof("skip user type:%s", other_user->user_type().c_str());
             continue;
         }
         auto resp_json = json::object();

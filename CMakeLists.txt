@@ -305,6 +305,9 @@ add_executable(cpp_media_server
             src/net/webrtc/libwebrtc/modules/remote_bitrate_estimator/inter_arrival.h
             src/net/webrtc/libwebrtc/modules/remote_bitrate_estimator/overuse_detector.cc
             src/net/webrtc/libwebrtc/modules/remote_bitrate_estimator/overuse_detector.h
+            src/net/webrtc/libwebrtc/modules/remote_bitrate_estimator/rate_control.cc
+            src/net/webrtc/libwebrtc/modules/remote_bitrate_estimator/rate_control.h
+            src/net/webrtc/libwebrtc/modules/remote_bitrate_estimator/overuse_estimator.h
             src/net/webrtc/libwebrtc/modules/remote_bitrate_estimator/overuse_estimator.cc
             src/net/webrtc/libwebrtc/modules/remote_bitrate_estimator/overuse_estimator.h
             src/net/webrtc/libwebrtc/modules/remote_bitrate_estimator/remote_bitrate_estimator_abs_send_time.cc

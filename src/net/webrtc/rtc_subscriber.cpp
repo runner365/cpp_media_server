@@ -123,6 +123,7 @@ void rtc_subscriber::send_rtp_packet(const std::string& roomId, const std::strin
     }
     //update payload&ssrc in subscriber
     stream_ptr_->on_send_rtp_packet(pkt);
+
     session_->send_rtp_data_in_dtls(pkt->get_data(), pkt->get_data_length());
 
     pkt->set_ssrc(origin_ssrc);

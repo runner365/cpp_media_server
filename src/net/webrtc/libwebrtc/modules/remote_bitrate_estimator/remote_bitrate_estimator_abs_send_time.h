@@ -16,6 +16,7 @@
 #include "modules/remote_bitrate_estimator/overuse_detector.h"
 #include "modules/remote_bitrate_estimator/overuse_estimator.h"
 #include "stream_statics.hpp"
+#include "rate_control.h"
 #include <stddef.h>
 #include <stdint.h>
 #include <list>
@@ -58,11 +59,10 @@ class RemoteBitrateEstimatorAbsSendTime : public RemoteBitrateEstimator {
   OveruseDetector detector_;
   stream_statics incoming_bitrate_;
   int64_t avg_bitrate_ = -1;
-  int stable_count_ = 0;
 
   Ssrcs ssrcs_;
   int64_t last_update_ms_ = -1;
-  //AimdRateControl remote_rate_;
+  RateControl rate_ctrl_;
 };
 
 }  // namespace webrtc

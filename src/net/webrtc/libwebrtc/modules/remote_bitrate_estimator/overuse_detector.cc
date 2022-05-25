@@ -44,6 +44,17 @@ BandwidthUsage OveruseDetector::State() const {
   return hypothesis_;
 }
 
+std::string OveruseDetector::GetState() const {
+  if (hypothesis_ == BandwidthUsage::kBwNormal) {
+    return "normal";
+  } else if (hypothesis_ == BandwidthUsage::kBwOverusing) {
+    return "overusing";
+  } else if (hypothesis_ == BandwidthUsage::kBwUnderusing) {
+    return "underusing";
+  }
+  return "unkown";
+}
+
 BandwidthUsage OveruseDetector::Detect(double offset,
                                        double ts_delta,
                                        int num_of_deltas,
