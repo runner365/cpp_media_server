@@ -5,10 +5,21 @@
 #include "net/websocket/ws_session_pub.hpp"
 #include "flv_demux.hpp"
 
+class transcode;
 class av_outputer : public av_format_callback
 {
 public:
+    av_outputer();
+    ~av_outputer();
+
+public:
+    void release();
+
+public:
     virtual int output_packet(MEDIA_PACKET_PTR pkt_ptr) override;
+
+private:
+    transcode* trans_ = nullptr;
 };
 
 class flv_websocket : public ws_session_callback

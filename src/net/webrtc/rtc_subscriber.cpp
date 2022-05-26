@@ -154,6 +154,13 @@ void rtc_subscriber::stream_send_rtp(uint8_t* data, size_t len) {
 }
 
 void rtc_subscriber::request_keyframe() {
+    int64_t now_ms = now_millisec();
+
+    if ((now_ms - last_reqkey_ts_) < 1000) {
+        return;
+    }
+    last_reqkey_ts_ = now_ms;
+
     room_cb_->on_request_keyframe(pid_, sid_, rtp_ssrc_);
 }
 

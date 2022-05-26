@@ -1974,7 +1974,6 @@ void room_service::handle_join(const std::string& id, const std::string& method,
 }
 
 void room_service::notify_userin_to_others(const std::string& uid, const std::string& user_type) {
-
     for (auto iter : users_) {
         if (uid == iter.first) {
             continue;

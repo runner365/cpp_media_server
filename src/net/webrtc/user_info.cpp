@@ -233,7 +233,7 @@ void user_info::on_rtmp_camera_callback(MEDIA_PACKET_PTR pkt_ptr) {
             media_stream_manager::writer_media_packet(ret_pkt_ptr);
             //send_buffer(ret_pkt_ptr);
         }
-       return;
+        return;
     }
 
     //log_infof("media type:%s, origin dts:%ld, dts:%ld", 
