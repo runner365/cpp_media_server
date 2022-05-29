@@ -1,6 +1,7 @@
 #ifndef UUID_H
 #define UUID_H
 #include "byte_crypto.hpp"
+#include <cstring>
 
 inline std::string make_uuid() {
     char uuid_sz[128];
