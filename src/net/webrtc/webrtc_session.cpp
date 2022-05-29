@@ -283,11 +283,15 @@ void webrtc_session::send_xr_rrt(int64_t now_ms) {
 
 void webrtc_session::send_rtp_data_in_dtls(uint8_t* data, size_t data_len) {
     if(!write_srtp_) {
+        log_errorf("write_srtp is not ready, roomid:%s, uid:%s",
+                roomId_.c_str(), uid_.c_str());
         return;
     }
     
     bool ret = write_srtp_->encrypt_rtp(const_cast<uint8_t**>(&data), &data_len);
     if (!ret) {
+        log_errorf("encrypt_rtp error, roomid:%s, uid:%s",
+                roomId_.c_str(), uid_.c_str());
         return;
     }
     //log_infof("sent srtp data len:%u, remote:%s", data_len, remote_address_.to_string().c_str());

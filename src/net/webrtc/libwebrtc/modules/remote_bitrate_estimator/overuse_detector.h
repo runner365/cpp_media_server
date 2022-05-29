@@ -12,6 +12,7 @@
 
 #include "modules/remote_bitrate_estimator/include/bwe_defines.h"
 #include <stdint.h>
+#include <string>
 
 namespace webrtc {
 
@@ -33,6 +34,7 @@ class OveruseDetector {
 
   // Returns the current detector state.
   BandwidthUsage State() const;
+  std::string GetState() const;
 
  private:
   void UpdateThreshold(double modified_offset, int64_t now_ms);

@@ -92,6 +92,9 @@ private:
 
 private:
     int64_t remb_bitrate_ = 0;
+
+private:
+    int64_t last_reqkey_ts_ = -1;
 };
 
 

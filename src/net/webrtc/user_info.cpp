@@ -233,7 +233,7 @@ void user_info::on_rtmp_camera_callback(MEDIA_PACKET_PTR pkt_ptr) {
             media_stream_manager::writer_media_packet(ret_pkt_ptr);
             //send_buffer(ret_pkt_ptr);
         }
-       return;
+        return;
     }
 
     //log_infof("media type:%s, origin dts:%ld, dts:%ld", 
@@ -308,8 +308,8 @@ int live_user_info::handle_video_data(MEDIA_PACKET_PTR pkt_ptr) {
     if (pkt_ptr->codec_type_ == MEDIA_CODEC_H264) {
         uint8_t sps[1024];
         uint8_t pps[1024];
-        size_t sps_len;
-        size_t pps_len;
+        size_t sps_len = 0;
+        size_t pps_len = 0;
         uint8_t* p = (uint8_t*)pkt_ptr->buffer_ptr_->data() + 5;
         size_t data_len = pkt_ptr->buffer_ptr_->data_len() - 5;
         std::vector<std::shared_ptr<data_buffer>> nalus;
@@ -320,14 +320,16 @@ int live_user_info::handle_video_data(MEDIA_PACKET_PTR pkt_ptr) {
             ret = get_sps_pps_from_extradata(pps, pps_len,
                                 sps, sps_len,
                                 p, data_len);
-            if (ret < 0) {
+            if ((ret < 0) || (pps_len == 0) || (sps_len == 0)) {
                 log_errorf("live user receive wrong h264 extra data");
                 log_info_data((uint8_t*)pkt_ptr->buffer_ptr_->data(),
                         pkt_ptr->buffer_ptr_->data_len(),
                         "wrong video h264 seq data");
                 return ret;
             }
-
+            log_info_data(p, data_len, "live user video extra data");
+            log_info_data(sps, sps_len, "live user udpate sps");
+            log_info_data(pps, pps_len, "live user udpate pps");
             updata_pps(pps, pps_len);
             updata_sps(sps, sps_len);
             return ret;

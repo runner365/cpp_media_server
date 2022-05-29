@@ -100,7 +100,10 @@ public:
     bool update_abs_time(uint32_t abs_time_24bits);
 
     void set_need_delete(bool flag) { this->need_delete = flag; }
-
+    void enable_debug() { debug_enable = true; }
+    void disable_debug() { debug_enable = false; }
+    bool is_debug() { return debug_enable; }
+    
     int64_t get_local_ms() {return this->local_ms;}
 
     void rtx_demux(uint32_t ssrc, uint8_t payloadtype);
@@ -124,7 +127,7 @@ private:
     uint8_t* get_extension(uint8_t id, uint8_t& len);
 
     bool update_extension_length(uint8_t id, uint8_t len);
-    
+
 private:
     rtp_common_header* header = nullptr;
     header_extension* ext     = nullptr;
@@ -134,6 +137,7 @@ private:
     size_t data_len           = 0;
     int64_t local_ms          = 0;
     bool need_delete          = false;
+    bool debug_enable         = false;
 
 private:
     uint8_t mid_extension_id_      = 0;
