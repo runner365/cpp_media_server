@@ -8,7 +8,7 @@
 class pack_handle_h264 : public pack_handle_base, public timer_interface
 {
 public:
-    pack_handle_h264(pack_callbackI* cb, boost::asio::io_context& io_ctx);
+    pack_handle_h264(pack_callbackI* cb, uv_loop_t* io_ctx);
     virtual ~pack_handle_h264();
 
 public:

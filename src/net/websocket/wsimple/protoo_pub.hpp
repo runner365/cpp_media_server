@@ -21,9 +21,9 @@
 class protoo_request_interface
 {
 public:
-    virtual void accept(const std::string& id, const std::string& data) = 0;
-    virtual void reject(const std::string& id, int err_code, const std::string& err) = 0;
-    virtual void notification(const std::string& method, const std::string& data) = 0;
+    virtual void accept(const std::string& id, const std::string& data, void* ws_session) = 0;
+    virtual void reject(const std::string& id, int err_code, const std::string& err, void* ws_session) = 0;
+    virtual void notification(const std::string& method, const std::string& data, void* ws_session) = 0;
 };
 
 class protoo_event_callback
@@ -34,7 +34,7 @@ public:
     virtual void on_disconnected() = 0;
     virtual void on_close() = 0;
     virtual void on_request(const std::string& id, const std::string& method, const std::string& data,
-                        protoo_request_interface* feedback_p) = 0;
+                        protoo_request_interface* feedback_p, void* ws_session) = 0;
     virtual void on_response(int err_code, const std::string& err_message, const std::string& id, 
                         const std::string& data) = 0;
     virtual void on_notification(const std::string& method, const std::string& data) = 0;

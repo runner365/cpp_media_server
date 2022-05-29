@@ -5,11 +5,10 @@
 #include "byte_stream.hpp"
 #include "amf/amf0.hpp"
 
-rtmp_client_session::rtmp_client_session(boost::asio::io_context& io_context, rtmp_client_callbackI* callback):conn_(io_context, this)
+rtmp_client_session::rtmp_client_session(uv_loop_t* loop, rtmp_client_callbackI* callback):conn_(loop, this)
     , cb_(callback)
     , hs_(this)
     , ctrl_handler_(this)
-    , io_ctx_(io_context)
 {
     log_infof("rtmp client session construct....");
 }
@@ -37,10 +36,8 @@ int rtmp_client_session::start(const std::string& url, bool is_publish) {
         host_.c_str(), port_, req_.tcurl_.c_str(), req_.app_.c_str(), req_.stream_name_.c_str(),
         req_.key_.c_str(), is_publish_desc());
    
-    io_ctx_.post([this](){
-        this->conn_.connect(this->host_, this->port_);
-    });
-
+    this->conn_.connect(this->host_, this->port_);
+    
     return 0;
 }
 
@@ -66,12 +63,11 @@ int rtmp_client_session::rtmp_write(MEDIA_PACKET_PTR pkt_ptr) {
         return -1;
     }
     
-    io_ctx_.post([this, csid, type_id, pkt_ptr](){
-        write_data_by_chunk_stream(this, csid,
+    write_data_by_chunk_stream(this, csid,
                     pkt_ptr->dts_, type_id,
                     pkt_ptr->streamid_, this->get_chunk_size(),
                     pkt_ptr->buffer_ptr_);
-    });
+
     return RTMP_OK;
 }
 
@@ -112,6 +108,7 @@ void rtmp_client_session::on_connect(int ret_code) {
     client_phase_ = client_c0c1_phase;
     recv_buffer_.reset();
     (void)hs_.send_c0c1();
+    log_infof("rtmp client connected...");
     try_read();
 }
 
@@ -139,6 +136,7 @@ void rtmp_client_session::on_read(int ret_code, const char* data, size_t data_si
         cb_->on_close(ret);
         return;
     } else if (ret == RTMP_NEED_READ_MORE) {
+        log_infof("handle_message need read more...");
         try_read();
         return;
     }

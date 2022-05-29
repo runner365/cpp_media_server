@@ -106,24 +106,25 @@ int Config::init_httpflv(json& json_object) {
     auto ssl_iter = json_object.find("ssl");
     if (ssl_iter == json_object.end()) {
         httpflv_config_.ssl_enable = false;
-        return 0;
+    } else {
+        httpflv_config_.ssl_enable = ssl_iter->get<bool>();
     }
-    httpflv_config_.ssl_enable = ssl_iter->get<bool>();
+    
 
     auto cert_iter = json_object.find("cert_file");
     if (cert_iter == json_object.end()) {
         httpflv_config_.cert_file = "";
-        return 0;
+    } else {
+        httpflv_config_.cert_file = cert_iter->get<std::string>();
     }
-    httpflv_config_.cert_file = cert_iter->get<std::string>();
+    
 
     auto key_iter = json_object.find("key_file");
     if (key_iter == json_object.end()) {
         httpflv_config_.key_file = "";
-        return 0;
+    } else {
+        httpflv_config_.key_file = key_iter->get<std::string>();
     }
-    httpflv_config_.key_file = key_iter->get<std::string>();
-
 
     auto port_iter = json_object.find("listen");
     if (port_iter != json_object.end()) {

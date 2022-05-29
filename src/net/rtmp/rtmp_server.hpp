@@ -12,7 +12,7 @@
 class rtmp_server : public tcp_server_callbackI, public rtmp_server_callbackI, public timer_interface
 {
 public:
-    rtmp_server(boost::asio::io_context& io_context, uint16_t port);
+    rtmp_server(uv_loop_t* loop, uint16_t port);
     virtual ~rtmp_server();
 
 public:
@@ -22,8 +22,7 @@ protected:
     virtual void on_close(std::string session_key) override;
 
 protected:
-    virtual void on_accept(int ret_code, boost::asio::ip::tcp::socket socket) override;
-    virtual void on_accept_ssl(int ret_code, boost::asio::ssl::stream<boost::asio::ip::tcp::socket> socket) override;
+    virtual void on_accept(int ret_code, uv_loop_t* loop, uv_stream_t* handle) override;
 
 private:
     void on_check_alive();

@@ -1,77 +1,68 @@
 #include "ws_server.hpp"
 #include "tcp_server.hpp"
 #include "ws_session.hpp"
-#include "ws_service_imp.hpp"
-#include "ws_session_pub.hpp"
-#include "wsimple/flv_websocket.hpp"
-#include "wsimple/protoo_server.hpp"
-#include "server_certificate.hpp"
+#include "ws28/Server.h"
 #include "logger.hpp"
-#include "net_pub.hpp"
 
-websocket_server::websocket_server(boost::asio::io_context& io_context, uint16_t port, int imp_type):io_ctx_(io_context)
-    , imp_type_(imp_type)
-    , ssl_ctx_(boost::asio::ssl::context::tlsv12) {
-    server_ = std::make_shared<tcp_server>(io_context, port, this);
-    server_->accept();
-    ssl_enable_ = false;
+void on_connected_callback(ws28::Client* client, ws28::HTTPRequest& req, void* user_data) {
+    websocket_server* server = (websocket_server*)user_data;
+    websocket_session* new_session = new websocket_session(std::string(req.method),
+                                                        std::string(req.path),
+                                                        std::string(req.ip),
+                                                        client, server);
+    log_infof("connected method:%s, path:%s, ip:%s", new_session->method().c_str(),
+            new_session->path().c_str(), new_session->remote_ip().c_str());
+	client->SetUserData((void*)new_session);
+    if (server->cb_) {
+        server->cb_->on_accept(new_session);
+    }
 }
 
-websocket_server::websocket_server(boost::asio::io_context& io_context, uint16_t port, int imp_type,
-    const std::string& cert_file, const std::string& key_file):io_ctx_(io_context)
-                                                            , imp_type_(imp_type)
-                                                            , ssl_ctx_(boost::asio::ssl::context::tlsv12) {
-    
-    log_infof("websocket open ssl certificate file:%s, private key file:%s, tls version:%d",
-        cert_file.c_str(), key_file.c_str(), (int)boost::asio::ssl::context::tlsv12);
+void on_disconnect_callback(ws28::Client* client, void* user_data) {
+	websocket_session* del_session = (websocket_session*)client->GetUserData();
 
-    ssl_ctx_.use_certificate_file(cert_file, boost::asio::ssl::context::file_format::pem);
-    ssl_ctx_.use_private_key_file(key_file, boost::asio::ssl::context::file_format::pem);
-    
-    ssl_enable_ = true;
+    client->SetCloseFlag(true);
+    if (del_session) {
+        websocket_server* server = (websocket_server*)del_session->get_server();
+        del_session->set_close(true);
+        if (server && server->cb_) {
+            log_infof("websocket is disconnect, server cb:%p", server->cb_);
+            server->cb_->on_close(del_session);
+        }
+    }
+    delete del_session;
+}
 
-    server_ = std::make_shared<tcp_server>(io_context, port, this);
-    server_->accept();
+void on_client_data_callback(ws28::Client* client, char* data, size_t len, int opcode, void* user_data) {
+    websocket_server* server = (websocket_server*)user_data;
+	websocket_session* session = (websocket_session*)client->GetUserData();
+    if (session && server->cb_) {
+        server->cb_->on_read(session, data, len);
+    }
+}
+
+websocket_server::websocket_server(uv_loop_t* loop, uint16_t port, websocket_server_callbackI* cb):ws_server_(loop)
+                                                            , cb_(cb)
+{
+    ws_server_.SetMaxMessageSize(256 * 1024 * 1024);
+    ws_server_.SetUserData(this);
+
+	ws_server_.SetClientConnectedCallback(on_connected_callback);
+	ws_server_.SetClientDisconnectedCallback(on_disconnect_callback);
+	ws_server_.SetClientDataCallback(on_client_data_callback);
+	
+	ws_server_.SetHTTPCallback([](ws28::HTTPRequest& req, ws28::HTTPResponse& res){
+		std::stringstream ss;
+		ss << "Hi, you issued a " << req.method << " to " << req.path << "\r\n";
+		ss << "Headers:\r\n";
+		
+		log_infof("http callback: %s", ss.str().c_str());
+	});
+
+    bool ret = ws_server_.Listen(port);
+    log_infof("websocket construct, port:%d return:%d", port, ret);
 }
 
 websocket_server::~websocket_server()
 {
-
-}
-
-void websocket_server::on_accept_ssl(int ret_code, boost::asio::ssl::stream<boost::asio::ip::tcp::socket> socket) {
-
-}
-
-void websocket_server::on_accept(int ret_code, boost::asio::ip::tcp::socket socket) {
-    if (ret_code == 0) {
-        std::string key;
-        make_endpoint_string(socket.remote_endpoint(), key);
-        log_infof("tcp accept key:%s", key.c_str());
-
-        std::shared_ptr<websocket_session> session_ptr;
-        if (ssl_enable_) {
-            session_ptr = std::make_shared<websocket_session>(io_ctx_, std::move(socket), ssl_ctx_, this, key);
-        } else {
-            session_ptr = std::make_shared<websocket_session>(io_ctx_, std::move(socket), this, key);
-        }
-        session_ptr->run();
-        sessions_.insert(std::make_pair(key, session_ptr));
-
-        ws_session_callback* cb = create_websocket_implement(imp_type_, session_ptr);
-        if (cb) {
-            session_ptr->set_websocket_callback(cb);
-        }
-    }
-    server_->accept();
-}
-
-void websocket_server::on_close(const std::string& session_key) {
-    auto iter = sessions_.find(session_key);
-    if (iter == sessions_.end()) {
-        log_warnf("the session key doesn't exist:%s", session_key.c_str());
-        return;
-    }
-    log_infof("remove websocket session id:%s", session_key.c_str());
-    sessions_.erase(iter);
 }

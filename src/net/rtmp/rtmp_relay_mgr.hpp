@@ -8,7 +8,7 @@
 class rtmp_relay_manager : public timer_interface
 {
 public:
-    rtmp_relay_manager(boost::asio::io_context& io_context);
+    rtmp_relay_manager(uv_loop_t* loop);
     virtual ~rtmp_relay_manager();
 
     int add_new_relay(const std::string& host, const std::string& key);
@@ -18,7 +18,7 @@ public:
 
 private:
     std::map<std::string, std::shared_ptr<rtmp_relay>> relay_map_;
-    boost::asio::io_context& io_context_;
+    uv_loop_t* loop_ = nullptr;
 };
 
 

@@ -77,7 +77,7 @@ class webrtc_session;
 class rtc_dtls : public timer_interface
 {
 public:
-    rtc_dtls(webrtc_session* session, boost::asio::io_context& io_ctx);
+    rtc_dtls(webrtc_session* session, uv_loop_t* loop);
     virtual ~rtc_dtls();
 
 public:

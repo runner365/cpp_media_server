@@ -20,7 +20,7 @@ class transcode;
 class user_info
 {
 public:
-    user_info(const std::string& uid, const std::string& roomId, protoo_request_interface* fb);
+    user_info(const std::string& uid, const std::string& roomId, protoo_request_interface* fb, void* ws_session);
     user_info(const std::string& uid, const std::string& roomId);
     ~user_info();
 
@@ -29,6 +29,7 @@ public:
     std::string roomId() {return roomId_;}
     std::string user_type() {return user_type_;}
     protoo_request_interface* feedback() { return fb_; }
+    void* ws_session() { return ws_session_; }
     int64_t active_last_ms() { return active_last_ms_; }
     void update_alive(int64_t now_ms) { active_last_ms_ = now_ms; }
 
@@ -61,6 +62,7 @@ private:
     std::string roomId_;
     std::string user_type_ = "websocket";//1) websocket; 2) whip
     protoo_request_interface* fb_ = nullptr;
+    void* ws_session_ = nullptr;
     int64_t active_last_ms_ = 0;
 
 private:

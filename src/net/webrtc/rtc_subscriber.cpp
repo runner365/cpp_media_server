@@ -4,7 +4,7 @@
 #include "utils/byte_crypto.hpp"
 #include "logger.hpp"
 
-extern boost::asio::io_context& get_global_io_context();
+extern uv_loop_t* get_global_io_context();
 
 rtc_subscriber::rtc_subscriber(const std::string& roomId, const std::string& uid, const std::string& remote_uid, const std::string& pid
     , rtc_base_session* session, const MEDIA_RTC_INFO& media_info, room_callback_interface* room_cb):timer_interface(get_global_io_context(), 50)

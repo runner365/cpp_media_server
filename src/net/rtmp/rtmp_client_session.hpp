@@ -6,12 +6,12 @@
 #include "rtmp_session_base.hpp"
 #include "data_buffer.hpp"
 #include "media_packet.hpp"
+#include <uv.h>
 #include <memory>
 #include <stdint.h>
 #include <unordered_map>
 #include <vector>
 #include <string>
-#include <boost/asio.hpp>
 
 class rtmp_client_callbackI
 {
@@ -33,7 +33,7 @@ friend class rtmp_client_handshake;
 friend class rtmp_writer;
 
 public:
-    rtmp_client_session(boost::asio::io_context& io_context, rtmp_client_callbackI* callback);
+    rtmp_client_session(uv_loop_t* loop, rtmp_client_callbackI* callback);
     virtual ~rtmp_client_session();
 
 public://tcp client callback implement
@@ -74,7 +74,6 @@ private:
 
 private:
     rtmp_control_handler ctrl_handler_;
-    boost::asio::io_context& io_ctx_;
 };
 
 #endif

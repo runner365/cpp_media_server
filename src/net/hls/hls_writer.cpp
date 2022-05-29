@@ -1,7 +1,7 @@
 #include "hls_writer.hpp"
 
-hls_writer::hls_writer(boost::asio::io_context& io_context,
-                    const std::string& path, bool rec_enable):work_(io_context)
+hls_writer::hls_writer(uv_loop_t* loop,
+                    const std::string& path, bool rec_enable):work_(loop)
 {
     work_.set_path(path);
     work_.set_rec_enable(rec_enable);

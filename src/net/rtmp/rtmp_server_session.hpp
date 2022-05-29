@@ -33,7 +33,9 @@ friend class media_stream_manager;
 friend class rtmp_writer;
 
 public:
-    rtmp_server_session(boost::asio::ip::tcp::socket socket, rtmp_server_callbackI* callback, std::string session_key);
+    rtmp_server_session(uv_loop_t* loop,
+                    uv_stream_t* server_uv_handle,
+                    rtmp_server_callbackI* callback);
     virtual ~rtmp_server_session();
 
 public:
@@ -58,7 +60,6 @@ private:
     int send_rtmp_ack(uint32_t size);
 
 private:
-    std::string session_key_;
     std::shared_ptr<tcp_session> session_ptr_;
     rtmp_server_callbackI* callback_ = nullptr;
 

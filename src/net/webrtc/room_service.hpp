@@ -45,7 +45,7 @@ public:
     virtual void on_disconnected() override;
     virtual void on_close() override;
     virtual void on_request(const std::string& id, const std::string& method, const std::string& data,
-                        protoo_request_interface* feedback_p) override;
+                        protoo_request_interface* feedback_p, void* ws_session) override;
     virtual void on_response(int err_code, const std::string& err_message, const std::string& id, 
                         const std::string& data) override;
     virtual void on_notification(const std::string& method, const std::string& data) override;
@@ -86,19 +86,19 @@ public:
 
 private:
     void handle_join(const std::string& id, const std::string& method,
-                const std::string& data, protoo_request_interface* feedback_p);
+                const std::string& data, protoo_request_interface* feedback_p, void* ws_session);
     void handle_publish(const std::string& id, const std::string& method,
-                const std::string& data, protoo_request_interface* feedback_p);
+                const std::string& data, protoo_request_interface* feedback_p, void* ws_session);
     void response_publish(const std::string& id, protoo_request_interface* feedback_p,
-                int code, const std::string& desc, const std::string& sdp, const std::string& pc_id);
+                int code, const std::string& desc, const std::string& sdp, const std::string& pc_id, void* ws_session);
     void handle_unpublish(const std::string& id, const std::string& method,
-                const std::string& data, protoo_request_interface* feedback_p);
+                const std::string& data, protoo_request_interface* feedback_p, void* ws_session);
     void handle_subscribe(const std::string& id, const std::string& method,
-                const std::string& data, protoo_request_interface* feedback_p);
-    void handle_live_subscribe(const std::string& id, const json& data_json, protoo_request_interface* feedback_p);
-    void handle_webrtc_subscribe(const std::string& id, const json& data_json, protoo_request_interface* feedback_p);
+                const std::string& data, protoo_request_interface* feedback_p, void* ws_session);
+    void handle_live_subscribe(const std::string& id, const json& data_json, protoo_request_interface* feedback_p, void* ws_session);
+    void handle_webrtc_subscribe(const std::string& id, const json& data_json, protoo_request_interface* feedback_p, void* ws_session);
     void handle_unsubscribe(const std::string& id, const std::string& method,
-                const std::string& data, protoo_request_interface* feedback_p);
+                const std::string& data, protoo_request_interface* feedback_p, void* ws_session);
 
 private:
     std::shared_ptr<live_user_info> live_user_join(const std::string& roomId, const std::string& uid);

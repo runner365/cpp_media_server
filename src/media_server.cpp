@@ -7,6 +7,8 @@
 #include "net/webrtc/rtmp2rtc.hpp"
 #include "net/hls/hls_writer.hpp"
 #include "net/http/http_common.hpp"
+#include "net/websocket/wsimple/flv_websocket.hpp"
+#include "net/websocket/wsimple/protoo_server.hpp"
 #include "utils/byte_crypto.hpp"
 #include "utils/config.hpp"
 #include "utils/av/media_stream_manager.hpp"
@@ -15,11 +17,15 @@
 #include <stdint.h>
 #include <stddef.h>
 #include <iostream>
+#include <unistd.h>
 
-boost::asio::io_context MediaServer::io_context;
-boost::asio::io_context MediaServer::hls_io_context;
+uv_loop_t* MediaServer::loop_ = uv_default_loop();
+uv_loop_t* MediaServer::hls_loop_ = uv_loop_new();
+
 websocket_server* MediaServer::ws_p  = nullptr;
-websocket_server* MediaServer::ws_flv_p = nullptr;
+flv_websocket* MediaServer::ws_flv_server = nullptr;
+protoo_server* MediaServer::ws_webrtc_server = nullptr;
+
 rtmp2rtc_writer* MediaServer::r2r_output = nullptr;
 std::shared_ptr<rtmp_server> MediaServer::rtmp_ptr;
 std::shared_ptr<httpflv_server> MediaServer::httpflv_ptr;
@@ -55,15 +61,15 @@ void MediaServer::create_webrtc() {
     byte_crypto::init();
     rtc_dtls::dtls_init(Config::tls_key(), Config::tls_cert());
     srtp_session::init();
-    init_single_udp_server(io_context, Config::candidate_ip(), Config::webrtc_udp_port());
+    init_single_udp_server(loop_, Config::candidate_ip(), Config::webrtc_udp_port());
     init_webrtc_stream_manager_callback();
 
     if (Config::rtmp2rtc_is_enable()) {
         MediaServer::r2r_output = new rtmp2rtc_writer();
         media_stream_manager::set_rtc_writer(MediaServer::r2r_output);
     }
-    MediaServer::ws_p = new websocket_server(MediaServer::io_context, Config::webrtc_https_port(), WEBSOCKET_IMPLEMENT_PROTOO_TYPE);
-    log_infof("webrtc is starting, https port:%d, rtmp2rtc:%s, rtc2rtmp:%s",
+    MediaServer::ws_webrtc_server = new protoo_server(loop_, Config::webrtc_https_port());
+    log_infof("webrtc is starting, websocket port:%d, rtmp2rtc:%s, rtc2rtmp:%s",
             Config::webrtc_https_port(),
             Config::rtmp2rtc_is_enable() ? "true" : "false",
             Config::rtc2rtmp_is_enable() ? "true" : "false");
@@ -75,11 +81,11 @@ void MediaServer::create_rtmp() {
         log_infof("rtmp is disable...");
         return;
     }
-    MediaServer::rtmp_ptr = std::make_shared<rtmp_server>(io_context, Config::rtmp_listen_port());
+    MediaServer::rtmp_ptr = std::make_shared<rtmp_server>(loop_, Config::rtmp_listen_port());
     log_infof("rtmp server is starting, listen port:%d", Config::rtmp_listen_port());
 
     if (Config::rtmp_relay_is_enable() && !Config::rtmp_relay_host().empty()) {
-        MediaServer::relay_mgr_p = new rtmp_relay_manager(MediaServer::io_context);
+        MediaServer::relay_mgr_p = new rtmp_relay_manager(MediaServer::loop_);
         media_stream_manager::set_play_callback(on_play_callback);
     }
     return;
@@ -92,9 +98,9 @@ void MediaServer::create_httpflv() {
     }
 
     if (Config::httpflv_ssl_enable() && !Config::httpflv_cert_file().empty() && !Config::httpflv_key_file().empty()) {
-        MediaServer::httpflv_ptr = std::make_shared<httpflv_server>(MediaServer::io_context, Config::httpflv_port(), Config::httpflv_cert_file(), Config::httpflv_key_file());
+        //MediaServer::httpflv_ptr = std::make_shared<httpflv_server>(MediaServer::loop_, Config::httpflv_port(), Config::httpflv_cert_file(), Config::httpflv_key_file());
     } else {
-        MediaServer::httpflv_ptr = std::make_shared<httpflv_server>(MediaServer::io_context, Config::httpflv_port());
+        MediaServer::httpflv_ptr = std::make_shared<httpflv_server>(MediaServer::loop_, Config::httpflv_port());
     }
 
     log_infof("httpflv server is starting, listen port:%d", Config::httpflv_port());
@@ -107,9 +113,9 @@ void MediaServer::create_httpapi() {
         return;
     }
     if (Config::httpapi_ssl_enable() && !Config::httpapi_cert_file().empty() && !Config::httpapi_key_file().empty()) {
-        MediaServer::httpapi_ptr = std::make_shared<httpapi_server>(MediaServer::io_context, Config::httpapi_port(), Config::httpapi_cert_file(), Config::httpapi_key_file());
+        //MediaServer::httpapi_ptr = std::make_shared<httpapi_server>(MediaServer::loop_, Config::httpapi_port(), Config::httpapi_cert_file(), Config::httpapi_key_file());
     } else {
-        MediaServer::httpapi_ptr = std::make_shared<httpapi_server>(MediaServer::io_context, Config::httpapi_port());
+        MediaServer::httpapi_ptr = std::make_shared<httpapi_server>(MediaServer::loop_, Config::httpapi_port());
     }
 
     log_infof("httpapi server is starting, listen port:%d", Config::httpapi_port());
@@ -121,7 +127,7 @@ void MediaServer::create_hls() {
         log_infof("hls is disable...");
         return;
     }
-    MediaServer::hls_output = new hls_writer(MediaServer::hls_io_context, Config::hls_path(), true);//enable hls
+    MediaServer::hls_output = new hls_writer(MediaServer::hls_loop_, Config::hls_path(), true);//enable hls
     media_stream_manager::set_hls_writer(hls_output);
     MediaServer::hls_output->run();
 
@@ -135,7 +141,7 @@ void MediaServer::create_websocket_flv() {
         return;
     }
 
-    MediaServer::ws_flv_p = new websocket_server(io_context, Config::websocket_port(), WEBSOCKET_IMPLEMENT_FLV_TYPE);
+    MediaServer::ws_flv_server = new flv_websocket(MediaServer::loop_, Config::websocket_port());
 
     log_infof("websocket flv is starting, listen port:%d", Config::websocket_port());
     return;
@@ -161,7 +167,6 @@ void MediaServer::Run(const std::string& cfg_file) {
     #endif
     log_infof("configuration file:%s", Config::dump().c_str());
     
-    boost::asio::io_service::work work(io_context);
     try {
         MediaServer::create_webrtc();
         MediaServer::create_rtmp();
@@ -170,7 +175,7 @@ void MediaServer::Run(const std::string& cfg_file) {
         MediaServer::create_httpapi();
         MediaServer::create_websocket_flv();
 
-        io_context.run();
+        uv_run(MediaServer::loop_, UV_RUN_DEFAULT);
     }
     catch(const std::exception& e) {
         std::cerr << e.what() << '\n';
@@ -186,9 +191,9 @@ void MediaServer::release_all() {
         MediaServer::ws_p = nullptr;
     }
 
-    if (MediaServer::ws_flv_p) {
-        delete MediaServer::ws_flv_p;
-        MediaServer::ws_flv_p = nullptr;
+    if (MediaServer::ws_flv_server) {
+        delete MediaServer::ws_flv_server;
+        MediaServer::ws_flv_server = nullptr;
     }
 
     if (MediaServer::r2r_output) {
@@ -205,8 +210,8 @@ void MediaServer::release_all() {
     return;
 }
 
-boost::asio::io_context& get_global_io_context() {
-    return MediaServer::get_io_ctx();
+uv_loop_t* get_global_io_context() {
+    return MediaServer::get_loop();
 }
 
 int main(int argn, char** argv) {

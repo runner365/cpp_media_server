@@ -9,7 +9,7 @@
 class pack_handle_vp8 : public pack_handle_base, public timer_interface
 {
 public:
-    pack_handle_vp8(pack_callbackI* cb, boost::asio::io_context& io_ctx);
+    pack_handle_vp8(pack_callbackI* cb, uv_loop_t* loop);
     virtual ~pack_handle_vp8();
 
 public:

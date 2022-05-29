@@ -1,7 +1,7 @@
 #include "jitterbuffer.hpp"
 #include "timeex.hpp"
 
-jitterbuffer::jitterbuffer(jitterbuffer_callbackI* cb, boost::asio::io_context& io_ctx):timer_interface(io_ctx, 100)
+jitterbuffer::jitterbuffer(jitterbuffer_callbackI* cb, uv_loop_t* loop):timer_interface(loop, 100)
                     , cb_(cb) {
 
 }

@@ -6,12 +6,11 @@
 #include "utils/av/media_stream_manager.hpp"
 #include "json.hpp"
 #include "utils/uuid.hpp"
+#include <uv.h>
 #include <unordered_map>
 #include <sstream>
 
 using json = nlohmann::json;
-
-extern boost::asio::io_context& get_global_io_context();
 
 static std::unordered_map<std::string, std::shared_ptr<room_service>> s_rooms;
 
@@ -321,7 +320,7 @@ void init_webrtc_stream_manager_callback() {
     media_stream_manager::add_stream_callback(&s_webrtc_callback);
 }
 
-room_service::room_service(const std::string& roomId):timer_interface(get_global_io_context(), 2000)
+room_service::room_service(const std::string& roomId):timer_interface(uv_default_loop(), 2000)
                                                       , roomId_(roomId) {
     start_timer();
 }
@@ -425,20 +424,20 @@ void room_service::on_close() {
 }
 
 void room_service::on_request(const std::string& id, const std::string& method, const std::string& data,
-            protoo_request_interface* feedback_p) {
+            protoo_request_interface* feedback_p, void* ws_session) {
     if (method == "join") {
-        handle_join(id, method, data, feedback_p);
+        handle_join(id, method, data, feedback_p, ws_session);
     } else if (method == "publish") {
-        handle_publish(id, method, data, feedback_p);
+        handle_publish(id, method, data, feedback_p, ws_session);
     } else if (method == "unpublish") {
-        handle_unpublish(id, method, data, feedback_p);
+        handle_unpublish(id, method, data, feedback_p, ws_session);
     } else if (method == "subscribe") {
-        handle_subscribe(id, method, data, feedback_p);
+        handle_subscribe(id, method, data, feedback_p, ws_session);
     } else if (method == "unsubscribe") {
-        handle_unsubscribe(id, method, data, feedback_p);
+        handle_unsubscribe(id, method, data, feedback_p, ws_session);
     } else {
         log_infof("receive unkown method:%s", method.c_str());
-        feedback_p->reject(id, METHOD_ERROR, "unkown method");
+        feedback_p->reject(id, METHOD_ERROR, "unkown method", ws_session);
     }
 }
 
@@ -709,29 +708,29 @@ int room_service::live_publish(const std::string& uid,
 }
 
 void room_service::handle_publish(const std::string& id, const std::string& method,
-                const std::string& data, protoo_request_interface* feedback_p) {
+                const std::string& data, protoo_request_interface* feedback_p, void* ws_session) {
     std::shared_ptr<user_info> user_ptr;
     json data_json = json::parse(data);
 
     std::string uid = get_uid_by_json(data_json);
     if (uid.empty()) {
-        feedback_p->reject(id, UID_ERROR, "uid field does not exist");
+        feedback_p->reject(id, UID_ERROR, "uid field does not exist", ws_session);
         return;
     }
 
     user_ptr = get_user_info(uid);
     if (!user_ptr) {
-        feedback_p->reject(id, UID_ERROR, "uid doesn't exist");
+        feedback_p->reject(id, UID_ERROR, "uid doesn't exist", ws_session);
         return;
     }
 
     auto sdp_json = data_json.find("sdp");
     if (sdp_json == data_json.end()) {
-        feedback_p->reject(id, SDP_ERROR, "roomId does not exist");
+        feedback_p->reject(id, SDP_ERROR, "roomId does not exist", ws_session);
         return;
     }
     if (!sdp_json->is_string()) {
-        feedback_p->reject(id, SDP_ERROR, "roomId is not string");
+        feedback_p->reject(id, SDP_ERROR, "roomId is not string", ws_session);
         return;
     }
 
@@ -756,7 +755,7 @@ void room_service::handle_publish(const std::string& id, const std::string& meth
             ss << "publish media rtp encodings is empty, mid:" << media_item.mid
                << ", media type:" << media_item.media_type << ", protocal:" << media_item.protocol;
             log_errorf("%s", ss.str().c_str());
-            feedback_p->reject(id, SDP_ERROR, ss.str());
+            feedback_p->reject(id, SDP_ERROR, ss.str(), ws_session);
             return;
         }
         session_ptr->create_publisher(media_item);
@@ -787,7 +786,7 @@ void room_service::handle_publish(const std::string& id, const std::string& meth
     user_ptr->publish_sessions_[session_ptr->get_id()] = session_ptr;
     //log_infof("support response sdp:\r\n%s", resp_sdp_str.c_str());
 
-    response_publish(id, feedback_p, 0, "ok", resp_sdp_str, session_ptr->get_id());
+    response_publish(id, feedback_p, 0, "ok", resp_sdp_str, session_ptr->get_id(), ws_session);
 
     //notify new publish infomation to other users
     std::vector<publisher_info> publishers_vec = session_ptr->get_publishs_information();
@@ -797,7 +796,8 @@ void room_service::handle_publish(const std::string& id, const std::string& meth
 }
 
 void room_service::response_publish(const std::string& id, protoo_request_interface* feedback_p,
-                    int code, const std::string& desc, const std::string& sdp, const std::string& pc_id) {
+                    int code, const std::string& desc, const std::string& sdp, const std::string& pc_id,
+                    void* ws_session) {
     auto resp_json = json::object();
     
     resp_json["code"] = 0;
@@ -807,41 +807,42 @@ void room_service::response_publish(const std::string& id, protoo_request_interf
 
     std::string resp_data = resp_json.dump();
     log_infof("publish response data:%s", resp_data.c_str());
-    feedback_p->accept(id, resp_data);
+    feedback_p->accept(id, resp_data, ws_session);
 }
 
 void room_service::handle_unpublish(const std::string& id, const std::string& method,
-                        const std::string& data, protoo_request_interface* feedback_p) {
+                        const std::string& data, protoo_request_interface* feedback_p,
+                        void* ws_session) {
     std::shared_ptr<user_info> user_ptr;
     json data_json = json::parse(data);
 
     log_infof("unpublish data: %s", data.c_str());
     std::string uid = get_uid_by_json(data_json);
     if (uid.empty()) {
-        feedback_p->reject(id, UID_ERROR, "uid field does not exist");
+        feedback_p->reject(id, UID_ERROR, "uid field does not exist", ws_session);
         return;
     }
 
     user_ptr = get_user_info(uid);
     if (!user_ptr) {
-        feedback_p->reject(id, UID_ERROR, "uid doesn't exist");
+        feedback_p->reject(id, UID_ERROR, "uid doesn't exist", ws_session);
         return;
     }
 
     auto pc_id_json = data_json.find("pcid");
     if (pc_id_json == data_json.end()) {
-        feedback_p->reject(id, UID_ERROR, "peer connection id can't be found");
+        feedback_p->reject(id, UID_ERROR, "peer connection id can't be found", ws_session);
         return;
     }
     if (!pc_id_json->is_string()) {
-        feedback_p->reject(id, UID_ERROR, "peer connection id is not string");
+        feedback_p->reject(id, UID_ERROR, "peer connection id is not string", ws_session);
         return;
     }
 
     std::string pc_id = pc_id_json->get<std::string>();
     auto session_iter = user_ptr->publish_sessions_.find(pc_id);
     if (session_iter == user_ptr->publish_sessions_.end()) {
-        feedback_p->reject(id, UID_ERROR, "peer connection id doesn't exist");
+        feedback_p->reject(id, UID_ERROR, "peer connection id doesn't exist", ws_session);
         return;
     }
     auto unpublish_vec = session_iter->second->get_publishs_information();
@@ -862,7 +863,7 @@ void room_service::handle_unpublish(const std::string& id, const std::string& me
     
     std::string resp_data = resp_json.dump();
     log_infof("publish close response data:%s", resp_data.c_str());
-    feedback_p->accept(id, resp_data);
+    feedback_p->accept(id, resp_data, ws_session);
 
     //notify unpublish to others
     notify_unpublisher_to_others(uid, unpublish_vec);
@@ -871,20 +872,20 @@ void room_service::handle_unpublish(const std::string& id, const std::string& me
 }
 
 void room_service::handle_unsubscribe(const std::string& id, const std::string& method,
-                const std::string& data, protoo_request_interface* feedback_p) {
+                const std::string& data, protoo_request_interface* feedback_p, void* ws_session) {
     log_infof("unsubscribe data: %s", data.c_str());
     std::shared_ptr<user_info> user_ptr;
     json data_json = json::parse(data);
 
     std::string uid = get_uid_by_json(data_json);
     if (uid.empty()) {
-        feedback_p->reject(id, UID_ERROR, "subscribe uid field does not exist");
+        feedback_p->reject(id, UID_ERROR, "subscribe uid field does not exist", ws_session);
         return;
     }
 
     user_ptr = get_user_info(uid);
     if (!user_ptr) {
-        feedback_p->reject(id, UID_ERROR, "subscribe uid doesn't exist");
+        feedback_p->reject(id, UID_ERROR, "subscribe uid doesn't exist", ws_session);
         return;
     }
 
@@ -893,7 +894,7 @@ void room_service::handle_unsubscribe(const std::string& id, const std::string& 
     auto subscriber_session_iter = user_ptr->subscribe_sessions_.find(pcid);
     if (subscriber_session_iter == user_ptr->subscribe_sessions_.end()) {
         log_infof("unsubscribe fail to get remote pcid:%s", pcid.c_str());
-        feedback_p->reject(id, UID_ERROR, "unsubscribe's pcid doesn't exist");
+        feedback_p->reject(id, UID_ERROR, "unsubscribe's pcid doesn't exist", ws_session);
         return;
     }
     user_ptr->subscribe_sessions_.erase(subscriber_session_iter);
@@ -901,7 +902,7 @@ void room_service::handle_unsubscribe(const std::string& id, const std::string& 
 
     auto publishers_iter = data_json.find("publishers");
     if (publishers_iter == data_json.end()) {
-        feedback_p->reject(id, SUBSCRIBE_JSON_ERROR, "publishers doesn't exist");
+        feedback_p->reject(id, SUBSCRIBE_JSON_ERROR, "publishers doesn't exist", ws_session);
         return;
     }
     std::vector<publisher_info> publishers = get_publishers_info_by_json(*publishers_iter);
@@ -922,13 +923,13 @@ void room_service::handle_unsubscribe(const std::string& id, const std::string& 
     resp_json["code"] = 0;
     resp_json["desc"] = "ok";
     std::string resp_data = resp_json.dump();
-    feedback_p->accept(id, resp_data);
+    feedback_p->accept(id, resp_data, ws_session);
 
     return;
 }
 
 void room_service::handle_subscribe(const std::string& id, const std::string& method,
-                const std::string& data, protoo_request_interface* feedback_p) {
+                const std::string& data, protoo_request_interface* feedback_p, void* ws_session) {
     //log_infof("subscribe data: %s", data.c_str());
     std::string user_type;
     json data_json = json::parse(data);
@@ -938,62 +939,65 @@ void room_service::handle_subscribe(const std::string& id, const std::string& me
         user_type = "webrtc";
     } else {
         if (!user_type_json->is_string()) {
-            feedback_p->reject(id, UID_ERROR, "subscribe user_type field is not string");
+            feedback_p->reject(id, UID_ERROR, "subscribe user_type field is not string", ws_session);
             return;
         }
         user_type = user_type_json->get<std::string>();
     }
 
     if (user_type == "webrtc") {
-        handle_webrtc_subscribe(id, data_json, feedback_p);
+        handle_webrtc_subscribe(id, data_json, feedback_p, ws_session);
     } else if (user_type == "live") {
-        handle_live_subscribe(id, data_json, feedback_p);
+        handle_live_subscribe(id, data_json, feedback_p, ws_session);
     } else {
         std::stringstream error_desc;
         error_desc << "user type is unkown:" << user_type;
-        feedback_p->reject(id, UID_ERROR, error_desc.str());
+        feedback_p->reject(id, UID_ERROR, error_desc.str(), ws_session);
     }
 
     return;
 }
 
-void room_service::handle_live_subscribe(const std::string& id, const json& data_json, protoo_request_interface* feedback_p) {
+void room_service::handle_live_subscribe(const std::string& id,
+                                    const json& data_json,
+                                    protoo_request_interface* feedback_p,
+                                    void* ws_session) {
     std::string uid = get_uid_by_json(data_json);
     std::shared_ptr<user_info> user_ptr;
     std::shared_ptr<live_user_info> remote_user_ptr;
 
     if (uid.empty()) {
-        feedback_p->reject(id, UID_ERROR, "live subscribe uid field does not exist");
+        feedback_p->reject(id, UID_ERROR, "live subscribe uid field does not exist", ws_session);
         return;
     }
 
     user_ptr = get_user_info(uid);
     if (!user_ptr) {
-        feedback_p->reject(id, UID_ERROR, "live subscribe uid doesn't exist");
+        feedback_p->reject(id, UID_ERROR, "live subscribe uid doesn't exist", ws_session);
         return;
     }
 
     std::string remote_uid = data_json["remoteUid"];
     remote_user_ptr = get_live_user_info(remote_uid);
     if (!remote_user_ptr) {
-        feedback_p->reject(id, UID_ERROR, "publisher live uid doesn't exist");
+        feedback_p->reject(id, UID_ERROR, "publisher live uid doesn't exist", ws_session);
         return;
     }
 
     auto publishers_iter = data_json.find("publishers");
     if (publishers_iter == data_json.end()) {
-        feedback_p->reject(id, SUBSCRIBE_JSON_ERROR, "live publishers doesn't exist");
+        feedback_p->reject(id, SUBSCRIBE_JSON_ERROR, "live publishers doesn't exist", ws_session);
         return;
     }
     std::vector<publisher_info> publishers = get_publishers_info_by_json(*publishers_iter);
 
     auto sdp_iter = data_json.find("sdp");
     if (sdp_iter == data_json.end()) {
-        feedback_p->reject(id, SUBSCRIBE_JSON_ERROR, "live subscribe sdp doesn't exist");
+        feedback_p->reject(id, SUBSCRIBE_JSON_ERROR, "live subscribe sdp doesn't exist", ws_session);
         return;
     }
     if (!sdp_iter->is_string()) {
-        feedback_p->reject(id, SUBSCRIBE_JSON_ERROR, "live subscribe sdp isn't string");
+        feedback_p->reject(id, SUBSCRIBE_JSON_ERROR, "live subscribe sdp isn't string", ws_session);
         return;
     }
     std::string sdp = sdp_iter->get<std::string>();
@@ -1152,56 +1156,59 @@ void room_service::handle_live_subscribe(const std::string& id, const json& data
 
     std::string resp_data = resp_json.dump();
     //log_infof("subscirbe response data:%s", resp_data.c_str());
-    feedback_p->accept(id, resp_data);
+    feedback_p->accept(id, resp_data, ws_session);
 
     return;
 }
 
-void room_service::handle_webrtc_subscribe(const std::string& id, const json& data_json, protoo_request_interface* feedback_p) {
+void room_service::handle_webrtc_subscribe(const std::string& id,
+                                        const json& data_json,
+                                        protoo_request_interface* feedback_p,
+                                        void* ws_session) {
     std::string uid = get_uid_by_json(data_json);
     std::shared_ptr<user_info> user_ptr;
     std::shared_ptr<user_info> remote_user_ptr;
 
     if (uid.empty()) {
-        feedback_p->reject(id, UID_ERROR, "subscribe uid field does not exist");
+        feedback_p->reject(id, UID_ERROR, "subscribe uid field does not exist", ws_session);
         return;
     }
 
     user_ptr = get_user_info(uid);
     if (!user_ptr) {
-        feedback_p->reject(id, UID_ERROR, "subscribe uid doesn't exist");
+        feedback_p->reject(id, UID_ERROR, "subscribe uid doesn't exist", ws_session);
         return;
     }
 
     std::string remote_uid = data_json["remoteUid"];
     remote_user_ptr = get_user_info(remote_uid);
     if (!remote_user_ptr) {
-        feedback_p->reject(id, UID_ERROR, "subscribe uid doesn't exist");
+        feedback_p->reject(id, UID_ERROR, "subscribe uid doesn't exist", ws_session);
         return;
     }
 
     std::string remote_pcid = data_json["remotePcId"];
     auto remote_session_iter = remote_user_ptr->publish_sessions_.find(remote_pcid);
     if (remote_session_iter == remote_user_ptr->publish_sessions_.end()) {
-        feedback_p->reject(id, UID_ERROR, "subscribe pcid doesn't exist");
+        feedback_p->reject(id, UID_ERROR, "subscribe pcid doesn't exist", ws_session);
         return;
     }
     std::shared_ptr<webrtc_session> remote_session_ptr = remote_session_iter->second;
 
     auto publishers_iter = data_json.find("publishers");
     if (publishers_iter == data_json.end()) {
-        feedback_p->reject(id, SUBSCRIBE_JSON_ERROR, "publishers doesn't exist");
+        feedback_p->reject(id, SUBSCRIBE_JSON_ERROR, "publishers doesn't exist", ws_session);
         return;
     }
     std::vector<publisher_info> publishers = get_publishers_info_by_json(*publishers_iter);
 
     auto sdp_iter = data_json.find("sdp");
     if (sdp_iter == data_json.end()) {
-        feedback_p->reject(id, SUBSCRIBE_JSON_ERROR, "sdp doesn't exist");
+        feedback_p->reject(id, SUBSCRIBE_JSON_ERROR, "sdp doesn't exist", ws_session);
         return;
     }
     if (!sdp_iter->is_string()) {
-        feedback_p->reject(id, SUBSCRIBE_JSON_ERROR, "sdp isn't string");
+        feedback_p->reject(id, SUBSCRIBE_JSON_ERROR, "sdp isn't string", ws_session);
         return;
     }
     std::string sdp = sdp_iter->get<std::string>();
@@ -1223,7 +1230,7 @@ void room_service::handle_webrtc_subscribe(const std::string& id, const json& da
                 auto publisher_ptr =  remote_session_ptr->get_publisher(info.mid);
                 if (!publisher_ptr) {
                     log_errorf("fail to get publisher by mid:%d", info.mid);
-                    feedback_p->reject(id, SUBSCRIBE_JSON_ERROR, "publishers doesn't exist");
+                    feedback_p->reject(id, SUBSCRIBE_JSON_ERROR, "publishers doesn't exist", ws_session);
                     return;
                 }
                 std::stringstream ss_debug;
@@ -1304,7 +1311,7 @@ void room_service::handle_webrtc_subscribe(const std::string& id, const json& da
     
     std::string resp_data = resp_json.dump();
     //log_infof("subscirbe response data:%s", resp_data.c_str());
-    feedback_p->accept(id, resp_data);
+    feedback_p->accept(id, resp_data, ws_session);
 }
 
 std::shared_ptr<live_user_info> room_service::live_user_join(const std::string& roomId, const std::string& uid) {
@@ -1909,40 +1916,43 @@ void room_service::handle_http_join(const std::string& uid) {
     return;
 }
 
-void room_service::handle_join(const std::string& id, const std::string& method, const std::string& data,
-                protoo_request_interface* feedback_p) {
+void room_service::handle_join(const std::string& id,
+                const std::string& method,
+                const std::string& data,
+                protoo_request_interface* feedback_p,
+                void* ws_session) {
     std::shared_ptr<user_info> user_ptr;
     json data_json = json::parse(data);
 
     std::string uid = get_uid_by_json(data_json);
     if (uid.empty()) {
-        feedback_p->reject(id, UID_ERROR, "uid field does not exist");
+        feedback_p->reject(id, UID_ERROR, "uid field does not exist", ws_session);
         return;
     }
 
     user_ptr = get_user_info(uid);
     if (user_ptr.get() != nullptr) {
-        feedback_p->reject(id, UID_ERROR, "uid has existed");
+        feedback_p->reject(id, UID_ERROR, "uid has existed", ws_session);
         return;
     }
 
     auto roomId_json = data_json.find("roomId");
     if (roomId_json == data_json.end()) {
-        feedback_p->reject(id, ROOMID_ERROR, "roomId does not exist");
+        feedback_p->reject(id, ROOMID_ERROR, "roomId does not exist", ws_session);
         return;
     }
     if (!roomId_json->is_string()) {
-        feedback_p->reject(id, ROOMID_ERROR, "roomId is not string");
+        feedback_p->reject(id, ROOMID_ERROR, "roomId is not string", ws_session);
         return;
     }
 
     std::string roomId = roomId_json->get<std::string>();
     if (roomId != roomId_) {
-        feedback_p->reject(id, ROOMID_ERROR, "roomId error");
+        feedback_p->reject(id, ROOMID_ERROR, "roomId error", ws_session);
         return;
     }
 
-    user_ptr = std::make_shared<user_info>(uid, roomId, feedback_p);
+    user_ptr = std::make_shared<user_info>(uid, roomId, feedback_p, ws_session);
 
     users_.insert(std::make_pair(uid, user_ptr));
 
@@ -1967,7 +1977,7 @@ void room_service::handle_join(const std::string& id, const std::string& method,
 
     std::string resp_data = resp_json.dump();
     log_infof("join response data:%s", resp_data.c_str());
-    feedback_p->accept(id, resp_data);
+    feedback_p->accept(id, resp_data, ws_session);
 
     notify_others_publisher_to_me(uid, user_ptr);
     return;
@@ -1988,7 +1998,7 @@ void room_service::notify_userin_to_others(const std::string& uid, const std::st
         resp_json["user_type"] = user_type;
         log_infof("send newuser message: %s", resp_json.dump().c_str());
         if (other_user->feedback()) {
-            other_user->feedback()->notification("userin", resp_json.dump());
+            other_user->feedback()->notification("userin", resp_json.dump(), other_user->ws_session());
         }
     }
 }
@@ -2006,7 +2016,7 @@ void room_service::notify_userout_to_others(const std::string& uid) {
         resp_json["uid"] = uid;
         log_infof("send userout message: %s", resp_json.dump().c_str());
         if (other_user->feedback()) {
-            other_user->feedback()->notification("userout", resp_json.dump());
+            other_user->feedback()->notification("userout", resp_json.dump(), other_user->ws_session());
         }
         
     }
@@ -2047,7 +2057,7 @@ void room_service::notify_others_publisher_to_me(const std::string& uid, std::sh
             resp_json["user_type"]  = "webrtc";
 
             log_infof("send other publisher message: %s to me(%s)", resp_json.dump().c_str(), uid.c_str());
-            me->feedback()->notification("publish", resp_json.dump());
+            me->feedback()->notification("publish", resp_json.dump(), me->ws_session());
         }
     }
 
@@ -2087,7 +2097,7 @@ void room_service::notify_others_publisher_to_me(const std::string& uid, std::sh
             resp_json["pcid"]       = publisher_id;
             resp_json["user_type"]  = "live";
             log_infof("send other live publisher message: %s to me(%s)", resp_json.dump().c_str(), uid.c_str());
-            me->feedback()->notification("publish", resp_json.dump());
+            me->feedback()->notification("publish", resp_json.dump(), me->ws_session());
         }
     }
 }
@@ -2121,7 +2131,7 @@ void room_service::notify_publisher_to_others(const std::string& uid, const std:
 
         log_infof("send publish message: %s", resp_json.dump().c_str());
         if (other_user->feedback()) {
-            other_user->feedback()->notification("publish", resp_json.dump());
+            other_user->feedback()->notification("publish", resp_json.dump(), other_user->ws_session());
         }
     }
 }
@@ -2152,7 +2162,7 @@ void room_service::notify_unpublisher_to_others(const std::string& uid, const st
 
         log_infof("send unpublish message: %s", resp_json.dump().c_str());
         if (other_user->feedback()) {
-            other_user->feedback()->notification("unpublish", resp_json.dump());
+            other_user->feedback()->notification("unpublish", resp_json.dump(), other_user->ws_session());
         }
     }
 }

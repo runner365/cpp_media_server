@@ -278,7 +278,7 @@ void rtc_dtls::on_ssl_info(int type, int value) {
 
 }
 
-rtc_dtls::rtc_dtls(webrtc_session* session, boost::asio::io_context& io_ctx): timer_interface(io_ctx, 5*1000)
+rtc_dtls::rtc_dtls(webrtc_session* session, uv_loop_t* loop): timer_interface(loop, 5*1000)
     , session_(session) {
     state = DTLS_NEW;
     role  = ROLE_SERVER;//role must be "server" in ice-lite mode.

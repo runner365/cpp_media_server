@@ -5,6 +5,7 @@
 #include "logger.hpp"
 #include "utils/byte_stream.hpp"
 #include "transcode/transcode.hpp"
+#include "net/websocket/ws_session.hpp"
 #include <sstream>
 #include <assert.h>
 
@@ -66,7 +67,8 @@ int av_outputer::output_packet(MEDIA_PACKET_PTR pkt_ptr) {
     return ret;
 }
 
-flv_websocket::flv_websocket():demuxer_(&outputer_)
+flv_websocket::flv_websocket(uv_loop_t* loop, uint16_t port):server_(loop, port, this)
+                        , demuxer_(&outputer_)
 {
 
 }
@@ -76,11 +78,11 @@ flv_websocket::~flv_websocket()
 
 }
 
-void flv_websocket::on_accept() {
+void flv_websocket::on_accept(websocket_session* session) {
     log_infof("flv in websocket is accept....");
 }
 
-void flv_websocket::on_read(const char* data, size_t len) {
+void flv_websocket::on_read(websocket_session* session, const char* data, size_t len) {
     if (uri_.empty()) {
         const char* uri_data = data;
         assert(uri_data[0] == 0x02);
@@ -105,13 +107,9 @@ void flv_websocket::on_read(const char* data, size_t len) {
     demuxer_.input_packet(pkt_ptr);
 }
 
-void flv_websocket::on_writen(int len) {
 
-}
-
-void flv_websocket::on_close(int err_code) {
-    log_errorf("flv in websocket is closed, err:%d, uri:%s",
-            err_code, uri_.c_str());
+void flv_websocket::on_close(websocket_session* session) {
+    log_errorf("flv in websocket is closed, uri:%s", uri_.c_str());
     if (!uri_.empty()) {
         media_stream_manager::remove_publisher(uri_);
     }

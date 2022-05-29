@@ -1,54 +1,61 @@
 #ifndef WEBSOCKET_SESSION_HPP
 #define WEBSOCKET_SESSION_HPP
-#include "tcp_server.hpp"
-#include "ws_session_pub.hpp"
-#include <boost/beast/core.hpp>
-#include <boost/beast/ssl.hpp>
-#include <boost/beast/websocket/ssl.hpp>
-#include <boost/beast/websocket.hpp>
-#include <boost/asio/dispatch.hpp>
-#include <boost/asio/strand.hpp>
-#include <queue>
+#include "ws28/Server.h"
 
-class websocket_server_callbackI
+class websocket_server;
+class websocket_session
 {
 public:
-    virtual void on_close(const std::string& session_key) = 0;
-};
+    websocket_session(const std::string& method,
+                const std::string& path,
+                const std::string& ip,
+                ws28::Client* client,
+                websocket_server* server):method_(method)
+                        , path_(path)
+                        , ip_(ip)
+                        , client_(client)
+                        , server_(server)
+    {
+        close_ = false;
+    }
+    ~websocket_session()
+    {
+    }
 
-class websocket_session : public std::enable_shared_from_this<websocket_session>
-{
 public:
-    websocket_session(boost::asio::io_context& io_ctx, boost::asio::ip::tcp::socket&& socket, websocket_server_callbackI* cb, std::string stream_id);
-    websocket_session(boost::asio::io_context& io_ctx, boost::asio::ip::tcp::socket&& socket, boost::asio::ssl::context& ctx,
-            websocket_server_callbackI* cb, std::string stream_id);
-    ~websocket_session();
+    std::string method() {
+        return method_;
+    }
+    std::string path() {
+        return path_;
+    }
+    std::string remote_ip() {
+        return ip_;
+    }
 
-    void set_websocket_callback(ws_session_callback* cb);
-    void run();
-    void async_write(const char* data, int len);
+    ws28::Client* get_client() {
+        return client_;
+    }
+
+    websocket_server* get_server() {
+        return server_;
+    }
+
+    void set_close(bool flag) {
+        close_ = flag;
+    }
+
+    bool is_close() {
+        return close_;
+    }
 
 private:
-    void on_handshake(boost::beast::error_code ec);
-    void on_accept(boost::beast::error_code ec);
-    void do_read();
-    void do_write();
-    void on_read(boost::beast::error_code ec, size_t bytes_transferred);
-    void on_write(boost::beast::error_code ec, size_t bytes_transferred);
-    void close_session(boost::beast::error_code& ec);
-
-private:
-    boost::beast::websocket::stream<boost::beast::tcp_stream>* ws_ = nullptr;
-    boost::beast::websocket::stream<boost::beast::ssl_stream<boost::beast::tcp_stream>>* wss_ = nullptr;
-    websocket_server_callbackI* server_cb_ = nullptr;
-    ws_session_callback* ws_cb_            = nullptr;
-    std::string stream_id_;
-    bool closed_flag_ = false;
-    bool sending_flag_   = false;
-
-private:
-    boost::beast::flat_buffer recv_buffer_;
-    std::queue<boost::beast::flat_buffer> send_buffer_queue_;
+	std::string method_;
+	std::string path_;
+	std::string ip_;
+    ws28::Client* client_ = nullptr;
+    websocket_server* server_ = nullptr;
+    bool close_ = false;
 };
 
 #endif //WEBSOCKET_SESSION_HPP

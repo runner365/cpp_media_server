@@ -1,15 +1,20 @@
 #ifndef ASIO_TIMER_HPP
 #define ASIO_TIMER_HPP
 #include "logger.hpp"
-#include <boost/asio.hpp>
+#include <uv.h>
 #include <stdint.h>
+
+inline void on_uv_timer_callback(uv_timer_t *handle);
 
 class timer_interface
 {
 public:
-    timer_interface(boost::asio::io_context& io_ctx, uint32_t timeout_ms):timer_(io_ctx)
-        , timeout_ms_(timeout_ms)
+    timer_interface(uv_loop_t* loop, uint32_t timeout_ms):timeout_ms_(timeout_ms)
     {
+        uv_timer_init(loop, &timer_);
+        timer_.data = this;
+
+        
     }
 
     virtual ~timer_interface() {
@@ -22,21 +27,11 @@ public:
 
 public:
     void start_timer() {
+        if(running_) {
+            return;
+        }
         running_ = true;
-        timer_.expires_from_now(boost::posix_time::millisec(timeout_ms_));
-        timer_.async_wait([this](const boost::system::error_code& ec) {
-            if (!this->running_) {
-                return;
-            }
-            if(!ec) {
-                this->on_timer();
-            } else {
-                log_errorf("timer error:%s, value:%d",
-                    ec.message().c_str(), ec.value())
-                return;
-            }
-            this->start_timer();
-        });
+        uv_timer_start(&timer_, on_uv_timer_callback, timeout_ms_, timeout_ms_);
     }
 
     void stop_timer() {
@@ -44,17 +39,20 @@ public:
             return;
         }
         running_ = false;
-        boost::system::error_code ec;
-        timer_.cancel(ec);
-    }
-    void update_timeout(uint32_t timeout_ms) {
-        timeout_ms_ = timeout_ms;
+        uv_timer_stop(&timer_);
     }
 
 private:
-    boost::asio::deadline_timer timer_;
+    uv_timer_t timer_;
     uint32_t timeout_ms_;
     bool running_ = false;
 };
+
+inline void on_uv_timer_callback(uv_timer_t *handle) {
+    timer_interface* timer = (timer_interface*)handle->data;
+    if (timer) {
+        timer->on_timer();
+    }
+}
 
 #endif

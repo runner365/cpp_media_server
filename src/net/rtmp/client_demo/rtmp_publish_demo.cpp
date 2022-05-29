@@ -8,7 +8,6 @@
 #include <string>
 #include <functional>
 #include <iostream>
-#include <boost/asio.hpp>
 
 rtmp_client_session* client_session_p = nullptr;
 std::string dst_url;
@@ -41,11 +40,10 @@ public:
 
 client_media_callback client_cb;
 
-void client_publish(boost::asio::io_context& io_context) {
+void client_publish(uv_loop_t* loop) {
     log_infof("rtmp client start publishing: %s", dst_url.c_str());
 
-    client_session_p = new rtmp_client_session(io_context, &client_cb);
-
+    client_session_p = new rtmp_client_session(loop, &client_cb);
     client_session_p->start(dst_url, true);
 
     return;
@@ -62,11 +60,11 @@ public:
 
 protected:
     void on_work() {
-        boost::asio::io_service::work work(io_ctx_);
-    
         try {
-            client_publish(io_ctx_);
-            io_ctx_.run();
+            uv_loop_t* loop = uv_default_loop();
+
+            client_publish(loop);
+            uv_run(loop, UV_RUN_DEFAULT);
         }
         catch(const std::exception& e) {
             std::cerr << e.what() << '\n';
@@ -83,7 +81,6 @@ public:
             return;
         }
         stop_flag_ = true;
-        io_ctx_.stop();
         thread_ptr_->join();
     }
 
@@ -144,7 +141,6 @@ private:
         return;
     }
 private:
-    boost::asio::io_context io_ctx_;
     std::shared_ptr<std::thread> thread_ptr_;
     int64_t last_dts_    = -1;
     int64_t last_sys_ts_ = -1;

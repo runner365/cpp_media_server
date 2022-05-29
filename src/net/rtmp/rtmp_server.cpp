@@ -1,11 +1,9 @@
 #include "rtmp_server.hpp"
-#include "net_pub.hpp"
 #include "timer.hpp"
 
-rtmp_server::rtmp_server(boost::asio::io_context& io_context, uint16_t port):timer_interface(io_context, 5000)
+rtmp_server::rtmp_server(uv_loop_t* loop, uint16_t port):timer_interface(loop, 5000)
 {
-    server_ = std::make_shared<tcp_server>(io_context, port, this);
-    server_->accept();
+    server_ = std::make_shared<tcp_server>(loop, port, this);
     start_timer();
     log_infof("rtmp server is starting, port:%d", port);
 }
@@ -22,19 +20,12 @@ void rtmp_server::on_close(std::string session_key) {
     }
 }
 
-void rtmp_server::on_accept(int ret_code, boost::asio::ip::tcp::socket socket) {
+void rtmp_server::on_accept(int ret_code, uv_loop_t* loop, uv_stream_t* handle) {
     if (ret_code == 0) {
-        std::string key;
-        make_endpoint_string(socket.remote_endpoint(), key);
-        log_infof("tcp accept key:%s", key.c_str());
-        std::shared_ptr<rtmp_server_session> session_ptr = std::make_shared<rtmp_server_session>(std::move(socket), this, key);
-        session_ptr_map_.insert(std::make_pair(key, session_ptr));
+        std::shared_ptr<rtmp_server_session> session_ptr = std::make_shared<rtmp_server_session>(loop, handle, this);
+        log_infof("get rtmp session key:%s", session_ptr->get_sesson_key().c_str());
+        session_ptr_map_.insert(std::make_pair(session_ptr->get_sesson_key(), session_ptr));
     }
-    server_->accept();
-}
-
-void rtmp_server::on_accept_ssl(int ret_code, boost::asio::ssl::stream<boost::asio::ip::tcp::socket> socket) {
-
 }
 
 void rtmp_server::on_timer() {

@@ -17,7 +17,10 @@
 #include <stdint.h>
 #include <stddef.h>
 #include <iostream>
+#include <uv.h>
 
+class flv_websocket;
+class protoo_server;
 
 class MediaServer
 {
@@ -26,7 +29,7 @@ public:
 
 public:
     static void Run(const std::string& cfg_file);
-    static boost::asio::io_context& get_io_ctx() { return MediaServer::io_context; }
+    static uv_loop_t* get_loop() { return MediaServer::loop_; }
 
 private:
     static void create_webrtc();
@@ -39,8 +42,8 @@ private:
     static void release_all();
 
 private:
-    static boost::asio::io_context io_context;
-    static boost::asio::io_context hls_io_context;
+    static uv_loop_t* loop_;
+    static uv_loop_t* hls_loop_;
 
 private:
     static websocket_server* ws_p;
@@ -59,7 +62,8 @@ private:
     static hls_writer* hls_output;
 
 private:
-    static websocket_server* ws_flv_p;
+    static flv_websocket* ws_flv_server;
+    static protoo_server* ws_webrtc_server;
     static rtmp_relay_manager* relay_mgr_p;
 };
 

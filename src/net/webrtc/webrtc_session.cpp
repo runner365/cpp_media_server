@@ -40,13 +40,13 @@ std::unordered_map<std::string, webrtc_session*> single_webrtc_map;
 std::string single_candidate_ip;
 uint16_t single_candidate_port = 0;
 
-void init_single_udp_server(boost::asio::io_context& io_context,
+void init_single_udp_server(uv_loop_t* loop,
         const std::string& candidate_ip, uint16_t port) {
     if (!single_udp_server_ptr) {
         single_candidate_ip   = candidate_ip;
         single_candidate_port = port;
         log_infof("init udp server candidate_ip:%s, port:%d", candidate_ip.c_str(), port);
-        single_udp_server_ptr = std::make_shared<udp_server>(io_context, port, &single_udp_cb);
+        single_udp_server_ptr = std::make_shared<udp_server>(loop, port, &single_udp_cb);
     }
 }
 
@@ -162,7 +162,7 @@ void single_udp_session_callback::on_read(const char* data, size_t data_size, ud
     log_warnf("fail to find session to handle packet, data len:%lu, remote address:%s",
         data_size, address.to_string().c_str());
 }
-extern boost::asio::io_context& get_global_io_context();
+extern uv_loop_t* get_global_io_context();
 
 webrtc_session::webrtc_session(const std::string& roomId, const std::string& uid,
                 room_callback_interface* room, int session_direction, const rtc_media_info& media_info,
@@ -174,7 +174,7 @@ webrtc_session::webrtc_session(const std::string& roomId, const std::string& uid
 
     insert_webrtc_session(username_fragment_, this);
 
-    dtls_trans_ = new rtc_dtls(this, single_udp_server_ptr->get_io_context());
+    dtls_trans_ = new rtc_dtls(this, single_udp_server_ptr->get_loop());
 
     close_session_ = false;
     start_timer();

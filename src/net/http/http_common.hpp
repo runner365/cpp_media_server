@@ -1,6 +1,5 @@
 #ifndef HTTP_COMMOM_HPP
 #define HTTP_COMMOM_HPP
-#include "net/net_pub.hpp"
 #include "tcp_session.hpp"
 #include "data_buffer.hpp"
 #include "http_session.hpp"
@@ -29,11 +28,7 @@ public:
     }
 
     std::string remote_address() const {
-        auto remote_ep = session_->remote_endpoint();
-        std::string remote_address;
-        
-        make_endpoint_string(remote_ep, remote_address);
-        return remote_address;
+        return session_->remote_endpoint();
     }
 
 public:

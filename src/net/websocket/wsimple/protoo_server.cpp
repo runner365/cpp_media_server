@@ -10,15 +10,17 @@
 
 using json = nlohmann::json;
 
-protoo_server::protoo_server(websocket_session* ws_session):ws_session_(ws_session) {
+protoo_server::protoo_server(uv_loop_t* loop, uint16_t port):server_(loop, port, this)
+{
 }
 
 protoo_server::~protoo_server() {
 
 }
 
-void protoo_server::accept(const std::string& id, const std::string& data) {
+void protoo_server::accept(const std::string& id, const std::string& data, void* ws_session) {
     std::stringstream ss;
+    websocket_session* session = (websocket_session*)ws_session;
 
     ss << "{";
     ss << "\"response\":true,";
@@ -28,12 +30,17 @@ void protoo_server::accept(const std::string& id, const std::string& data) {
     ss << data;
     ss << "}";
 
-    //log_infof("response accept:%s, data:%lu", ss.str().c_str(), (int)ss.str().length());
-    ws_session_->async_write(ss.str().c_str(), (int)ss.str().length());
+    if (session && session->get_client()) {
+        log_infof("protoo accept:%s", ss.str().c_str());
+        if (!session->is_close()) {
+            session->get_client()->Send(ss.str().c_str(), ss.str().size(), 1);
+        }
+    }
 }
 
-void protoo_server::reject(const std::string& id, int err_code, const std::string& err) {
+void protoo_server::reject(const std::string& id, int err_code, const std::string& err, void* ws_session) {
     std::stringstream ss;
+    websocket_session* session = (websocket_session*)ws_session;
 
     ss << "{";
     ss << "\"response\":true,";
@@ -44,11 +51,16 @@ void protoo_server::reject(const std::string& id, int err_code, const std::strin
     ss << "}";
     
     log_infof("response reject:%s", ss.str().c_str());
-    ws_session_->async_write(ss.str().c_str(), (int)ss.str().size());
+    if (session && session->get_client()) {
+        if (!session->is_close()) {
+            session->get_client()->Send(ss.str().c_str(), ss.str().size(), 1);
+        }
+    }
 }
 
-void protoo_server::notification(const std::string& method, const std::string& data) {
+void protoo_server::notification(const std::string& method, const std::string& data, void* ws_session) {
     std::stringstream ss;
+    websocket_session* session = (websocket_session*)ws_session;
 
     ss << "{";
     ss << "\"notification\":true,";
@@ -58,10 +70,14 @@ void protoo_server::notification(const std::string& method, const std::string& d
     ss << "}";
 
     log_infof("notification: %s", ss.str().c_str());
-    ws_session_->async_write(ss.str().c_str(), (int)ss.str().size());
+    if (session && session->get_client()) {
+        if (!session->is_close()) {
+            session->get_client()->Send(ss.str().c_str(), ss.str().size(), 1);
+        }
+    }
 }
 
-void protoo_server::on_request(json& protooBodyJson) {
+void protoo_server::on_request(websocket_session* session, json& protooBodyJson) {
     auto idObj = protooBodyJson.find("id");
     if (idObj == protooBodyJson.end()) {
         MS_THROW_ERROR("the json has not 'id'.");
@@ -123,11 +139,11 @@ void protoo_server::on_request(json& protooBodyJson) {
         MS_THROW_ERROR("the room has not been created, roomId:%s", roomId_.c_str());
         return;
     }
-    ev_cb_ptr_->on_request(std::to_string(id), method, body, this);
+    ev_cb_ptr_->on_request(std::to_string(id), method, body, this, session);
     return;
 }
 
-void protoo_server::on_reponse(json& protooBodyJson) {
+void protoo_server::on_reponse(websocket_session* session, json& protooBodyJson) {
     auto okObj = protooBodyJson.find("ok");
     if (okObj == protooBodyJson.end()) {
         MS_THROW_ERROR("the json has not 'ok'.");
@@ -195,7 +211,7 @@ void protoo_server::on_reponse(json& protooBodyJson) {
     return;
 }
 
-void protoo_server::on_notification(json& protooBodyJson) {
+void protoo_server::on_notification(websocket_session* session, json& protooBodyJson) {
     auto methodObj = protooBodyJson.find("method");
     if (methodObj == protooBodyJson.end()) {
         MS_THROW_ERROR("the json has not 'method'.");
@@ -225,11 +241,11 @@ void protoo_server::on_notification(json& protooBodyJson) {
     ev_cb_ptr_->on_notification(method, body);
 }
 
-void protoo_server::on_accept() {
+void protoo_server::on_accept(websocket_session* session) {
     log_infof("protoo server accept...");
 }
 
-void protoo_server::on_read(const char* data, size_t len) {
+void protoo_server::on_read(websocket_session* session, const char* data, size_t len) {
     std::string body(data, len);
     //log_infof("protoo server read body:%s, len:%lu", body.c_str(), len);
 
@@ -248,7 +264,7 @@ void protoo_server::on_read(const char* data, size_t len) {
 
         try
         {
-            on_request(protooBodyJson);
+            on_request(session, protooBodyJson);
         }
         catch(const std::exception& e)
         {
@@ -273,7 +289,7 @@ void protoo_server::on_read(const char* data, size_t len) {
 
         try
         {
-            on_reponse(protooBodyJson);
+            on_reponse(session, protooBodyJson);
         }
         catch(const std::exception& e)
         {
@@ -297,7 +313,7 @@ void protoo_server::on_read(const char* data, size_t len) {
 
         try
         {
-            on_notification(protooBodyJson);
+            on_notification(session, protooBodyJson);
         }
         catch(const std::exception& e)
         {
@@ -310,13 +326,9 @@ void protoo_server::on_read(const char* data, size_t len) {
     return;
 }
 
-void protoo_server::on_writen(int len) {
-    //log_infof("protoo server writen len:%d", len);
-}
-
-void protoo_server::on_close(int err_code) {
-    log_infof("protoo server on close, error code:%d, roomId:%s, uid:%s",
-        err_code, roomId_.c_str(), uid_.c_str());
+void protoo_server::on_close(websocket_session* session) {
+    log_infof("protoo server on close, roomId:%s, uid:%s",
+        roomId_.c_str(), uid_.c_str());
 
     if (uid_.empty() || roomId_.empty()) {
         log_infof("user has not joined.");

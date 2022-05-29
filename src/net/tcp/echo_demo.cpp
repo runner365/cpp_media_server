@@ -6,26 +6,19 @@
 class echo_server : public tcp_server_callbackI, public tcp_session_callbackI
 {
 public:
-    echo_server(boost::asio::io_context& io_context, uint16_t local_port)
+    echo_server(uv_loop_t* loop, uint16_t local_port)
     {
-        server_ = std::make_shared<tcp_server>(io_context, local_port, this);
-
-        server_->accept();
+        server_ = std::make_shared<tcp_server>(loop, local_port, this);
     }
     virtual ~echo_server()
     {
     }
 
 public://implement tcp_server_callbackI
-    virtual void on_accept(int ret_code, boost::asio::ip::tcp::socket socket) override {
+    virtual void on_accept(int ret_code, uv_loop_t* loop, uv_stream_t* handle) override {
         log_infof("on accept return %d", ret_code);
-        session_ptr_ = std::make_shared<tcp_session>(std::move(socket), (tcp_session_callbackI*)this);
-
+        session_ptr_ = std::make_shared<tcp_session>(loop, handle, this);
         session_ptr_->async_read();
-    }
-
-    virtual void on_accept_ssl(int ret_code, boost::asio::ssl::stream<boost::asio::ip::tcp::socket> socket) override {
-
     }
 
 public://implement tcp_session_callbackI
@@ -48,15 +41,18 @@ private:
 class echo_client : public tcp_client_callback
 {
 public:
-    echo_client(boost::asio::io_context& io_ctx, const std::string& host, uint16_t dst_port)
+    echo_client(uv_loop_t* loop)
     {
-        client_ = std::make_shared<tcp_client>(io_ctx, host, dst_port, this);
-
-        client_->connect();
+        client_ = std::make_shared<tcp_client>(loop, this);
     }
     virtual ~echo_client()
     {
         log_infof("echo_client destructed...");
+    }
+
+public:
+    void connnect(const std::string host, uint16_t port) {
+        client_->connect(host, port);
     }
 
 public:
@@ -91,13 +87,15 @@ int main(int argn, char** argv) {
     }
 
     int local_port = atoi(argv[1]);
-    boost::asio::io_context io_context;
-    boost::asio::io_service::work work(io_context);
+    uv_loop_t* loop = uv_default_loop();
+
     try {
-        echo_server echoSevice(io_context, local_port);
-        echo_client echoClient(io_context, "127.0.0.1", local_port);
+        echo_server echoSevice(loop, local_port);
+        echo_client echoClient(loop);
+
+        echoClient.connnect("127.0.0.1", local_port);
         
-        io_context.run();
+        uv_run(loop, UV_RUN_DEFAULT);
     }
     catch(const std::exception& e)
     {

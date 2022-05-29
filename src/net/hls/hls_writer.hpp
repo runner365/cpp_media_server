@@ -10,7 +10,7 @@
 class hls_writer : public av_writer_base
 {
 public:
-    hls_writer(boost::asio::io_context& io_context,
+    hls_writer(uv_loop_t* loop,
             const std::string& path, bool rec_enable);
     virtual ~hls_writer();
 

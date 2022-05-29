@@ -5,6 +5,7 @@ set(EXTRA_LDFLAGS "-L${PREFIX_DIR}/lib")
 set(EXTRA_LIBS "-lm -pthread -ldl")
 
 add_subdirectory(libsdptransform)
+add_subdirectory(libuv)
 
 IF (APPLE)
 ExternalProject_Add(openssl

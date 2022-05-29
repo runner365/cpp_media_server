@@ -89,8 +89,7 @@ void hls_handle(const http_request* request, std::shared_ptr<http_response> resp
 
 }
 */
-hls_worker::hls_worker(boost::asio::io_context& io_context):timer_interface(io_context, 5000)
-                        , io_context_(io_context)
+hls_worker::hls_worker(uv_loop_t* loop):timer_interface(loop, 5000)
 {
     run();
     start_timer();
@@ -121,8 +120,23 @@ void hls_worker::stop() {
 }
 
 void hls_worker::insert_packet(MEDIA_PACKET_PTR pkt_ptr) {
-    io_context_.post(std::bind(&hls_worker::on_handle_packet, this, pkt_ptr));
+    std::unique_lock<std::mutex> locker(queue_mutex_);
+    
+    pkt_queue_.push(pkt_ptr);
     return;
+}
+
+MEDIA_PACKET_PTR hls_worker::get_packet() {
+    std::unique_lock<std::mutex> locker(queue_mutex_);
+    MEDIA_PACKET_PTR pkt_ptr;
+    if (pkt_queue_.empty()) {
+        return pkt_ptr;
+    }
+
+    pkt_ptr = pkt_queue_.front();
+    pkt_queue_.pop();
+
+    return pkt_ptr;
 }
 
 void hls_worker::on_handle_packet(MEDIA_PACKET_PTR pkt_ptr) {
@@ -167,7 +181,14 @@ std::shared_ptr<mpegts_handle> hls_worker::get_mpegts_handle(const std::string& 
 
 void hls_worker::on_work() {
     log_infof("http hls is running...");
-    io_context_.run();
+    while (run_flag_) {
+        MEDIA_PACKET_PTR pkt_ptr = get_packet();
+        if (!pkt_ptr) {
+            std::this_thread::sleep_for(std::chrono::milliseconds(100));
+        }
+        on_handle_packet(pkt_ptr);
+    }
+    log_infof("http hls is over...");
 }
 
 void hls_worker::on_timer() {

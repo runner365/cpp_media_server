@@ -5,7 +5,6 @@
 #include <thread>
 #include <functional>
 #include <iostream>
-#include <boost/asio.hpp>
 
 rtmp_client_session* client_session_p = nullptr;
 std::string dst_url;
@@ -78,10 +77,10 @@ private:
 
 client_media_callback media_cb;
 
-void client_work(boost::asio::io_context& io_context) {
+void client_work(uv_loop_t* loop) {
     log_infof("rtmp client is starting url:%s", dst_url.c_str());
 
-    client_session_p = new rtmp_client_session(io_context, &media_cb);
+    client_session_p = new rtmp_client_session(loop, &media_cb);
 
     client_session_p->start(dst_url, false);
 
@@ -95,17 +94,15 @@ int main(int argn, char** argv) {
         log_errorf("please input rigth parameter...");
         return -1;
     }
+    uv_loop_t* loop = uv_default_loop();
     dst_url = argv[1];
 
     Logger::get_instance()->set_filename("play.log");
 
-    boost::asio::io_context io_context;
-    boost::asio::io_service::work work(io_context);
-
     try {
-        client_work(io_context);
+        client_work(loop);
 
-        io_context.run();
+        uv_run(loop, UV_RUN_DEFAULT);
     }
     catch(const std::exception& e) {
         std::cerr << e.what() << '\n';

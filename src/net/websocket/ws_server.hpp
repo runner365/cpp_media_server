@@ -1,35 +1,39 @@
 #ifndef WS_SERVER_HPP
 #define WS_SERVER_HPP
-#include "ws_session.hpp"
-#include "tcp_server.hpp"
-#include "ws_service_imp.hpp"
+#include "ws28/Server.h"
 #include <unordered_map>
 #include <memory>
 #include <string>
 #include <stdint.h>
-#include <boost/asio.hpp>
+#include <uv.h>
 
-class websocket_server : public tcp_server_callbackI, public websocket_server_callbackI
+class websocket_session;
+
+void on_connected_callback(ws28::Client* client, ws28::HTTPRequest& req, void* user_data);
+void on_disconnect_callback(ws28::Client* client, void* user_data);
+void on_client_data_callback(ws28::Client* client, char* data, size_t len, int opcode, void* user_data);
+
+class websocket_server_callbackI
 {
 public:
-    websocket_server(boost::asio::io_context& io_context, uint16_t port, int imp_type);
-    websocket_server(boost::asio::io_context& io_context, uint16_t port, int imp_type, const std::string& cert_file, const std::string& key_file);
+    virtual void on_accept(websocket_session* session) = 0;
+    virtual void on_read(websocket_session* session, const char* data, size_t len) = 0;
+    virtual void on_close(websocket_session* session) = 0;
+};
+
+class websocket_server
+{
+friend void on_connected_callback(ws28::Client* client, ws28::HTTPRequest& req, void* user_data);
+friend void on_disconnect_callback(ws28::Client* client, void* user_data);
+friend void on_client_data_callback(ws28::Client* client, char* data, size_t len, int opcode, void* user_data);
+
+public:
+    websocket_server(uv_loop_t* loop, uint16_t port, websocket_server_callbackI* cb);
     virtual ~websocket_server();
 
-public://implement tcp_server_callbackI
-    virtual void on_accept(int ret_code, boost::asio::ip::tcp::socket socket) override;
-    virtual void on_accept_ssl(int ret_code, boost::asio::ssl::stream<boost::asio::ip::tcp::socket> socket) override;
-
-public://implement websocket_server_callbackI
-    virtual void on_close(const std::string& session_key) override;
-
 private:
-    std::shared_ptr<tcp_server> server_;
-    boost::asio::io_context& io_ctx_;
-    int imp_type_ = 0;
-    boost::asio::ssl::context ssl_ctx_;
-    std::unordered_map< std::string, std::shared_ptr<websocket_session> > sessions_;
-    bool ssl_enable_ = false;
+    ws28::Server ws_server_;
+    websocket_server_callbackI* cb_ = nullptr;
 };
 
 #endif

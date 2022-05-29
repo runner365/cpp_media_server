@@ -2,312 +2,217 @@
 #define TCP_SERVER_BASE_H
 #include "logger.hpp"
 #include "data_buffer.hpp"
+#include "tcp_pub.hpp"
+#include "ipaddress.hpp"
+#include <uv.h>
 #include <memory>
 #include <string>
 #include <stdint.h>
-#include <boost/asio.hpp>
-#include <boost/asio/ssl.hpp>
 #include <iostream>
 #include <stdio.h>
 #include <queue>
+#include <sstream>
 
-#define TCP_DEF_RECV_BUFFER_SIZE (8*1024)
+inline static void on_tcp_close(uv_handle_t* handle);
+inline static void on_uv_alloc(uv_handle_t* handle,
+                       size_t suggested_size,
+                       uv_buf_t* buf);
+inline static void on_uv_read(uv_stream_t* handle,
+                       ssize_t nread,
+                       const uv_buf_t* buf);
+inline static void on_uv_write(uv_write_t* req, int status);
 
-class tcp_session_callbackI
+class tcp_session : public tcp_base_session
 {
-public:
-    virtual void on_write(int ret_code, size_t sent_size) = 0;
-    virtual void on_read(int ret_code, const char* data, size_t data_size) = 0;
-};
+friend void on_tcp_close(uv_handle_t* handle);
+friend void on_uv_alloc(uv_handle_t* handle,
+                    size_t suggested_size,
+                    uv_buf_t* buf);
+friend void on_uv_read(uv_stream_t* handle,
+                    ssize_t nread,
+                    const uv_buf_t* buf);
+friend void on_uv_write(uv_write_t* req, int status);
 
-class tcp_base_session
-{
 public:
-    virtual void async_write(const char* data, size_t data_size) = 0;
-    virtual void async_write(std::shared_ptr<data_buffer> buffer_ptr) = 0;
-    virtual void async_read() = 0;
-    virtual void close() = 0;
-    virtual boost::asio::ip::tcp::endpoint get_remote_endpoint() = 0;
-    virtual boost::asio::ip::tcp::endpoint get_local_endpoint() = 0;
-};
-
-class tcp_ssl_session : public std::enable_shared_from_this<tcp_ssl_session>, public tcp_base_session
-{
-public:
-    tcp_ssl_session(boost::asio::ssl::stream<boost::asio::ip::tcp::socket> socket,
-        tcp_session_callbackI* callback):socket_(std::move(socket))
-        , callback_(callback)
-        , handshake_ready_(false)
+    tcp_session(uv_loop_t* loop,
+            uv_stream_t* server_uv_handle,
+            tcp_session_callbackI* callback):callback_(callback)
     {
-        buffer_ = new char[buffer_size_];
+        buffer_    = (char*)malloc(buffer_size_);
+        uv_handle_ = (uv_tcp_t*)malloc(sizeof(uv_tcp_t));
+        uv_handle_->data = this;
 
-    }
+        // Set the UV handle.
+        int err = uv_tcp_init(loop, uv_handle_);
+        if (err != 0) {
+            delete uv_handle_;
+            uv_handle_ = nullptr;
+            free(buffer_);
+            throw MediaServerError("uv_tcp_init() failed");
+        }
+        err = uv_accept(
+          reinterpret_cast<uv_stream_t*>(server_uv_handle),
+          reinterpret_cast<uv_stream_t*>(uv_handle_));
     
-    virtual ~tcp_ssl_session()
-    {
-        close();
-        delete[] buffer_;
-    }
-
-private:
-    void do_handshake() {
-        auto self(shared_from_this());
-        socket_.async_handshake(boost::asio::ssl::stream_base::server, 
-            [self](const boost::system::error_code& error) {
-                if (!error) {
-                    self->handshake_ready_ = true;
-                    self->async_read();
-                }
-            });
-    }
-
-    void do_write() {
-        if (send_buffer_queue_.empty()) {
-            return;
+        if (err != 0) {
+            delete uv_handle_;
+            uv_handle_ = nullptr;
+            free(buffer_);
+            throw MediaServerError("uv_accept() failed");
         }
-
-        auto head_ptr = send_buffer_queue_.front();
-        if (head_ptr->sent_flag_ > 0) {
-            return;
-        }
-
-        auto self(shared_from_this());
-
-        head_ptr->sent_flag_ = true;
-        boost::asio::async_write(socket_, boost::asio::buffer(head_ptr->data(), head_ptr->data_len()),
-            [self](boost::system::error_code ec, size_t written_size) {
-                if (!ec && self->callback_) {
-                    int64_t remain = (int64_t)written_size;
-
-                    while(remain > 0) {
-                        auto current = self->send_buffer_queue_.front();
-                        int64_t current_len = current->data_len();
-                        if (current_len > remain) {
-                            current->consume_data(remain);
-                            remain = 0;
-                        } else {
-                            self->send_buffer_queue_.pop();
-                            remain -= current_len;
-                        }
-                    }
-
-                    self->callback_->on_write(0, written_size);
-                    self->do_write();
-                    return;
-                }
-                log_infof("tcp ssl write callback error:%s", ec.message().c_str());
-                if (self->callback_) {
-                    self->callback_->on_write(-1, written_size);
-                }
-            });
-        return;
-    }
-
-public:
-    virtual void async_write(const char* data, size_t data_size) override {
-        if (!is_open_) {
-            return;
-        }
-        std::shared_ptr<data_buffer> buffer_ptr = std::make_shared<data_buffer>();
-        buffer_ptr->append_data(data, data_size);
-        
-        async_write(buffer_ptr);
-        return;
-    }
-
-    virtual void async_write(std::shared_ptr<data_buffer> buffer_ptr) override {
-        if (!is_open_) {
-            return;
-        }
-        send_buffer_queue_.push(buffer_ptr);
-
-        do_write();
-    }
-
-    virtual void async_read() override {
-        if (!is_open_) {
-            return;
-        }
-
-        if (!handshake_ready_) {
-            do_handshake();
-            return;
-        }
-
-        auto self(shared_from_this());
-        try
-        {
-            socket_.async_read_some(boost::asio::buffer(buffer_, buffer_size_),
-                [self](boost::system::error_code ec, size_t read_length) {
-                    if (!ec && self->callback_) {
-                        self->callback_->on_read(0, self->buffer_, read_length);
-                        return;
-                    }
-                    if (self->callback_) {
-                        self->callback_->on_read(-1, nullptr, read_length);
-                    }
-                });
-        }
-        catch(const std::exception& e)
-        {
-            std::cerr << e.what() << '\n';
-        }
-
-        return;
-    }
-
-    virtual void close() override {
-        if (!is_open_) {
-            return;
-        }
-        is_open_ = false;
-        callback_ = nullptr;
-    }
-
-    virtual boost::asio::ip::tcp::endpoint get_remote_endpoint() override {
-        return socket_.lowest_layer().remote_endpoint();
-    }
-
-    virtual boost::asio::ip::tcp::endpoint get_local_endpoint() override {
-        return socket_.lowest_layer().local_endpoint();
-    }
-
-private:
-    boost::asio::ssl::stream<boost::asio::ip::tcp::socket> socket_;
-    tcp_session_callbackI* callback_ = nullptr;
-    bool is_open_ = true;
-    bool handshake_ready_ = false;
-    char* buffer_ = nullptr;
-    size_t buffer_size_ = TCP_DEF_RECV_BUFFER_SIZE;
-    std::queue< std::shared_ptr<data_buffer> > send_buffer_queue_;
-};
-
-class tcp_session : public std::enable_shared_from_this<tcp_session>, public tcp_base_session
-{
-public:
-    tcp_session(boost::asio::ip::tcp::socket socket, tcp_session_callbackI* callback):socket_(std::move(socket))
-        ,callback_(callback)
-    {
-        buffer_ = new char[buffer_size_];
+        int namelen = (int)sizeof(local_name_);
+	    uv_tcp_getsockname(uv_handle_, &local_name_, &namelen);
+        uv_tcp_getpeername(uv_handle_, &peer_name_, &namelen);
+        close_ = false;
     }
     
     virtual ~tcp_session()
     {
         close();
-        delete[] buffer_;
+        if (buffer_) {
+            free(buffer_);
+        }
     }
 
-private:
-    void do_write() {
-        if (send_buffer_queue_.empty()) {
-            return;
-        }
-
-        auto head_ptr = send_buffer_queue_.front();
-        if (head_ptr->sent_flag_ > 0) {
-            return;
-        }
-
-        auto self(shared_from_this());
-
-        head_ptr->sent_flag_ = true;
-        boost::asio::async_write(socket_, boost::asio::buffer(head_ptr->data(), head_ptr->data_len()),
-            [self](boost::system::error_code ec, size_t written_size) {
-                if (!ec && self->callback_) {
-                    int64_t remain = (int64_t)written_size;
-
-                    while(remain > 0) {
-                        auto current = self->send_buffer_queue_.front();
-                        int64_t current_len = current->data_len();
-                        if (current_len > remain) {
-                            current->consume_data(remain);
-                            remain = 0;
-                        } else {
-                            self->send_buffer_queue_.pop();
-                            remain -= current_len;
-                        }
-                    }
-
-                    self->callback_->on_write(0, written_size);
-                    self->do_write();
-                    return;
-                }
-                log_infof("tcp write callback error:%s", ec.message().c_str());
-                if (self->callback_) {
-                    self->callback_->on_write(-1, written_size);
-                }
-            });
-
-    }
 public:
-    virtual void async_write(const char* data, size_t data_size) override {
-        if (!socket_.is_open()) {
+    virtual void async_read() override {
+        if (close_) {
             return;
         }
-        std::shared_ptr<data_buffer> buffer_ptr = std::make_shared<data_buffer>();
-        buffer_ptr->append_data(data, data_size);
-        
-        async_write(buffer_ptr);
-        return;
+
+        if (!uv_handle_) {
+            return;
+        }
+    
+        int err = uv_read_start(
+                            reinterpret_cast<uv_stream_t*>(uv_handle_),
+                            static_cast<uv_alloc_cb>(on_uv_alloc),
+                            static_cast<uv_read_cb>(on_uv_read));
+    
+        if (err != 0) {
+            if (err == UV_EALREADY) {
+                return;
+            }
+            throw MediaServerError("uv_read_start() failed");
+        }
+    }
+
+    virtual void async_write(const char* data, size_t len) override {
+        write_req_t* wr = (write_req_t*) malloc(sizeof(write_req_t));
+
+        char* new_data = (char*)malloc(len);
+        memcpy(new_data, data, len);
+
+        wr->buf = uv_buf_init(new_data, len);
+        if (uv_write((uv_write_t*)wr, reinterpret_cast<uv_stream_t*>(uv_handle_), &wr->buf, 1, on_uv_write)) {
+            free(new_data);
+            throw MediaServerError("uv_write error");
+        }
     }
 
     virtual void async_write(std::shared_ptr<data_buffer> buffer_ptr) override {
-        if (!socket_.is_open()) {
-            return;
-        }
-        send_buffer_queue_.push(buffer_ptr);
-
-        do_write();
-    }
-
-    virtual void async_read() override {
-        if (!socket_.is_open()) {
-            return;
-        }
-        auto self(shared_from_this());
-        try
-        {
-            socket_.async_read_some(boost::asio::buffer(buffer_, buffer_size_),
-                [self](boost::system::error_code ec, size_t read_length) {
-                    if (!ec && self->callback_) {
-                        self->callback_->on_read(0, self->buffer_, read_length);
-                        return;
-                    }
-
-                    if (self->callback_) {
-                        self->callback_->on_read(-1, nullptr, read_length);
-                    }
-                });
-        }
-        catch(const std::exception& e)
-        {
-            std::cerr << e.what() << '\n';
-        }
-
-        return;
+        this->async_write(buffer_ptr->data(), buffer_ptr->data_len());
     }
 
     virtual void close() override {
-        if (socket_.is_open()) {
-            socket_.close();
+        if (close_) {
+            return;
         }
-        callback_ = nullptr;
+        close_ = true;
+
+        int err = uv_read_stop(reinterpret_cast<uv_stream_t*>(uv_handle_));
+        if (err != 0) {
+            throw MediaServerError("uv_read_stop error");
+        }
+        uv_close(reinterpret_cast<uv_handle_t*>(uv_handle_), static_cast<uv_close_cb>(on_tcp_close));
     }
 
-    virtual boost::asio::ip::tcp::endpoint get_remote_endpoint() override {
-        return socket_.remote_endpoint();
+    virtual std::string get_remote_endpoint() override {
+        std::stringstream ss;
+        uint16_t remoteport = 0;
+        std::string remoteip = get_ip_str(&peer_name_, remoteport);
+
+        ss << remoteip << ":" << remoteport;
+        return ss.str();
     }
 
-    virtual boost::asio::ip::tcp::endpoint get_local_endpoint() override {
-        return socket_.local_endpoint();
+    virtual std::string get_local_endpoint() override {
+        std::stringstream ss;
+        uint16_t localport = 0;
+        std::string localip = get_ip_str(&local_name_, localport);
+
+        ss << localip << ":" << localport;
+        return ss.str();
     }
 
 private:
-    boost::asio::ip::tcp::socket socket_;
+    void on_alloc(uv_buf_t* buf) {
+        buf->base = buffer_;
+        buf->len  = buffer_size_;
+    }
+
+    void on_read(ssize_t nread, const uv_buf_t* buf) {
+        if (close_) {
+            return;
+        }
+        if (nread <= 0) {
+            callback_->on_read(-1, nullptr, 0);
+            return;
+        }
+        callback_->on_read(0, buf->base, nread);
+    }
+
+    void on_write(write_req_t* req, int status) {
+        write_req_t* wr;
+      
+        /* Free the read/write buffer and the request */
+        wr = (write_req_t*) req;
+        if (callback_ && !close_) {
+            callback_->on_write(status, wr->buf.len);
+        }
+        free(wr->buf.base);
+        free(wr);
+    }
+
+private:
     tcp_session_callbackI* callback_ = nullptr;
+    uv_tcp_t* uv_handle_ = nullptr;
+    struct sockaddr local_name_;
+    struct sockaddr peer_name_;
     char* buffer_ = nullptr;
     size_t buffer_size_ = TCP_DEF_RECV_BUFFER_SIZE;
-    std::queue< std::shared_ptr<data_buffer> > send_buffer_queue_;
+    bool close_ = false;
 };
+
+inline static void on_uv_alloc(uv_handle_t* handle,
+                       size_t suggested_size,
+                       uv_buf_t* buf) {
+    tcp_session* session = (tcp_session*)handle->data;
+    if (session) {
+        session->on_alloc(buf);
+    }
+}
+
+inline static void on_uv_read(uv_stream_t* handle, ssize_t nread, const uv_buf_t* buf)
+{
+    tcp_session* session = (tcp_session*)handle->data;
+    if (session) {
+        session->on_read(nread, buf);
+    }
+    return;
+}
+
+inline static void on_uv_write(uv_write_t* req, int status) {
+    tcp_session* session = static_cast<tcp_session*>(req->handle->data);
+
+    if (session) {
+        session->on_write((write_req_t*)req, status);
+    }
+    return;
+}
+
+inline static void on_tcp_close(uv_handle_t* handle) {
+    delete handle;
+}
 
 #endif //TCP_SERVER_BASE_H

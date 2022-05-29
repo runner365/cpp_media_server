@@ -2,7 +2,6 @@
 #include "http_server.hpp"
 #include "http_common.hpp"
 #include "utils/stringex.hpp"
-#include <boost/asio.hpp>
 #include <map>
 
 int get_uri_and_params(const std::string& input, std::string& uri, std::map<std::string, std::string>& params) {
@@ -30,20 +29,11 @@ int get_uri_and_params(const std::string& input, std::string& uri, std::map<std:
     return 0;
 }
 
-http_session::http_session(boost::asio::ip::tcp::socket socket, http_callbackI* callback) : callback_(callback)
+http_session::http_session(uv_loop_t* loop, uv_stream_t* handle, http_callbackI* callback) : callback_(callback)
 {
     request_ = new http_request(this);
-    session_ptr_ = std::make_shared<tcp_session>(std::move(socket), this);
-    remote_endpoint_ = session_ptr_->get_remote_endpoint();
-
-    try_read();
-}
-
-http_session::http_session(boost::asio::ssl::stream<boost::asio::ip::tcp::socket> socket, http_callbackI* callback) : callback_(callback)
-{
-    request_ = new http_request(this);
-    session_ptr_ = std::make_shared<tcp_ssl_session>(std::move(socket), this);
-    remote_endpoint_ = session_ptr_->get_remote_endpoint();
+    session_ptr_ = std::make_shared<tcp_session>(loop, handle, this);
+    remote_address_ = session_ptr_->get_remote_endpoint();
 
     try_read();
 }
@@ -70,7 +60,7 @@ void http_session::close() {
         response_ptr_->set_close(true);
     }
     session_ptr_->close();
-    callback_->on_close(remote_endpoint_);
+    callback_->on_close(remote_address_);
     return;
 }
 

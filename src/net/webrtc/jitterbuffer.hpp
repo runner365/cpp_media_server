@@ -9,12 +9,12 @@
 #include <stddef.h>
 #include <map>
 #include <memory>
-#include <boost/asio.hpp>
+#include <uv.h>
 
 class jitterbuffer : public timer_interface
 {
 public:
-    jitterbuffer(jitterbuffer_callbackI* cb, boost::asio::io_context& io_ctx);
+    jitterbuffer(jitterbuffer_callbackI* cb, uv_loop_t* loop);
     ~jitterbuffer();
 
 public:

@@ -1,6 +1,6 @@
 #include "pack_handle_vp8.hpp"
 
-pack_handle_vp8::pack_handle_vp8(pack_callbackI* cb, boost::asio::io_context& io_ctx):timer_interface(io_ctx, 100)
+pack_handle_vp8::pack_handle_vp8(pack_callbackI* cb, uv_loop_t* loop):timer_interface(loop, 100)
                                                     , cb_(cb)
 {
     start_timer();

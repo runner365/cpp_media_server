@@ -12,6 +12,10 @@ inline std::string get_ip_str(const struct sockaddr *sa, uint16_t& port) {
     const socklen_t maxlen = 64;
     char s[maxlen];
 
+    if (!sa) {
+        return "";
+    }
+    
     std::memset(s, 0, maxlen);
     switch(sa->sa_family) {
         case AF_INET:

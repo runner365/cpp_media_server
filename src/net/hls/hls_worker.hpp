@@ -8,6 +8,7 @@
 #include <mutex>
 #include <condition_variable>
 #include <map>
+#include <thread>
 
 #include "media_packet.hpp"
 #include "mpegts_handle.hpp"
@@ -17,7 +18,7 @@
 class hls_worker : public timer_interface
 {
 public:
-    hls_worker(boost::asio::io_context& io_context);
+    hls_worker(uv_loop_t* loop);
     virtual ~hls_worker();
 
 public:
@@ -32,6 +33,7 @@ protected:
     virtual void on_timer() override;
 
 private:
+    MEDIA_PACKET_PTR get_packet();
     void on_work();
     void on_handle_packet(MEDIA_PACKET_PTR pkt_ptr);
     void check_timeout();
@@ -42,12 +44,13 @@ private:
     std::shared_ptr<std::thread> run_thread_ptr_;
 
 private:
+    std::queue<MEDIA_PACKET_PTR> pkt_queue_;
+    std::mutex queue_mutex_;
+
+private:
     std::string path_;
     bool rec_enable_ = false;
     std::map<std::string, std::shared_ptr<mpegts_handle>> mpegts_handles_;
-
-private:
-    boost::asio::io_context& io_context_;
 };
 
 #endif

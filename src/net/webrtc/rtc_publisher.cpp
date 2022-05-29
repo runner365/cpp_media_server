@@ -19,7 +19,7 @@
 #include <sstream>
 #include <cstring>
 
-extern boost::asio::io_context& get_global_io_context();
+extern uv_loop_t* get_global_io_context();
 extern bool is_rtc_record_enable();
 
 rtc_publisher::rtc_publisher(const std::string& roomId, const std::string& uid,

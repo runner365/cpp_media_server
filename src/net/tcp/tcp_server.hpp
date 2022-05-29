@@ -1,96 +1,79 @@
 #ifndef TCP_SERVER_HPP
 #define TCP_SERVER_HPP
 #include "tcp_session.hpp"
+#include "tcp_pub.hpp"
+#include <uv.h>
 #include <memory>
 #include <string>
 #include <stdint.h>
-#include <boost/asio.hpp>
 #include <cstdlib>
 #include <functional>
 #include <iostream>
 
-#include <boost/asio/ssl.hpp>
+class tcp_server;
 
-class tcp_session;
+inline void on_uv_connection(uv_stream_t* handle, int status);
+inline void on_uv_server_close(uv_handle_t* handle);
 
-class tcp_server_callbackI
+class tcp_server
 {
-public:
-    virtual void on_accept(int ret_code, boost::asio::ip::tcp::socket socket) = 0;
-    virtual void on_accept_ssl(int ret_code, boost::asio::ssl::stream<boost::asio::ip::tcp::socket> socket) = 0;
-};
+friend void on_uv_connection(uv_stream_t* handle, int status);
+friend void on_uv_server_close(uv_handle_t* handle);
 
-class tcp_server : public std::enable_shared_from_this<tcp_server>
-{
 public:
-    tcp_server(boost::asio::io_context& io_context,
+    tcp_server(uv_loop_t* loop,
         uint16_t local_port,
-        tcp_server_callbackI* callback):ssl_enable_(false)
-        , context_(boost::asio::ssl::context::sslv23)
-        , acceptor_(io_context, boost::asio::ip::tcp::endpoint(boost::asio::ip::tcp::v4(), local_port))
-        , callback_(callback)
+        tcp_server_callbackI* callback):loop_(loop)
+                                    , callback_(callback)
+                                    , closed_(false)
     {
+        uv_ip4_addr("0.0.0.0", local_port, &server_addr_);
+        uv_tcp_init(loop_, &server_handle_);
+
+        uv_tcp_bind(&server_handle_, (const struct sockaddr*)&server_addr_, 0);
+
+        server_handle_.data = this;
+        uv_listen((uv_stream_t*)&server_handle_, SOMAXCONN, on_uv_connection);
     }
-    tcp_server(boost::asio::io_context& io_context,
-            uint16_t local_port,
-            const std::string& chain_file,
-            const std::string& key_file,
-            tcp_server_callbackI* callback):ssl_enable_(true)
-            , context_(boost::asio::ssl::context::sslv23)
-            , acceptor_(io_context, boost::asio::ip::tcp::endpoint(boost::asio::ip::tcp::v4(), local_port))
-            , callback_(callback)
-    {
-        context_.set_options(
-            boost::asio::ssl::context::default_workarounds
-            | boost::asio::ssl::context::no_sslv2
-            | boost::asio::ssl::context::single_dh_use);
-        //context_.set_password_callback(std::bind(&tcp_server::get_password, this));
-        context_.use_certificate_chain_file(chain_file);
-        context_.use_private_key_file(key_file, boost::asio::ssl::context::pem);
-        //context_.use_tmp_dh_file("dh2048.pem");
-    }
+
     virtual ~tcp_server()
     {
     }
 
-public:
-    void accept() {
-        auto self(shared_from_this());
-        if (!ssl_enable_) {
-            acceptor_.async_accept(
-                [self](boost::system::error_code ec, boost::asio::ip::tcp::socket socket)
-                {
-                    if (!ec) {
-                        self->callback_->on_accept(0, std::move(socket));
-                        return;
-                    }
-                    self->accept();
-                }
-            );
-        } else {
-            acceptor_.async_accept(
-                [self](const boost::system::error_code& ec, boost::asio::ip::tcp::socket socket)
-                {
-                    if (!ec) {
-                        self->callback_->on_accept_ssl(0, boost::asio::ssl::stream<boost::asio::ip::tcp::socket>(std::move(socket), self->context_));
-                        return;
-                    }
-                    self->accept();
-                });
+    void close() {
+        if (closed_) {
+            return;
         }
+        closed_ = true;
+        server_handle_.data = nullptr;
 
+        uv_close(reinterpret_cast<uv_handle_t*>(&server_handle_), static_cast<uv_close_cb>(on_uv_server_close));
     }
 
 private:
-    std::string get_password() const
-    {
-       return "test";
+    void on_connection(int status, uv_stream_t* handle) {
+        if (callback_) {
+            callback_->on_accept(status, loop_, handle);
+        }
     }
+
 private:
-    bool ssl_enable_ = false;
-    boost::asio::ssl::context context_;
-    boost::asio::ip::tcp::acceptor acceptor_;
-    tcp_server_callbackI* callback_;
+    uv_loop_t* loop_ = nullptr;
+    tcp_server_callbackI* callback_ = nullptr;
+    uv_tcp_t server_handle_;
+    struct sockaddr_in server_addr_;
+    bool closed_ = false;
 };
+
+inline void on_uv_connection(uv_stream_t* handle, int status) {
+    auto* server = static_cast<tcp_server*>(handle->data);
+    if (server) {
+        server->on_connection(status, handle);
+    }
+}
+
+inline void on_uv_server_close(uv_handle_t* handle) {
+    delete handle;
+}
 
 #endif //TCP_SERVER_HPP

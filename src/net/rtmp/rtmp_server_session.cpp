@@ -2,11 +2,12 @@
 #include "flv_pub.hpp"
 #include "rtmp_control_handler.hpp"
 
-rtmp_server_session::rtmp_server_session(boost::asio::ip::tcp::socket socket, rtmp_server_callbackI* callback, std::string session_key) : session_key_(session_key)
-    , callback_(callback)
+rtmp_server_session::rtmp_server_session(uv_loop_t* loop,
+                            uv_stream_t* server_uv_handle,
+                            rtmp_server_callbackI* callback):callback_(callback)
     , hs_(this)
     , ctrl_handler_(this) {
-    session_ptr_ = std::make_shared<tcp_session>(std::move(socket), this);
+    session_ptr_ = std::make_shared<tcp_session>(loop, server_uv_handle, this);
     try_read();
 }
 
@@ -18,7 +19,7 @@ rtmp_server_session::~rtmp_server_session() {
 }
 
 std::string rtmp_server_session::get_sesson_key() {
-    return session_key_;
+    return session_ptr_->get_remote_endpoint();
 }
 
 void rtmp_server_session::try_read() {
@@ -60,7 +61,7 @@ void rtmp_server_session::close() {
         }
     }
 
-    callback_->on_close(session_key_);
+    callback_->on_close(session_ptr_->get_remote_endpoint());
     session_ptr_->close();
 }
 

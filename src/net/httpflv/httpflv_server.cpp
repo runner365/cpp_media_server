@@ -34,22 +34,14 @@ void httpflv_handle(const http_request* request, std::shared_ptr<http_response> 
     return;
 }
 
-httpflv_server::httpflv_server(boost::asio::io_context& io_ctx, uint16_t port):timer_interface(io_ctx, 5000)
-    , server_(io_ctx, port)
+httpflv_server::httpflv_server(uv_loop_t* loop, uint16_t port):timer_interface(loop, 5000)
+    , server_(loop, port)
 {
     run();
     start_timer();
     log_infof("http flv server is listen:%d", port);
 }
 
-httpflv_server::httpflv_server(boost::asio::io_context& io_ctx, uint16_t port, const std::string& cert_file, const std::string& key_file):timer_interface(io_ctx, 5000)
-    , server_(io_ctx, port, cert_file, key_file)
-
-{
-    run();
-    start_timer();
-    log_infof("https flv server is listen:%d, cert:%s, key:%s", port, cert_file.c_str(), key_file.c_str());
-}
 httpflv_server::~httpflv_server()
 {
     stop_timer();

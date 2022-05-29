@@ -9,7 +9,7 @@
 class rtmp_relay : public rtmp_client_callbackI
 {
 public:
-    rtmp_relay(const std::string& host, const std::string& key, boost::asio::io_context& io_context);
+    rtmp_relay(const std::string& host, const std::string& key, uv_loop_t* loop);
     virtual ~rtmp_relay();
 
     void start();

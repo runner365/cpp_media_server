@@ -4,8 +4,8 @@
 #include "utils/logger.hpp"
 #include <vector>
 
-rtmp_relay_manager::rtmp_relay_manager(boost::asio::io_context& io_context):timer_interface(io_context, 5000)
-                                                                            , io_context_(io_context)
+rtmp_relay_manager::rtmp_relay_manager(uv_loop_t* loop):timer_interface(loop, 5000)
+                                                    , loop_(loop)
 {
     start_timer();
 }
@@ -22,7 +22,7 @@ int rtmp_relay_manager::add_new_relay(const std::string& host, const std::string
         return -1;
     }
 
-    auto relay_ptr = std::make_shared<rtmp_relay>(host, key, io_context_);
+    auto relay_ptr = std::make_shared<rtmp_relay>(host, key, loop_);
     relay_ptr->start();
 
     relay_map_[key] = relay_ptr;

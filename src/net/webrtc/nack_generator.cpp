@@ -5,7 +5,7 @@
 #include <algorithm>
 #include <sstream>
 
-extern boost::asio::io_context& get_global_io_context();
+extern uv_loop_t* get_global_io_context();
 
 nack_generator::nack_generator(nack_generator_callback_interface* cb):timer_interface(get_global_io_context(), NACK_DEFAULT_TIMEOUT)
     , cb_(cb)

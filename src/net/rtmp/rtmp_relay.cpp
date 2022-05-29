@@ -3,10 +3,10 @@
 #include "utils/av/media_stream_manager.hpp"
 
 
-rtmp_relay::rtmp_relay(const std::string& host, const std::string& key, boost::asio::io_context& io_context):host_(host)
+rtmp_relay::rtmp_relay(const std::string& host, const std::string& key, uv_loop_t* loop):host_(host)
     , key_(key)
 {
-    client_ptr_ = std::make_shared<rtmp_client_session>(io_context, this);
+    client_ptr_ = std::make_shared<rtmp_client_session>(loop, this);
     alive_cnt_ = 0;
     log_infof("rtmp relay construct host:%s, key:%s", host_.c_str(), key_.c_str());
 }
