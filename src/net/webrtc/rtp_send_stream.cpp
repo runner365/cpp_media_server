@@ -50,7 +50,8 @@ void rtp_send_stream::save_buffer(rtp_packet* input_pkt) {
 
     size_t storage_index = seq % STORAGE_MAX_SIZE;
     rtp_packet* pkt = input_pkt->clone(storages_[storage_index].data);
-
+    pkt->set_need_delete(false);
+    
     nack_pkt->last_sent_timestamp = 0;
     nack_pkt->sent_count          = 0;
     nack_pkt->packet              = pkt;
