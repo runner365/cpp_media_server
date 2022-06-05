@@ -1,6 +1,6 @@
 # cpp media server
 
-cpp media server是基于c++11开发的webrtc会议服务sfu.
+cpp media server是基于c++17开发的webrtc会议服务sfu.
 
 支持跨平台(linux/mac)，windows可以自行修改cmake支持。
 
