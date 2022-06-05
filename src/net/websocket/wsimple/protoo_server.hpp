@@ -15,6 +15,9 @@ class protoo_server : public websocket_server_callbackI, public protoo_request_i
 {
 public:
     protoo_server(uv_loop_t* loop, uint16_t port);
+    protoo_server(uv_loop_t* loop, uint16_t port,
+                const std::string& key_file,
+                const std::string& cert_file);
     virtual ~protoo_server();
 
 public://websocket_server_callbackI

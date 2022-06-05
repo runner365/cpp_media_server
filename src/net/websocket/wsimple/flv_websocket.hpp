@@ -27,6 +27,9 @@ class flv_websocket : public websocket_server_callbackI
 {
 public:
     flv_websocket(uv_loop_t* loop, uint16_t port);
+    flv_websocket(uv_loop_t* loop, uint16_t port,
+                const std::string& key_file,
+                const std::string& cert_file);
     virtual ~flv_websocket();
 
 public:

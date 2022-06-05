@@ -98,6 +98,7 @@ protected:
     
 public:
     static void dtls_init(const std::string& key_file, const std::string& cert_file);
+    static SSL_CTX* get_ssl_ctx();
     static int on_ssl_certificate_verify(int, X509_STORE_CTX*);
     static bool is_dtls(const uint8_t* data, size_t len);
 

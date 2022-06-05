@@ -75,15 +75,14 @@ int main(int argn, char** argv)
         std::cout << "ssl key file:" << key_file << "\r\n";
     }
 
-    boost::asio::io_context io_context;
-    boost::asio::io_service::work work(io_context);
+    uv_loop_t* loop = uv_default_loop();
 
     try {
-        http_server server(io_context, port, cert_file, key_file);
+        http_server server(loop, port, key_file, cert_file);
         
         server.add_get_handle("/api/v1/getdemo", GetDemo);
         server.add_post_handle("/api/v1/postdemo", PostDemo);
-        io_context.run();
+        uv_run(loop, UV_RUN_DEFAULT);
     }
     catch(const std::exception& e) {
         std::cerr << "http server exception:" << e.what() << "\r\n";

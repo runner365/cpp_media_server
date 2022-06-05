@@ -53,7 +53,7 @@ void on_play_callback(const std::string& key) {
 }
 
 void MediaServer::create_webrtc() {
-    if (!Config::webrtc_is_enable()) {
+    if (!Config::webrtc_is_enable() || Config::tls_key().empty() || Config::tls_cert().empty()) {
         log_infof("webrtc is disable...");
         return;
     }
@@ -68,9 +68,19 @@ void MediaServer::create_webrtc() {
         MediaServer::r2r_output = new rtmp2rtc_writer();
         media_stream_manager::set_rtc_writer(MediaServer::r2r_output);
     }
-    MediaServer::ws_webrtc_server = new protoo_server(loop_, Config::webrtc_https_port());
-    log_infof("webrtc is starting, websocket port:%d, rtmp2rtc:%s, rtc2rtmp:%s",
+    
+    if (Config::wss_is_enable()) {
+        MediaServer::ws_webrtc_server = new protoo_server(loop_,
+                                                    Config::webrtc_https_port(),
+                                                    Config::tls_key(),
+                                                    Config::tls_cert());
+    } else {
+        MediaServer::ws_webrtc_server = new protoo_server(loop_, Config::webrtc_https_port());
+    }
+    
+    log_infof("webrtc is starting, websocket port:%d, wss enable:%s rtmp2rtc:%s, rtc2rtmp:%s",
             Config::webrtc_https_port(),
+            Config::wss_is_enable() ? "true" : "false",
             Config::rtmp2rtc_is_enable() ? "true" : "false",
             Config::rtc2rtmp_is_enable() ? "true" : "false");
     return;
@@ -97,13 +107,20 @@ void MediaServer::create_httpflv() {
         return;
     }
 
+    log_infof("httpflv server is starting, listen port:%d, ssl enable:%s, key file:%s, cert file:%s", 
+            Config::httpflv_port(),
+            Config::httpflv_ssl_enable() ? "true":"false",
+            Config::httpflv_key_file().c_str(),
+            Config::httpflv_cert_file().c_str());
     if (Config::httpflv_ssl_enable() && !Config::httpflv_cert_file().empty() && !Config::httpflv_key_file().empty()) {
-        //MediaServer::httpflv_ptr = std::make_shared<httpflv_server>(MediaServer::loop_, Config::httpflv_port(), Config::httpflv_cert_file(), Config::httpflv_key_file());
+        MediaServer::httpflv_ptr = std::make_shared<httpflv_server>(MediaServer::loop_,
+                                                        Config::httpflv_port(),
+                                                        Config::httpflv_key_file(),
+                                                        Config::httpflv_cert_file());
     } else {
         MediaServer::httpflv_ptr = std::make_shared<httpflv_server>(MediaServer::loop_, Config::httpflv_port());
     }
 
-    log_infof("httpflv server is starting, listen port:%d", Config::httpflv_port());
     return;
 }
 
@@ -113,7 +130,10 @@ void MediaServer::create_httpapi() {
         return;
     }
     if (Config::httpapi_ssl_enable() && !Config::httpapi_cert_file().empty() && !Config::httpapi_key_file().empty()) {
-        //MediaServer::httpapi_ptr = std::make_shared<httpapi_server>(MediaServer::loop_, Config::httpapi_port(), Config::httpapi_cert_file(), Config::httpapi_key_file());
+        MediaServer::httpapi_ptr = std::make_shared<httpapi_server>(MediaServer::loop_,
+                                                        Config::httpapi_port(),
+                                                        Config::httpapi_key_file(),
+                                                        Config::httpapi_cert_file());
     } else {
         MediaServer::httpapi_ptr = std::make_shared<httpapi_server>(MediaServer::loop_, Config::httpapi_port());
     }
@@ -141,7 +161,16 @@ void MediaServer::create_websocket_flv() {
         return;
     }
 
-    MediaServer::ws_flv_server = new flv_websocket(MediaServer::loop_, Config::websocket_port());
+    if (Config::websocket_wss_enable() &&
+        !Config::websocket_key_file().empty() &&
+        !Config::websocket_cert_file().empty()) {
+        MediaServer::ws_flv_server = new flv_websocket(MediaServer::loop_,
+                                                    Config::websocket_port(),
+                                                    Config::websocket_key_file(),
+                                                    Config::websocket_cert_file());
+    } else {
+        MediaServer::ws_flv_server = new flv_websocket(MediaServer::loop_, Config::websocket_port());
+    }
 
     log_infof("websocket flv is starting, listen port:%d", Config::websocket_port());
     return;

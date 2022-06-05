@@ -25,6 +25,14 @@ const char* get_client_phase_desc(RTMP_CLIENT_SESSION_PHASE phase) {
     return client_phase_desc_list[phase];
 }
 
+rtmp_session_base::rtmp_session_base():recv_buffer_(50*1024)
+{
+}
+
+rtmp_session_base::~rtmp_session_base()
+{
+}
+
 int rtmp_session_base::read_fmt_csid() {
     uint8_t* p = nullptr;
 
@@ -108,7 +116,7 @@ MEDIA_PACKET_PTR rtmp_session_base::get_media_packet(CHUNK_STREAM_PTR cs_ptr) {
             pkt_ptr->codec_type_ = MEDIA_CODEC_VP9;
         }  else {
             log_errorf("does not support video codec typeid:%d, 0x%02x", cs_ptr->type_id_, p[0]);
-            assert(0);
+            //assert(0);
             return pkt_ptr;
         }
 

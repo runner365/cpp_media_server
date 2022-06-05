@@ -8,6 +8,7 @@
 #include <openssl/err.h>
 #include <openssl/pem.h>
 #include <openssl/ssl.h>
+#include "logger.hpp"
 
 namespace ws28 {
 
@@ -35,6 +36,8 @@ public:
 		SSL_set_bio(m_SSL, m_ReadBIO, m_WriteBIO);
 		
 		if(!server) DoSSLHandhake();
+
+		log_infof("TLS construct server:%d, hostname:%p", server, hostname);
 	}
 	
 	~TLS(){
@@ -184,13 +187,15 @@ private:
 		ERR_clear_error();
 		SSLStatus status = GetSSLStatus(SSL_do_handshake(m_SSL));
 		
+		log_infof("DoSSLHandhake status:%d, m_WriteBIO:%p", status, m_WriteBIO);
 		// Did SSL request to write bytes?
 		if(status == SSLSTATUS_WANT_IO){
 			int n;
 			do {
-				char buf[4096];
+				char buf[100*1024];
 				n = BIO_read(m_WriteBIO, buf, sizeof buf);
 				
+				log_infof("DoSSLHandhake BIO_read return:%d", n);
 				if(n > 0){
 					QueueEncrypted(buf, n);
 				}else if(!BIO_should_retry(m_WriteBIO)){

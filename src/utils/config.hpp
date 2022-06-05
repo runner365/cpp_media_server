@@ -33,6 +33,7 @@ public:
         std::stringstream ss;
         ss << "websocket config:\r\n";
         ss << "  enable: " << websocket_enable << "\r\n";
+        ss << "  wss enable: " << wss_enable << "\r\n";
         ss << "  port: " << websocket_port << "\r\n";
 
         return ss.str();
@@ -40,7 +41,10 @@ public:
 
 public:
     bool websocket_enable   = false;
+    bool wss_enable         = false;
     uint16_t websocket_port = WEBSOCKET_DEF_PORT;
+    std::string tls_key;
+    std::string tls_cert;
 };
 
 class WebrtcConfig
@@ -54,6 +58,7 @@ public:
         std::stringstream ss;
         ss << "webrtc config:\r\n";
         ss << "  enable: " << webrtc_enable << "\r\n";
+        ss << "  wss enable: " << wss_enable << "\r\n";
         ss << "  https port: " << https_port << "\r\n";
         ss << "  tls key: " << tls_key << "\r\n";
         ss << "  tls cert: " << tls_cert << "\r\n";
@@ -61,12 +66,16 @@ public:
         ss << "  candidate ip: " << candidate_ip << "\r\n";
         ss << "  rtmp2rtc: " << rtmp2rtc_enable << "\r\n";
         ss << "  rtc2rtmp: " << rtc2rtmp_enable << "\r\n";
+        ss << "  min kbps:" << min_kbps << "\r\n";
+        ss << "  max kbps:" << max_kbps << "\r\n";
+        ss << "  start kbps:" << start_kbps << "\r\n";
 
         return ss.str();
     }
 
 public:
-    bool webrtc_enable = false;
+    bool webrtc_enable  = false;
+    bool wss_enable     = false;
     uint16_t https_port = WEBRTC_HTTPS_PORT;
     std::string tls_key;
     std::string tls_cert;
@@ -74,6 +83,9 @@ public:
     std::string candidate_ip;
     bool rtmp2rtc_enable = false;
     bool rtc2rtmp_enable = false;
+    int min_kbps = 200;
+    int max_kbps = 1500;
+    int start_kbps = 800;
 };
 
 class RtmpRelayConfig
@@ -250,15 +262,22 @@ public:
 public:
     static bool webrtc_is_enable();
     static uint16_t webrtc_https_port();
+    static bool wss_is_enable();
     static std::string tls_key();
     static std::string tls_cert();
     static uint16_t webrtc_udp_port();
     static std::string candidate_ip();
     static bool rtmp2rtc_is_enable();
     static bool rtc2rtmp_is_enable();
+    static int min_kbps();
+    static int max_kbps();
+    static int start_kbps();
 
 public:
     static bool websocket_is_enable();
+    static bool websocket_wss_enable();
+    static std::string websocket_key_file();
+    static std::string websocket_cert_file();
     static uint16_t websocket_port();
 
 public:

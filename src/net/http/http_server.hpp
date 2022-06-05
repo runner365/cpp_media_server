@@ -28,6 +28,7 @@ class http_server : public tcp_server_callbackI, public http_callbackI, public t
 {
 public:
     http_server(uv_loop_t* loop, uint16_t port);
+    http_server(uv_loop_t* loop, uint16_t port, const std::string& key_file, const std::string& cert_file);
     virtual ~http_server();
 
 public:
@@ -46,6 +47,9 @@ protected://http_callbackI
 
 private:
     std::shared_ptr<tcp_server> server_;
+    bool ssl_enable_ = false;
+    std::string key_file_;
+    std::string cert_file_;
     std::unordered_map< std::string, std::shared_ptr<http_session> > session_ptr_map_;
     std::unordered_map< std::string, HTTP_HANDLE_Ptr > get_handle_map_;
     std::unordered_map< std::string, HTTP_HANDLE_Ptr > post_handle_map_;

@@ -42,6 +42,16 @@ httpflv_server::httpflv_server(uv_loop_t* loop, uint16_t port):timer_interface(l
     log_infof("http flv server is listen:%d", port);
 }
 
+httpflv_server::httpflv_server(uv_loop_t* loop, uint16_t port,
+                const std::string& key_file, const std::string& cert_file):timer_interface(loop, 5000)
+    , server_(loop, port, key_file, cert_file)
+{
+    run();
+    start_timer();
+    log_infof("https flv server is listen:%d, key file:%s, cert file:%s",
+            port, key_file.c_str(), cert_file.c_str());
+}
+
 httpflv_server::~httpflv_server()
 {
     stop_timer();

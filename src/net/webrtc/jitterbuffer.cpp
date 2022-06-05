@@ -3,19 +3,29 @@
 
 jitterbuffer::jitterbuffer(jitterbuffer_callbackI* cb, uv_loop_t* loop):timer_interface(loop, 100)
                     , cb_(cb) {
-
+    for (size_t i = 0; i < BUFFER_POOL_SIZE; i++) {
+        pkt_buffers_[i] = new uint8_t[RTP_PACKET_MAX_SIZE];
+    }
 }
 
 jitterbuffer::~jitterbuffer() {
-
+    for (size_t i = 0; i < BUFFER_POOL_SIZE; i++) {
+        if (pkt_buffers_[i]) {
+            delete[] pkt_buffers_[i];
+        }
+    }
 }
 
 void jitterbuffer::input_rtp_packet(const std::string& roomId, const std::string& uid,
                             const std::string& media_type, const std::string& stream_type,
-                            int clock_rate, rtp_packet* input_pkt) {
+                            int clock_rate, rtp_packet* pkt) {
     int64_t extend_seq = 0;
     bool reset = false;
     bool first_pkt = false;
+    size_t index = (buffer_index_++) % RTP_PACKET_MAX_SIZE;
+    uint8_t* buffer = pkt_buffers_[index];
+
+    rtp_packet* input_pkt = pkt->clone(buffer);
 
     if (!init_flag_) {
         init_flag_ = true;
@@ -74,7 +84,8 @@ void jitterbuffer::input_rtp_packet(const std::string& roomId, const std::string
         }
         return;
     } else if (extend_seq <= output_seq_) {
-        log_infof("receive old seq:%d media type:%s", extend_seq, pkt_info_ptr->media_type_.c_str());
+        log_infof("receive old seq:%ld, output_seq:%ld media type:%s",
+                extend_seq, output_seq_, pkt_info_ptr->media_type_.c_str());
         return;
     }
     rtp_packets_map_[extend_seq] = pkt_info_ptr;

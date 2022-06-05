@@ -54,7 +54,8 @@ namespace ws28 {
 		// Note: By default, this listens on both ipv4 and ipv6
 		// Note: if you provide a SSL_CTX, this server will listen to *BOTH* secure and insecure connections at that port,
 		//       sniffing the first byte to figure out whether it's secure or not
-		Server(uv_loop_t *loop, SSL_CTX *ctx = nullptr);
+		Server(uv_loop_t *loop);
+		Server(uv_loop_t *loop, const std::string& key_file, const std::string cert_file);
 		Server(const Server &other) = delete;
 		Server& operator=(const Server &other) = delete;
 		~Server();
@@ -62,6 +63,8 @@ namespace ws28 {
 		bool Listen(int port, bool ipv4Only = false);
 		void StopListening();
 		void DestroyClients();
+
+		bool SslIsEnable() { return ssl_enable_; }
 		
 		// This callback is called when we know whether a TCP connection wants a secure connection or not,
 		// once we receive the very first byte from the client
@@ -95,8 +98,6 @@ namespace ws28 {
 		// Connections that call this callback never lead to a connection
 		void SetHTTPCallback(HTTPRequestFn v){ m_fnHTTPRequest = v;}
 		
-		SSL_CTX* GetSSLContext() const { return m_pSSLContext; }
-		
 		inline void SetUserData(void *v){ m_pUserData = v; }
 		inline void* GetUserData() const { return m_pUserData; }
 		
@@ -129,7 +130,6 @@ namespace ws28 {
 		
 		uv_loop_t *m_pLoop;
 		SocketHandle m_Server;
-		SSL_CTX *m_pSSLContext;
 		void *m_pUserData = nullptr;
 		std::vector<std::unique_ptr<Client>> m_Clients;
 		bool m_bAllowAlternativeProtocol = false;
@@ -143,6 +143,10 @@ namespace ws28 {
 		HTTPRequestFn m_fnHTTPRequest = nullptr;
 		
 		size_t m_iMaxMessageSize = 16 * 1024;
+
+		bool ssl_enable_ = false;
+		std::string key_file_;
+		std::string cert_file_;
 		
 		friend class Client;
 	};

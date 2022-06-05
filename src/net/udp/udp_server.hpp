@@ -10,7 +10,7 @@
 #include <queue>
 #include <uv.h>
 
-#define UDP_DATA_BUFFER_MAX (1*1500)
+#define UDP_DATA_BUFFER_MAX (10*1500)
 
 typedef struct udp_req_info_s
 {
@@ -79,19 +79,22 @@ public:
     udp_server(uv_loop_t* loop, uint16_t port, udp_session_callbackI* cb):cb_(cb)
                                                                         , loop_(loop)
     {
-        buffer_ = new char[UDP_DATA_BUFFER_MAX];
+        recv_buffer_ = new char[UDP_DATA_BUFFER_MAX];
 
         uv_udp_init(loop, &udp_handle_);
         struct sockaddr_in recv_addr;
         uv_ip4_addr("0.0.0.0", port, &recv_addr);
         uv_udp_bind(&udp_handle_, (const struct sockaddr *)&recv_addr, UV_UDP_REUSEADDR);
         udp_handle_.data = this;
+
         try_read();
     }
 
     ~udp_server() {
-        delete[] buffer_;
-        buffer_ = nullptr;
+        if (recv_buffer_) {
+            delete[] recv_buffer_;
+            recv_buffer_ = nullptr;
+        }
     }
 
 public:
@@ -103,6 +106,7 @@ public:
         uv_ip4_addr(remote_address.ip_address.c_str(), ntohs(remote_address.port), &send_addr);
 
         req->handle.data = this;
+
         char* new_data = (char*)malloc(len);
         memcpy(new_data, data, len);
         req->buf = uv_buf_init(new_data, len);
@@ -131,7 +135,7 @@ private:
     }
 
     void on_alloc(uv_buf_t* buf) {
-        buf->base = buffer_;
+        buf->base = recv_buffer_;
         buf->len  = UDP_DATA_BUFFER_MAX;
     }
 
@@ -157,6 +161,13 @@ private:
             if (cb_) {
                 cb_->on_write(0, addr);
             }
+            udp_req_info_t* wr = (udp_req_info_t*)req;
+            if (wr) {
+                free(wr);
+                if (wr->buf.base) {
+                    free(wr->buf.base);
+                }
+            }
             return;
         }
         
@@ -166,15 +177,19 @@ private:
             addr.port       = wr->port;
             cb_->on_write(wr->buf.len, addr);
         }
-        free(wr->buf.base);
-        free(wr);
+        if (wr) {
+            if (wr->buf.base) {
+                free(wr->buf.base);
+            }
+            free(wr);
+        }
     }
 
 private:
-    udp_session_callbackI* cb_       = nullptr;
+    udp_session_callbackI* cb_ = nullptr;
     uv_loop_t* loop_ = nullptr;
     uv_udp_t udp_handle_;
-    char* buffer_ = nullptr;
+    char* recv_buffer_ = nullptr;
 };
 
 inline void udp_alloc_callback(uv_handle_t* handle,

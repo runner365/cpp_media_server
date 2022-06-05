@@ -37,6 +37,10 @@ const char* get_client_phase_desc(RTMP_CLIENT_SESSION_PHASE phase);
 class rtmp_session_base
 {
 public:
+    rtmp_session_base();
+    virtual ~rtmp_session_base();
+    
+public:
     virtual data_buffer* get_recv_buffer() = 0;
     virtual int rtmp_send(char* data, int len) = 0;
     virtual int rtmp_send(std::shared_ptr<data_buffer> data_ptr) = 0;

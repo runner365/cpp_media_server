@@ -66,7 +66,10 @@ EVP_PKEY* rtc_dtls::s_privatekey = nullptr;
 SSL_CTX* rtc_dtls::s_ssl_ctx     = nullptr;
 
 void ssl_info_callback(const SSL* ssl, int type, int value) {
-    static_cast<rtc_dtls*>(SSL_get_ex_data(ssl, 0))->on_ssl_info(type, value);
+    log_infof("ssl info callback type:0x%08x, value:0x%08x", type, value);
+    if (static_cast<rtc_dtls*>(SSL_get_ex_data(ssl, 0)) != nullptr) {
+        static_cast<rtc_dtls*>(SSL_get_ex_data(ssl, 0))->on_ssl_info(type, value);
+    }
 }
 
 void rtc_dtls::dtls_init(const std::string& key_file, const std::string& cert_file) {
@@ -216,6 +219,10 @@ void rtc_dtls::dtls_init(const std::string& key_file, const std::string& cert_fi
     }
 
     return;
+}
+
+SSL_CTX* rtc_dtls::get_ssl_ctx() {
+    return s_ssl_ctx;
 }
 
 int rtc_dtls::on_ssl_certificate_verify(int, X509_STORE_CTX*) {

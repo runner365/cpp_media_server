@@ -111,7 +111,7 @@ int Config::init_httpflv(json& json_object) {
     }
     
 
-    auto cert_iter = json_object.find("cert_file");
+    auto cert_iter = json_object.find("tls_cert");
     if (cert_iter == json_object.end()) {
         httpflv_config_.cert_file = "";
     } else {
@@ -119,7 +119,7 @@ int Config::init_httpflv(json& json_object) {
     }
     
 
-    auto key_iter = json_object.find("key_file");
+    auto key_iter = json_object.find("tls_key");
     if (key_iter == json_object.end()) {
         httpflv_config_.key_file = "";
     } else {
@@ -150,14 +150,14 @@ int Config::init_httpapi(json& json_object) {
     }
     httpapi_config_.ssl_enable = ssl_iter->get<bool>();
 
-    auto cert_iter = json_object.find("cert_file");
+    auto cert_iter = json_object.find("tls_cert");
     if (cert_iter == json_object.end()) {
         httpapi_config_.cert_file = "";
         return 0;
     }
     httpapi_config_.cert_file = cert_iter->get<std::string>();
 
-    auto key_iter = json_object.find("key_file");
+    auto key_iter = json_object.find("tls_key");
     if (key_iter == json_object.end()) {
         httpapi_config_.key_file = "";
         return 0;
@@ -204,7 +204,22 @@ int Config::init_websocket(json& json_object) {
     if (port_iter != json_object.end()) {
         websocket_config_.websocket_port = (uint16_t)port_iter->get<int>();
     }
+    auto wss_enable_iter = json_object.find("wss_enable");
+    if (wss_enable_iter == json_object.end()) {
+        websocket_config_.wss_enable = false;
+    } else {
+        websocket_config_.wss_enable = wss_enable_iter->get<bool>();
+    }
+    
+    auto tls_key_iter = json_object.find("tls_key");
+    if (tls_key_iter != json_object.end()) {
+        websocket_config_.tls_key = tls_key_iter->get<std::string>();
+    }
 
+    auto tls_cert_iter = json_object.find("tls_cert");
+    if (tls_cert_iter != json_object.end()) {
+        websocket_config_.tls_cert = tls_cert_iter->get<std::string>();
+    }
     return 0;
 }
 
@@ -221,6 +236,15 @@ int Config::init_webrtc(json& json_object) {
         webrtc_config_.https_port = (uint16_t)port_iter->get<int>();
     }
 
+    auto wss_enable_iter = json_object.find("wss_enable");
+    if (wss_enable_iter == json_object.end()) {
+        webrtc_config_.wss_enable = false;
+    } else {
+        webrtc_config_.wss_enable = wss_enable_iter->get<bool>();
+    }
+
+    webrtc_config_.webrtc_enable = enable_iter->get<bool>();
+
     auto tls_key_iter = json_object.find("tls_key");
     if (tls_key_iter != json_object.end()) {
         webrtc_config_.tls_key = tls_key_iter->get<std::string>();
@@ -236,7 +260,6 @@ int Config::init_webrtc(json& json_object) {
     if (udp_port_iter != json_object.end()) {
         webrtc_config_.udp_port = (uint16_t)udp_port_iter->get<int>();
     }
-
 
     auto candidat_ip_iter = json_object.find("candidate_ip");
     if (candidat_ip_iter != json_object.end()) {
@@ -257,6 +280,27 @@ int Config::init_webrtc(json& json_object) {
         webrtc_config_.rtmp2rtc_enable = false;
     } else {
         webrtc_config_.rtmp2rtc_enable = rtmp2rtc_iter->get<bool>();
+    }
+
+    auto min_kbps_iter = json_object.find("min_kbps");
+    if (min_kbps_iter != json_object.end()) {
+        webrtc_config_.min_kbps = min_kbps_iter->get<int>();
+    } else {
+        webrtc_config_.min_kbps = 200;
+    }
+
+    auto max_kbps_iter = json_object.find("max_kbps");
+    if (max_kbps_iter != json_object.end()) {
+        webrtc_config_.max_kbps = max_kbps_iter->get<int>();
+    } else {
+        webrtc_config_.max_kbps = 1500;
+    }
+
+    auto start_kbps_iter = json_object.find("start_kbps");
+    if (start_kbps_iter != json_object.end()) {
+        webrtc_config_.start_kbps = start_kbps_iter->get<int>();
+    } else {
+        webrtc_config_.start_kbps = 800;
     }
     return 0;
 }
@@ -337,6 +381,18 @@ uint16_t Config::websocket_port() {
     return websocket_config_.websocket_port;
 }
 
+bool Config::websocket_wss_enable() {
+    return websocket_config_.wss_enable;
+}
+
+std::string Config::websocket_key_file() {
+    return websocket_config_.tls_key;
+}
+
+std::string Config::websocket_cert_file() {
+    return websocket_config_.tls_cert;
+}
+
 bool Config::rtmp_is_enable() {
     return rtmp_config_.rtmp_enable;
 }
@@ -413,6 +469,10 @@ bool Config::webrtc_is_enable() {
     return webrtc_config_.webrtc_enable;
 }
 
+bool Config::wss_is_enable() {
+    return webrtc_config_.wss_enable;
+}
+
 uint16_t Config::webrtc_https_port() {
     return webrtc_config_.https_port;
 }
@@ -439,4 +499,16 @@ bool Config::rtmp2rtc_is_enable() {
 
 bool Config::rtc2rtmp_is_enable() {
     return webrtc_config_.rtc2rtmp_enable;
+}
+
+int Config::min_kbps() {
+    return webrtc_config_.min_kbps;
+}
+
+int Config::max_kbps() {
+    return webrtc_config_.max_kbps;
+}
+
+int Config::start_kbps() {
+    return webrtc_config_.start_kbps;
 }

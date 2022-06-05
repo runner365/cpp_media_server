@@ -1,4 +1,5 @@
 #include "data_buffer.hpp"
+#include "logger.hpp"
 #include <cstring>
 
 data_buffer::data_buffer(size_t data_size) {
@@ -48,6 +49,24 @@ data_buffer::~data_buffer() {
     }
 }
 
+static int get_new_size(int new_len) {
+    int ret = new_len;
+
+    if (new_len <= 50*1024) {
+        ret = 50*1024;
+    } else if ((new_len > 50*1024) && (new_len <= 100*1024)) {
+        ret = 100*1024;
+    } else if ((new_len > 100*1024) && (new_len <= 200*1024)) {
+        ret = 200*1024;
+    } else if ((new_len > 200*1024) && (new_len <= 500*1024)) {
+        ret = 500*1024;
+    } else {
+        ret = new_len;
+    }
+
+    return ret;
+}
+
 int data_buffer::append_data(const char* input_data, size_t input_len) {
     if ((input_data == nullptr) || (input_len == 0)) {
         return 0;
@@ -56,6 +75,8 @@ int data_buffer::append_data(const char* input_data, size_t input_len) {
     if ((size_t)end_ + input_len > (buffer_size_ - PRE_RESERVE_HEADER_SIZE)) {
         if (data_len_ + input_len >= (buffer_size_ - PRE_RESERVE_HEADER_SIZE)) {
             int new_len = data_len_ + (int)input_len + EXTRA_LEN;
+            
+            new_len = get_new_size(new_len);
             char* new_buffer = new char[new_len];
             memcpy(new_buffer + PRE_RESERVE_HEADER_SIZE, buffer_ + start_, data_len_);
             memcpy(new_buffer + PRE_RESERVE_HEADER_SIZE + data_len_, input_data, input_len);
@@ -87,7 +108,6 @@ int data_buffer::append_data(const char* input_data, size_t input_len) {
     memcpy(buffer_ + end_, input_data, input_len);
     data_len_ += (int)input_len;
     end_ += (int)input_len;
-
     return data_len_;
 }
 

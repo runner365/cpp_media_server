@@ -41,7 +41,34 @@ void on_client_data_callback(ws28::Client* client, char* data, size_t len, int o
     }
 }
 
-websocket_server::websocket_server(uv_loop_t* loop, uint16_t port, websocket_server_callbackI* cb):ws_server_(loop)
+websocket_server::websocket_server(uv_loop_t* loop,
+                            uint16_t port,
+                            websocket_server_callbackI* cb):ws_server_(loop)
+                                                        , cb_(cb)
+{
+    ws_server_.SetMaxMessageSize(256 * 1024 * 1024);
+    ws_server_.SetUserData(this);
+
+	ws_server_.SetClientConnectedCallback(on_connected_callback);
+	ws_server_.SetClientDisconnectedCallback(on_disconnect_callback);
+	ws_server_.SetClientDataCallback(on_client_data_callback);
+	
+	ws_server_.SetHTTPCallback([](ws28::HTTPRequest& req, ws28::HTTPResponse& res){
+		std::stringstream ss;
+		ss << "Hi, you issued a " << req.method << " to " << req.path << "\r\n";
+		ss << "Headers:\r\n";
+		
+		log_infof("http callback: %s", ss.str().c_str());
+	});
+
+    bool ret = ws_server_.Listen(port);
+    log_infof("websocket construct, port:%d return:%d, ssl disable", port, ret);
+}
+
+websocket_server::websocket_server(uv_loop_t* loop, uint16_t port
+                                , websocket_server_callbackI* cb
+                                , const std::string& key_file
+                                , const std::string& cert_file):ws_server_(loop, key_file, cert_file)
                                                             , cb_(cb)
 {
     ws_server_.SetMaxMessageSize(256 * 1024 * 1024);
@@ -60,7 +87,7 @@ websocket_server::websocket_server(uv_loop_t* loop, uint16_t port, websocket_ser
 	});
 
     bool ret = ws_server_.Listen(port);
-    log_infof("websocket construct, port:%d return:%d", port, ret);
+    log_infof("websocket construct, port:%d return:%d, ssl enable", port, ret);
 }
 
 websocket_server::~websocket_server()

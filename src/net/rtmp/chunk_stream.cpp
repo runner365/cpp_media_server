@@ -15,8 +15,9 @@ chunk_stream::chunk_stream(rtmp_session_base* session, uint8_t fmt, uint16_t csi
     fmt_     = fmt;
     csid_    = csid;
     chunk_size_     = chunk_size;
-    chunk_all_ptr_  = std::make_shared<data_buffer>();
-    chunk_data_ptr_ = std::make_shared<data_buffer>();
+    msg_count_      = 0;
+    chunk_all_ptr_  = std::make_shared<data_buffer>(50*1024);
+    chunk_data_ptr_ = std::make_shared<data_buffer>(50*1024);
 }
 
 chunk_stream::~chunk_stream() {
@@ -329,6 +330,7 @@ int chunk_stream::read_message_header(uint8_t input_fmt, uint16_t input_csid) {
         return ret;
     }
 
+    msg_count_ = 0;
     phase_ = CHUNK_STREAM_PHASE_PAYLOAD;
     return RTMP_OK;
 }
@@ -348,6 +350,7 @@ int chunk_stream::read_message_payload() {
 
     remain_ -= require_len_;
     msg_count_++;
+
     if (remain_ <= 0) {
         chunk_ready_ = true;
     }

@@ -36,7 +36,29 @@ int audio_encode::add_samples_to_fifo(uint8_t **data, const int frame_size) {
 }
 
 void audio_encode::release_audio() {
+    int ret = 0;
+
     if(codec_ctx_) {
+        //clean the encodec
+        while (ret >= 0) {
+            AVPacket* audio_pkt_p = av_packet_alloc();
+
+            memset(audio_pkt_p, 0, sizeof(AVPacket));
+            av_init_packet(audio_pkt_p);
+
+            ret = avcodec_receive_packet(codec_ctx_, audio_pkt_p);
+            if (ret == AVERROR(EAGAIN) || ret == AVERROR_EOF) {
+                av_packet_free(&audio_pkt_p);
+                break;
+            } else if (ret < 0) {
+                log_errorf("audio encode unkown error, return %d", ret);
+                av_packet_free(&audio_pkt_p);
+                break;
+            }
+            av_packet_free(&audio_pkt_p);
+            log_infof("clear the audio encode queue....");
+        }
+
         avcodec_free_context(&codec_ctx_);
         codec_ctx_ = NULL;
         log_infof("encode release_audio");
@@ -386,7 +408,25 @@ void video_encode::release_video() {
         return;
     }
     init_ = true;
+    int ret = 0;
+
     if(codec_ctx_) {
+        while (ret >= 0) {
+            AVPacket* video_pkt_p = av_packet_alloc();
+
+            av_init_packet(video_pkt_p);
+
+            ret = avcodec_receive_packet(codec_ctx_, video_pkt_p);
+            if (ret == AVERROR(EAGAIN) || ret == AVERROR_EOF) {
+                av_packet_free(&video_pkt_p);
+                break;
+            } else if (ret < 0) {
+                log_errorf("video encode unkown error, return %d", ret);
+                av_packet_free(&video_pkt_p);
+                break;
+            }
+            av_packet_free(&video_pkt_p);
+        }
         avcodec_free_context(&codec_ctx_);
         codec_ctx_ = nullptr;
         codec_ = nullptr;

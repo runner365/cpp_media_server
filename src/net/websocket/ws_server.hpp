@@ -29,6 +29,8 @@ friend void on_client_data_callback(ws28::Client* client, char* data, size_t len
 
 public:
     websocket_server(uv_loop_t* loop, uint16_t port, websocket_server_callbackI* cb);
+    websocket_server(uv_loop_t* loop, uint16_t port, websocket_server_callbackI* cb
+                , const std::string& key_file, const std::string& cert_file);
     virtual ~websocket_server();
 
 private:

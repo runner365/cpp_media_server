@@ -38,6 +38,16 @@ http_session::http_session(uv_loop_t* loop, uv_stream_t* handle, http_callbackI*
     try_read();
 }
 
+http_session::http_session(uv_loop_t* loop, uv_stream_t* handle, http_callbackI* callback,
+                const std::string& key_file, const std::string& cert_file) : callback_(callback)
+{
+    request_ = new http_request(this);
+    session_ptr_ = std::make_shared<tcp_session>(loop, handle, this, key_file, cert_file);
+    remote_address_ = session_ptr_->get_remote_endpoint();
+
+    try_read();
+}
+
 http_session::~http_session() {
     close();
 }
@@ -70,6 +80,9 @@ void http_session::on_write(int ret_code, size_t sent_size) {
         close();
     }
     keep_alive();
+    if (!response_ptr_) {
+        return;
+    }
 
     response_ptr_->remain_bytes_ -= sent_size;
     continue_flag_ = response_ptr_->continue_flag_;

@@ -120,6 +120,7 @@ int rtmp_server_session::receive_chunk_stream() {
         if ((cs_ptr->type_id_ >= RTMP_CONTROL_SET_CHUNK_SIZE) && (cs_ptr->type_id_ <= RTMP_CONTROL_SET_PEER_BANDWIDTH)) {
             ret = ctrl_handler_.handle_rtmp_control_message(cs_ptr);
             if (ret < RTMP_OK) {
+                cs_ptr->reset();
                 return ret;
             }
             cs_ptr->reset();
@@ -135,6 +136,7 @@ int rtmp_server_session::receive_chunk_stream() {
                     AMF_ITERM* temp = iter;
                     delete temp;
                 }
+                cs_ptr->reset();
                 return ret;
             }
             for (auto iter : amf_vec) {
@@ -155,12 +157,14 @@ int rtmp_server_session::receive_chunk_stream() {
         } else if (cs_ptr->type_id_ == RTMP_COMMAND_MESSAGES_AMF3) {
             //TODO: support amf3
             log_warnf("does not support amf3");
+            cs_ptr->reset();
             return -1;
         } else if ((cs_ptr->type_id_ == RTMP_MEDIA_PACKET_VIDEO) || (cs_ptr->type_id_ == RTMP_MEDIA_PACKET_AUDIO)
                 || (cs_ptr->type_id_ == RTMP_COMMAND_MESSAGES_META_DATA0) || (cs_ptr->type_id_ == RTMP_COMMAND_MESSAGES_META_DATA3)) {
             MEDIA_PACKET_PTR pkt_ptr = get_media_packet(cs_ptr);
             if (pkt_ptr->buffer_ptr_->data_len() == 0) {
-                return -1;
+                cs_ptr->reset();
+                return 0;
             }
 
             keep_alive();

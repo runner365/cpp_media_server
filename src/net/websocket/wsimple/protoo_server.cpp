@@ -14,6 +14,12 @@ protoo_server::protoo_server(uv_loop_t* loop, uint16_t port):server_(loop, port,
 {
 }
 
+protoo_server::protoo_server(uv_loop_t* loop, uint16_t port,
+                const std::string& key_file,
+                const std::string& cert_file):server_(loop, port, this, key_file, cert_file)
+{
+}
+
 protoo_server::~protoo_server() {
 
 }
@@ -31,7 +37,7 @@ void protoo_server::accept(const std::string& id, const std::string& data, void*
     ss << "}";
 
     if (session && session->get_client()) {
-        log_infof("protoo accept:%s", ss.str().c_str());
+        log_debugf("protoo accept:%s", ss.str().c_str());
         if (!session->is_close()) {
             session->get_client()->Send(ss.str().c_str(), ss.str().size(), 1);
         }
@@ -50,7 +56,7 @@ void protoo_server::reject(const std::string& id, int err_code, const std::strin
     ss << "\"errorReason\":" << "\"" << err << "\"";
     ss << "}";
     
-    log_infof("response reject:%s", ss.str().c_str());
+    log_debugf("response reject:%s", ss.str().c_str());
     if (session && session->get_client()) {
         if (!session->is_close()) {
             session->get_client()->Send(ss.str().c_str(), ss.str().size(), 1);
@@ -69,7 +75,7 @@ void protoo_server::notification(const std::string& method, const std::string& d
     ss << data;
     ss << "}";
 
-    log_infof("notification: %s", ss.str().c_str());
+    log_debugf("notification: %s", ss.str().c_str());
     if (session && session->get_client()) {
         if (!session->is_close()) {
             session->get_client()->Send(ss.str().c_str(), ss.str().size(), 1);
@@ -242,7 +248,7 @@ void protoo_server::on_notification(websocket_session* session, json& protooBody
 }
 
 void protoo_server::on_accept(websocket_session* session) {
-    log_infof("protoo server accept...");
+    log_debugf("protoo server accept...");
 }
 
 void protoo_server::on_read(websocket_session* session, const char* data, size_t len) {

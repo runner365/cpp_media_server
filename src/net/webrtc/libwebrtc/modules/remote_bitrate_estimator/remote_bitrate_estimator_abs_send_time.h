@@ -42,6 +42,8 @@ class RemoteBitrateEstimatorAbsSendTime : public RemoteBitrateEstimator {
   bool LatestEstimate(std::vector<uint32_t>* ssrcs,
                       uint32_t* bitrate_bps) const override;
   void SetMinBitrate(int min_bitrate_bps) override;
+  void SetMaxBitrate(int max_bitrate_bps);
+  void SetStartBitrate(int start_bitrate_bps);
 
  private:
   typedef std::map<uint32_t, int64_t> Ssrcs;

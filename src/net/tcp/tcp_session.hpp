@@ -4,6 +4,7 @@
 #include "data_buffer.hpp"
 #include "tcp_pub.hpp"
 #include "ipaddress.hpp"
+#include "ssl_server.hpp"
 #include <uv.h>
 #include <memory>
 #include <string>
@@ -12,6 +13,8 @@
 #include <stdio.h>
 #include <queue>
 #include <sstream>
+#include <openssl/ssl.h>
+#include <assert.h>
 
 inline static void on_tcp_close(uv_handle_t* handle);
 inline static void on_uv_alloc(uv_handle_t* handle,
@@ -22,7 +25,7 @@ inline static void on_uv_read(uv_stream_t* handle,
                        const uv_buf_t* buf);
 inline static void on_uv_write(uv_write_t* req, int status);
 
-class tcp_session : public tcp_base_session
+class tcp_session : public tcp_base_session, public ssl_server_callbackI
 {
 friend void on_tcp_close(uv_handle_t* handle);
 friend void on_uv_alloc(uv_handle_t* handle,
@@ -65,10 +68,49 @@ public:
         uv_tcp_getpeername(uv_handle_, &peer_name_, &namelen);
         close_ = false;
     }
+
+    tcp_session(uv_loop_t* loop,
+            uv_stream_t* server_uv_handle,
+            tcp_session_callbackI* callback,
+            const std::string& key_file,
+            const std::string& cert_file):callback_(callback)
+                                        , ssl_enable_(true)
+                                        , ssl_(new ssl_server(key_file, cert_file, this))
+    {
+        buffer_    = (char*)malloc(buffer_size_);
+        uv_handle_ = (uv_tcp_t*)malloc(sizeof(uv_tcp_t));
+        uv_handle_->data = this;
+
+        // Set the UV handle.
+        int err = uv_tcp_init(loop, uv_handle_);
+        if (err != 0) {
+            delete uv_handle_;
+            uv_handle_ = nullptr;
+            free(buffer_);
+            throw MediaServerError("uv_tcp_init() failed");
+        }
+        err = uv_accept(
+          reinterpret_cast<uv_stream_t*>(server_uv_handle),
+          reinterpret_cast<uv_stream_t*>(uv_handle_));
     
+        if (err != 0) {
+            delete uv_handle_;
+            uv_handle_ = nullptr;
+            free(buffer_);
+            throw MediaServerError("uv_accept() failed");
+        }
+        int namelen = (int)sizeof(local_name_);
+	    uv_tcp_getsockname(uv_handle_, &local_name_, &namelen);
+        uv_tcp_getpeername(uv_handle_, &peer_name_, &namelen);
+        close_ = false;
+    }
     virtual ~tcp_session()
     {
         close();
+        if (ssl_) {
+            delete ssl_;
+            ssl_ = nullptr;
+        }
         if (buffer_) {
             free(buffer_);
         }
@@ -98,6 +140,10 @@ public:
     }
 
     virtual void async_write(const char* data, size_t len) override {
+        if (ssl_enable_ && ssl_) {
+            ssl_->ssl_write((uint8_t*)data, len);
+            return;
+        }
         write_req_t* wr = (write_req_t*) malloc(sizeof(write_req_t));
 
         char* new_data = (char*)malloc(len);
@@ -146,6 +192,36 @@ public:
     }
 
 private:
+    virtual void plaintext_data_send(const char* data, size_t len) override {
+        write_req_t* wr = (write_req_t*) malloc(sizeof(write_req_t));
+
+        char* new_data = (char*)malloc(len);
+        memcpy(new_data, data, len);
+
+        wr->buf = uv_buf_init(new_data, len);
+        if (uv_write((uv_write_t*)wr, reinterpret_cast<uv_stream_t*>(uv_handle_), &wr->buf, 1, on_uv_write)) {
+            free(new_data);
+            throw MediaServerError("uv_write error");
+        }
+    }
+
+    virtual void plaintext_data_recv(const char* data, size_t len) override {
+        callback_->on_read(0, data, len);
+    }
+
+    virtual void encrypted_data_send(const char* data, size_t len) override {
+        write_req_t* wr = (write_req_t*) malloc(sizeof(write_req_t));
+
+        char* new_data = (char*)malloc(len);
+        memcpy(new_data, data, len);
+
+        wr->buf = uv_buf_init(new_data, len);
+        if (uv_write((uv_write_t*)wr, reinterpret_cast<uv_stream_t*>(uv_handle_), &wr->buf, 1, on_uv_write)) {
+            free(new_data);
+            throw MediaServerError("uv_write error");
+        }
+    }
+
     void on_alloc(uv_buf_t* buf) {
         buf->base = buffer_;
         buf->len  = buffer_size_;
@@ -159,6 +235,18 @@ private:
             callback_->on_read(-1, nullptr, 0);
             return;
         }
+
+        if (ssl_enable_) {
+            int ret = ssl_->handshake(buf->base, nread);
+            if (ret != 0) {
+                close();
+                return;
+            }
+            ssl_->handle_ssl_data_recv((uint8_t*)buf->base, nread);
+            async_read();
+            return;
+        }
+
         callback_->on_read(0, buf->base, nread);
     }
 
@@ -167,9 +255,18 @@ private:
       
         /* Free the read/write buffer and the request */
         wr = (write_req_t*) req;
-        if (callback_ && !close_) {
-            callback_->on_write(status, wr->buf.len);
+        if (ssl_enable_ && ssl_) {
+            if (ssl_->get_state() == TLS_DATA_RECV_STATE) {
+                if (callback_ && !close_) {
+                    callback_->on_write(status, wr->buf.len);
+                }
+            }
+        } else {
+            if (callback_ && !close_) {
+                callback_->on_write(status, wr->buf.len);
+            }
         }
+
         free(wr->buf.base);
         free(wr);
     }
@@ -179,9 +276,13 @@ private:
     uv_tcp_t* uv_handle_ = nullptr;
     struct sockaddr local_name_;
     struct sockaddr peer_name_;
-    char* buffer_ = nullptr;
-    size_t buffer_size_ = TCP_DEF_RECV_BUFFER_SIZE;
-    bool close_ = false;
+    char* buffer_        = nullptr;
+    size_t buffer_size_  = TCP_DEF_RECV_BUFFER_SIZE;
+    bool close_          = false;
+
+private:
+    bool ssl_enable_     = false;
+    ssl_server* ssl_     = nullptr;
 };
 
 inline static void on_uv_alloc(uv_handle_t* handle,
@@ -193,8 +294,7 @@ inline static void on_uv_alloc(uv_handle_t* handle,
     }
 }
 
-inline static void on_uv_read(uv_stream_t* handle, ssize_t nread, const uv_buf_t* buf)
-{
+inline static void on_uv_read(uv_stream_t* handle, ssize_t nread, const uv_buf_t* buf) {
     tcp_session* session = (tcp_session*)handle->data;
     if (session) {
         session->on_read(nread, buf);

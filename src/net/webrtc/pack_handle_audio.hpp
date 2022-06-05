@@ -20,7 +20,8 @@ public:
 public:
     virtual void input_rtp_packet(std::shared_ptr<rtp_packet_info> pkt_ptr) override
     {
-        std::shared_ptr<MEDIA_PACKET> audio_pkt_ptr = std::make_shared<MEDIA_PACKET>();
+        size_t pkt_size = pkt_ptr->pkt->get_payload_length() + 1024;
+        std::shared_ptr<MEDIA_PACKET> audio_pkt_ptr = std::make_shared<MEDIA_PACKET>(pkt_size);
         int64_t dts = (int64_t)pkt_ptr->pkt->get_timestamp();
 
         audio_pkt_ptr->av_type_    = MEDIA_AUDIO_TYPE;

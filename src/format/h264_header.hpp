@@ -182,7 +182,7 @@ inline bool annexb_to_nalus(uint8_t* data, size_t len, std::vector<std::shared_p
         p += 4;
         data_len -= 4;
 
-        std::shared_ptr<data_buffer> nalu_ptr = std::make_shared<data_buffer>();
+        std::shared_ptr<data_buffer> nalu_ptr = std::make_shared<data_buffer>(4 + nalu_len + 1024);
         uint8_t nalu_data[4];
         nalu_data[0] = 0x00;
         nalu_data[1] = 0x00;

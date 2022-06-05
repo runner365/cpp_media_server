@@ -20,6 +20,7 @@
 #include "utils/ipaddress.hpp"
 #include "utils/byte_crypto.hpp"
 #include "utils/timeex.hpp"
+#include "utils/config.hpp"
 #include <unordered_map>
 #include <map>
 #include <vector>
@@ -136,10 +137,10 @@ void single_udp_session_callback::on_read(const char* data, size_t data_size, ud
             session = get_webrtc_session(username);
             if (!session) {
                 log_errorf("fail to find session by username(%s)", username.c_str());
-            if (packet) {
-                delete packet;
-                packet = nullptr;
-            }
+                if (packet) {
+                    delete packet;
+                    packet = nullptr;
+                }
                 return;
             }
             log_infof("insert new session, username:%s, remote address:%s",
@@ -181,9 +182,16 @@ webrtc_session::webrtc_session(const std::string& roomId, const std::string& uid
 
     last_xr_ntp_.ntp_sec  = 0;
     last_xr_ntp_.ntp_frac = 0;
-    log_infof("webrtc_session construct username fragement:%s, user password:%s, roomid:%s, uid:%s, direction:%s",
+
+    bitrate_estimate_.SetMaxBitrate(Config::max_kbps() * 1000);
+    bitrate_estimate_.SetMinBitrate(Config::min_kbps() * 1000);
+    bitrate_estimate_.SetStartBitrate(Config::start_kbps() * 1000);
+
+    log_infof("webrtc_session construct username fragement:%s, user password:%s, \
+roomid:%s, uid:%s, direction:%s, max kbps:%d, min kbps:%d, start kbps:%d",
         username_fragment_.c_str(), user_pwd_.c_str(), roomId_.c_str(), uid_.c_str(),
-        (direction_ == RTC_DIRECTION_SEND) ? "send" : "receive");
+        (direction_ == RTC_DIRECTION_SEND) ? "send" : "receive",
+        Config::max_kbps(), Config::min_kbps(), Config::start_kbps());
 }
 
 webrtc_session::~webrtc_session() {
@@ -319,25 +327,25 @@ void webrtc_session::write_udp_data(uint8_t* data, size_t data_size, const udp_t
 
 void webrtc_session::on_recv_packet(const uint8_t* udp_data, size_t udp_data_len,
                             const udp_tuple& address) {
-    memcpy(pkt_data_, udp_data, udp_data_len);
+    assert(udp_data_len < RTP_PACKET_MAX_SIZE);
 
-    if (stun_packet::is_stun(pkt_data_, udp_data_len)) {
+    if (stun_packet::is_stun(udp_data, udp_data_len)) {
         try {
-            stun_packet* packet = stun_packet::parse((uint8_t*)pkt_data_, udp_data_len);
+            stun_packet* packet = stun_packet::parse((uint8_t*)udp_data, udp_data_len);
             on_handle_stun_packet(packet, address);
             delete packet;
         }
         catch(const std::exception& e) {
             log_errorf("handle stun packet exception:%s", e.what());
         }
-    } else if (is_rtcp(pkt_data_, udp_data_len)) {
-        on_handle_rtcp_data(pkt_data_, udp_data_len, address);
-    } else if (is_rtp(pkt_data_, udp_data_len)) {
-        on_handle_rtp_data(pkt_data_, udp_data_len, address);
-    } else if (rtc_dtls::is_dtls(pkt_data_, udp_data_len)) {
+    } else if (is_rtcp(udp_data, udp_data_len)) {
+        on_handle_rtcp_data(udp_data, udp_data_len, address);
+    } else if (is_rtp(udp_data, udp_data_len)) {
+        on_handle_rtp_data(udp_data, udp_data_len, address);
+    } else if (rtc_dtls::is_dtls(udp_data, udp_data_len)) {
         log_infof("receive dtls packet len:%lu, remote:%s",
                 udp_data_len, address.to_string().c_str());
-        on_handle_dtls_data(pkt_data_, udp_data_len, address);
+        on_handle_dtls_data(udp_data, udp_data_len, address);
     } else {
         log_errorf("receive unkown packet len:%lu, remote:%s",
                 udp_data_len, address.to_string().c_str());
@@ -426,13 +434,16 @@ void webrtc_session::on_handle_rtp_data(const uint8_t* data, size_t data_len, co
     uint32_t abs_time = 0;
     bool ret_abs_time = false;
     int abstime_id = publisher_ptr->get_abstime_id();
+    size_t payload_len = pkt->get_payload_length();
     pkt->set_abs_time_extension_id((uint8_t)abstime_id);
     ret_abs_time = pkt->read_abs_time(abs_time);
     publisher_ptr->on_handle_rtppacket(pkt);
+
+    delete pkt;
     
     if (ret_abs_time) {
         int64_t arrivalTimeMs = now_millisec();
-        bitrate_estimate_.IncomingPacket(arrivalTimeMs, pkt->get_payload_length(), ssrc, abs_time);
+        bitrate_estimate_.IncomingPacket(arrivalTimeMs, payload_len, ssrc, abs_time);
         log_debugf("rtp media:%s abs_time:%u, ssrc:%u",
             publisher_ptr->get_media_type().c_str(), abs_time, ssrc);
     }
@@ -618,17 +629,20 @@ void webrtc_session::handle_rtcp_psfb(uint8_t* data, size_t data_len) {
                 log_infof("receive keyframe request: %s", pspli_pkt->dump().c_str());
                 if (direction_ != RTC_DIRECTION_SEND) {
                     log_errorf("webrtc session recv direction get rtcp ps pli....");
+                    delete pspli_pkt;
                     return;
                 }
                 std::shared_ptr<rtc_subscriber> subscriber_ptr = get_subscriber(pspli_pkt->get_media_ssrc());
                 if (!subscriber_ptr) {
                     log_errorf("get subscriber error, media ssrc:%u, sender ssrc:%u",
                             pspli_pkt->get_media_ssrc(), pspli_pkt->get_sender_ssrc());
+                    delete pspli_pkt;
                     return;
                 }
                 subscriber_ptr->update_alive(now_ms);
                 subscriber_ptr->request_keyframe();
-                
+
+                delete pspli_pkt;
                 break;
             }
             case FB_PS_AFB:
@@ -656,8 +670,7 @@ void webrtc_session::handle_rtcp_psfb(uint8_t* data, size_t data_len) {
                 break;
             }
         }
-    }
-    catch(const std::exception& e) {
+    } catch(const std::exception& e) {
         log_errorf("handle rtcp ps feedback error:%s", e.what());
     }
     
@@ -678,10 +691,12 @@ void webrtc_session::handle_rtcp_rtpfb(uint8_t* data, size_t data_len) {
                 uint32_t media_ssrc = nack_pkt->get_media_ssrc();
                 std::shared_ptr<rtc_subscriber> subscriber_ptr = get_subscriber(media_ssrc);
                 if (!subscriber_ptr) {
+                    delete nack_pkt;
                     return;
                 }
                 subscriber_ptr->update_alive(now_ms);
                 subscriber_ptr->handle_fb_rtp_nack(nack_pkt);
+                delete nack_pkt;
                 break;
             }
             default:

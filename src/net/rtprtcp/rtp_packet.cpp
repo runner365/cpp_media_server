@@ -6,6 +6,7 @@
 #include <arpa/inet.h>
 #include <sstream>
 #include <cstring>
+#include <assert.h>
 
 rtp_packet* rtp_packet::parse(uint8_t* data, size_t len) {
     rtp_common_header* header = (rtp_common_header*)data;
@@ -83,13 +84,26 @@ rtp_packet::~rtp_packet() {
     }
 }
 
-rtp_packet* rtp_packet::clone() {
-    uint8_t* new_data = new uint8_t[RTP_PACKET_MAX_SIZE];
+rtp_packet* rtp_packet::clone(uint8_t* buffer) {
+    uint8_t* new_data = nullptr;
+    
+    if (buffer) {
+        new_data = buffer;
+    } else {
+        new_data = new uint8_t[RTP_PACKET_MAX_SIZE];
+    }
+    
+    assert(this->get_data_length() < RTP_PACKET_MAX_SIZE);
     memcpy(new_data, this->get_data(), this->get_data_length());
 
     rtp_packet* new_pkt = rtp_packet::parse(new_data, this->get_data_length());
 
-    new_pkt->need_delete = true;
+    if (buffer) {
+        new_pkt->need_delete = false;
+    } else {
+        new_pkt->need_delete = true;
+    }
+    
     new_pkt->mid_extension_id_ = this->mid_extension_id_;
     new_pkt->abs_time_extension_id_ = this->abs_time_extension_id_;
 

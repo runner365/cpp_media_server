@@ -435,7 +435,10 @@ void room_service::on_request(const std::string& id, const std::string& method, 
         handle_subscribe(id, method, data, feedback_p, ws_session);
     } else if (method == "unsubscribe") {
         handle_unsubscribe(id, method, data, feedback_p, ws_session);
-    } else {
+    } else if (method == "heartbeat") {
+        handle_heartbeat(id, method, data, feedback_p, ws_session);
+    }
+    else {
         log_infof("receive unkown method:%s", method.c_str());
         feedback_p->reject(id, METHOD_ERROR, "unkown method", ws_session);
     }
@@ -595,7 +598,6 @@ void room_service::on_rtppacket_publisher2room(rtc_publisher* publisher, rtp_pac
             subscribe_item.second->send_rtp_packet(roomId_, mediatype, publish_id, pkt);
         }
     }
-    delete pkt;
     
     return;
 }
@@ -1913,6 +1915,37 @@ void room_service::handle_http_join(const std::string& uid) {
 
     notify_userin_to_others(uid, "whip");
 
+    return;
+}
+
+void room_service::handle_heartbeat(const std::string& id,
+                const std::string& method,
+                const std::string& data, 
+                protoo_request_interface* feedback_p,
+                void* ws_session) {
+    std::shared_ptr<user_info> user_ptr;
+    json data_json = json::parse(data);
+
+    log_debugf("heart beat json:%s", data_json.dump().c_str());
+    std::string uid = get_uid_by_json(data_json);
+    if (uid.empty()) {
+        feedback_p->reject(id, UID_ERROR, "uid field does not exist", ws_session);
+        return;
+    }
+
+    user_ptr = get_user_info(uid);
+    if (!user_ptr) {
+        feedback_p->reject(id, UID_ERROR, "uid doesn't existed", ws_session);
+        return;
+    }
+    user_ptr->update_alive(now_millisec());
+    auto resp_json = json::object();
+    resp_json["code"] = 0;
+    resp_json["desc"] = "ok";
+
+    std::string resp_data = resp_json.dump();
+    log_debugf("heart beat response:%s", resp_data.c_str());
+    feedback_p->accept(id, resp_data, ws_session);
     return;
 }
 

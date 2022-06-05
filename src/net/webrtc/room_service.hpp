@@ -99,7 +99,8 @@ private:
     void handle_webrtc_subscribe(const std::string& id, const json& data_json, protoo_request_interface* feedback_p, void* ws_session);
     void handle_unsubscribe(const std::string& id, const std::string& method,
                 const std::string& data, protoo_request_interface* feedback_p, void* ws_session);
-
+    void handle_heartbeat(const std::string& id, const std::string& method,
+                const std::string& data, protoo_request_interface* feedback_p, void* ws_session);
 private:
     std::shared_ptr<live_user_info> live_user_join(const std::string& roomId, const std::string& uid);
     int live_publish(const std::string& uid,

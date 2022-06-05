@@ -11,12 +11,15 @@ using json = nlohmann::json;
 
 static const size_t RTP_VIDEO_BUFFER_MAX = 800;
 static const size_t RTP_AUDIO_BUFFER_MAX = 100;
+static const size_t STORAGE_MAX_SIZE     = 2000;
 
 rtp_send_stream::rtp_send_stream(const std::string& media_type, bool nack_enable,
                         rtc_stream_callback* cb):media_type_(media_type)
                                                 , nack_enable_(nack_enable)
                                                 , cb_(cb)
 {
+    storages_.resize(STORAGE_MAX_SIZE);
+    memset((void*)rtp_packet_array, 0, sizeof(rtp_packet_array));
 }
 
 rtp_send_stream::~rtp_send_stream() {
@@ -43,33 +46,42 @@ void rtp_send_stream::get_statics(json& json_data) {
 void rtp_send_stream::save_buffer(rtp_packet* input_pkt) {
     uint16_t seq = input_pkt->get_seq();
     size_t buffer_max = (media_type_ == "video") ? RTP_VIDEO_BUFFER_MAX : RTP_AUDIO_BUFFER_MAX;
-    NACK_PACKET nack_pkt;
+    NACK_PACKET* nack_pkt = new NACK_PACKET();
 
-    rtp_packet* pkt = input_pkt->clone();
+    size_t storage_index = seq % STORAGE_MAX_SIZE;
+    rtp_packet* pkt = input_pkt->clone(storages_[storage_index].data);
 
-    nack_pkt.last_sent_timestamp = 0;
-    nack_pkt.sent_count          = 0;
-    nack_pkt.packet              = pkt;
+    nack_pkt->last_sent_timestamp = 0;
+    nack_pkt->sent_count          = 0;
+    nack_pkt->packet              = pkt;
 
-    auto iter = rtp_buffer_map_.find(seq);
-    if (iter != rtp_buffer_map_.end()) {
-        delete iter->second.packet;
-        rtp_buffer_map_.erase(iter);
+    if (rtp_packet_array[seq] != nullptr) {
+        if (rtp_packet_array[seq]->packet) {
+            delete rtp_packet_array[seq]->packet;
+        }
+        delete rtp_packet_array[seq];
+        rtp_packet_array[seq] = nullptr;
     }
 
-    if (rtp_buffer_map_.empty()) {
+    if (first_seq_ < 0) {
         first_seq_ = seq;
     }
-    rtp_buffer_map_[seq] = nack_pkt;
+    rtp_packet_array[seq] = nack_pkt;
 
-    while(rtp_buffer_map_.size() > buffer_max) {
-        auto iter = rtp_buffer_map_.find(first_seq_);
-        delete iter->second.packet;
-        auto next_iter = rtp_buffer_map_.erase(iter);
-        if (next_iter == rtp_buffer_map_.end()) {
-            next_iter = rtp_buffer_map_.begin();
+    pkt_count_++;
+
+    if (pkt_count_ > (int)buffer_max) {
+        if (rtp_packet_array[first_seq_] != nullptr) {
+            if (rtp_packet_array[first_seq_]->packet) {
+                delete rtp_packet_array[first_seq_]->packet;
+            }
+            delete rtp_packet_array[first_seq_];
+            rtp_packet_array[first_seq_] = nullptr;
         }
-        first_seq_ = next_iter->first;
+        first_seq_ = (first_seq_ + 1) % 65535;
+        if (pkt_count_ > 0) {
+            pkt_count_--;
+        }
     }
 }
 
@@ -86,61 +98,60 @@ void rtp_send_stream::on_send_rtp_packet(rtp_packet* pkt) {
 }
 
 void rtp_send_stream::clear_buffer() {
-    while (!rtp_buffer_map_.empty())
-    {
-        auto iter = rtp_buffer_map_.begin();
-        delete iter->second.packet;
-        rtp_buffer_map_.erase(iter);
+    for (size_t i = 0; i < 65535; i++) {
+        auto* nack_item = rtp_packet_array[i];
+        if (nack_item) {
+            if (nack_item->packet) {
+                delete nack_item->packet;
+            }
+            delete nack_item;
+        }
+        rtp_packet_array[i] = nullptr;
     }
+    pkt_count_ = 0;
 }
 
 void rtp_send_stream::handle_fb_rtp_nack(rtcp_fb_nack* nack_pkt) {
-    if (rtp_buffer_map_.size() == 0) {
-        return;
-    }
-
     std::vector<uint16_t> lost_seqs = nack_pkt->get_lost_seqs();
     int64_t now_ms = now_millisec();
-    auto first_iter = rtp_buffer_map_.begin();
-    auto last_iter = rtp_buffer_map_.rbegin();
 
-    std::stringstream ss;
+    //std::stringstream ss;
+    //ss << "[";
+    //for (auto seq : lost_seqs) {
+    //    ss << " " << seq;
+    //}
+    //ss << " ]";
+    //log_infof("media ssrc:%u, nack lost seqs:%s, avg rtt:%.02f",
+    //    nack_pkt->get_media_ssrc(), ss.str().c_str(), avg_rtt_);
 
-    ss << "[";
     for (auto seq : lost_seqs) {
-        ss << " " << seq;
-    }
-    ss << " ]";
-    log_infof("media ssrc:%u, nack lost seqs:%s, avg rtt:%.02f",
-        nack_pkt->get_media_ssrc(), ss.str().c_str(), avg_rtt_);
-    for (auto seq : lost_seqs) {
-        auto pkt_iter = rtp_buffer_map_.find(seq);
-        if (pkt_iter == rtp_buffer_map_.end()) {
-            log_errorf("the lost sequence(%d) is missed, first seq:%d, last seq:%d, size:%lu, hearder seq:%d, avg rtt:%.02f",
-                seq, first_iter->first, last_iter->first, rtp_buffer_map_.size(), first_seq_, avg_rtt_);
+        NACK_PACKET* nack_item = rtp_packet_array[seq];
+        if (nack_item == nullptr) {
+            log_warnf("nack seq[%d] can't be found", seq);
             continue;
         }
-        if (pkt_iter->second.last_sent_timestamp == 0) {
-            pkt_iter->second.last_sent_timestamp = now_ms;
-            pkt_iter->second.sent_count = 1;
+        
+        if (nack_item->last_sent_timestamp == 0) {
+            nack_item->last_sent_timestamp = now_ms;
+            nack_item->sent_count = 1;
         } else {
-            int64_t diff_t = now_ms - pkt_iter->second.last_sent_timestamp;
+            int64_t diff_t = now_ms - nack_item->last_sent_timestamp;
             if ((diff_t < avg_rtt_) && (avg_rtt_ <= 150)) {
                 log_warnf("resend is too often, seq:%d, diff:%ld",
-                    pkt_iter->second.packet->get_seq(), diff_t);
+                    nack_item->packet->get_seq(), diff_t);
                 continue;
             }
             
-            pkt_iter->second.sent_count++;
-            if (pkt_iter->second.sent_count > RETRANSMIT_MAX_COUNT) {
+            nack_item->sent_count++;
+            if (nack_item->sent_count > RETRANSMIT_MAX_COUNT) {
                 log_errorf("the lost sequence(%d) has been retransmited over times(%d), avg rtt:%.02f",
-                        seq, pkt_iter->second.sent_count, avg_rtt_);
+                        seq, nack_item->sent_count, avg_rtt_);
                 continue;
             }
-            pkt_iter->second.last_sent_timestamp = now_ms;
+            nack_item->last_sent_timestamp = now_ms;
         }
-        cb_->stream_send_rtp(pkt_iter->second.packet->get_data(),
-                            pkt_iter->second.packet->get_data_length());
+        cb_->stream_send_rtp(nack_item->packet->get_data(),
+                            nack_item->packet->get_data_length());
     }
 }
 

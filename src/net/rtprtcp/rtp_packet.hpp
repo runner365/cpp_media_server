@@ -112,7 +112,7 @@ public:
 
 public:
     static rtp_packet* parse(uint8_t* data, size_t len);
-    rtp_packet* clone();
+    rtp_packet* clone(uint8_t* buffer = nullptr);
 
 private:
     void parse_ext();

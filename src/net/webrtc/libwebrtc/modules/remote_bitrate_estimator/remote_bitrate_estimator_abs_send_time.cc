@@ -170,8 +170,15 @@ bool RemoteBitrateEstimatorAbsSendTime::LatestEstimate(
 }
 
 void RemoteBitrateEstimatorAbsSendTime::SetMinBitrate(int min_bitrate_bps) {
-  // Called from both the configuration thread and the network thread. Shouldn't
-  // be called from the network thread in the future.
-  // remote_rate_.SetMinBitrate(DataRate::bps(min_bitrate_bps));
+  rate_ctrl_.set_min_bitrate(min_bitrate_bps);
 }
+
+void RemoteBitrateEstimatorAbsSendTime::SetMaxBitrate(int max_bitrate_bps) {
+  rate_ctrl_.set_max_bitrate(max_bitrate_bps);
+}
+
+void RemoteBitrateEstimatorAbsSendTime::SetStartBitrate(int start_bitrate_bps) {
+  rate_ctrl_.set_start_bitrate(start_bitrate_bps);
+}
+
 }  // namespace webrtc

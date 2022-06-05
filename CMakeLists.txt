@@ -45,78 +45,78 @@ include_directories(src
 link_directories(${CMAKE_BINARY_DIR}/output/lib /usr/local/lib64 /usr/local/lib)
 add_subdirectory(3rdparty)
 
-add_executable(echo_demo
-            src/net/tcp/echo_demo.cpp
-            src/utils/logger.cpp
-            src/utils/data_buffer.cpp)
-
-IF (APPLE)
-target_link_libraries(echo_demo dl z m pthread uv)
-ELSEIF (UNIX)
-target_link_libraries(echo_demo rt dl z m pthread uv)
-ENDIF ()
-
-add_executable(flv_demux_demo
-            ./src/format/flv/flv_demux.cpp
-            ./src/format/flv/flv_demux_demo.cpp
-            ./src/utils/logger.cpp
-            ./src/utils/data_buffer.cpp
-            ./src/utils/byte_stream.cpp)
-IF (APPLE)
-target_link_libraries(flv_demux_demo pthread dl z m)
-ELSEIF (UNIX)
-target_link_libraries(flv_demux_demo pthread rt dl z m)
-ENDIF ()
-
-add_executable(flv_mux_demo
-            src/format/flv/flv_mux.cpp
-            src/format/flv/flv_demux.cpp
-            src/format/flv/flv_mux_demo.cpp
-            src/utils/logger.cpp
-            src/utils/data_buffer.cpp
-            src/utils/byte_stream.cpp)
-IF (APPLE)
-target_link_libraries(flv_mux_demo pthread dl z m)
-ELSEIF (UNIX)
-target_link_libraries(flv_mux_demo pthread rt dl z m)
-ENDIF ()
-
-add_executable(mpegts_demux_demo
-            src/format/mpegts/mpegts_demux_demo.cpp
-            src/format/mpegts/mpegts_demux.cpp
-            src/utils/logger.cpp
-            src/utils/data_buffer.cpp
-            src/utils/byte_stream.cpp)
-IF (APPLE)
-target_link_libraries(mpegts_demux_demo pthread dl z m)
-ELSEIF (UNIX)
-target_link_libraries(mpegts_demux_demo pthread rt dl z m)
-ENDIF ()
-
-add_executable(mpegts_mux_demo
-            src/format/mpegts/mpegts_mux_demo.cpp
-            src/format/mpegts/mpegts_mux.cpp
-            src/format/flv/flv_demux.cpp
-            src/utils/logger.cpp
-            src/utils/data_buffer.cpp
-            src/utils/byte_stream.cpp)
-IF (APPLE)
-target_link_libraries(mpegts_mux_demo pthread dl z m)
-ELSEIF (UNIX)
-target_link_libraries(mpegts_mux_demo pthread rt dl z m)
-ENDIF ()
-
-add_executable(http_server_demo
-            src/net/http/http_server_demo.cpp
-            src/net/http/http_server.cpp
-            src/net/http/http_session.cpp
-            src/utils/data_buffer.cpp
-            src/utils/logger.cpp)
-IF (APPLE)
-target_link_libraries(http_server_demo  dl z m pthread uv)
-ELSEIF (UNIX)
-target_link_libraries(http_server_demo rt dl z m pthread uv)
-ENDIF ()
+#add_executable(echo_demo
+#            src/net/tcp/echo_demo.cpp
+#            src/utils/logger.cpp
+#            src/utils/data_buffer.cpp)
+#
+#IF (APPLE)
+#target_link_libraries(echo_demo dl z m ssl crypto pthread uv)
+#ELSEIF (UNIX)
+#target_link_libraries(echo_demo rt dl z m ssl crypto pthread uv)
+#ENDIF ()
+#
+#add_executable(flv_demux_demo
+#            ./src/format/flv/flv_demux.cpp
+#            ./src/format/flv/flv_demux_demo.cpp
+#            ./src/utils/logger.cpp
+#            ./src/utils/data_buffer.cpp
+#            ./src/utils/byte_stream.cpp)
+#IF (APPLE)
+#target_link_libraries(flv_demux_demo pthread dl z m)
+#ELSEIF (UNIX)
+#target_link_libraries(flv_demux_demo pthread rt dl z m)
+#ENDIF ()
+#
+#add_executable(flv_mux_demo
+#            src/format/flv/flv_mux.cpp
+#            src/format/flv/flv_demux.cpp
+#            src/format/flv/flv_mux_demo.cpp
+#            src/utils/logger.cpp
+#            src/utils/data_buffer.cpp
+#            src/utils/byte_stream.cpp)
+#IF (APPLE)
+#target_link_libraries(flv_mux_demo pthread dl z m)
+#ELSEIF (UNIX)
+#target_link_libraries(flv_mux_demo pthread rt dl z m)
+#ENDIF ()
+#
+#add_executable(mpegts_demux_demo
+#            src/format/mpegts/mpegts_demux_demo.cpp
+#            src/format/mpegts/mpegts_demux.cpp
+#            src/utils/logger.cpp
+#            src/utils/data_buffer.cpp
+#            src/utils/byte_stream.cpp)
+#IF (APPLE)
+#target_link_libraries(mpegts_demux_demo pthread dl z m)
+#ELSEIF (UNIX)
+#target_link_libraries(mpegts_demux_demo pthread rt dl z m)
+#ENDIF ()
+#
+#add_executable(mpegts_mux_demo
+#            src/format/mpegts/mpegts_mux_demo.cpp
+#            src/format/mpegts/mpegts_mux.cpp
+#            src/format/flv/flv_demux.cpp
+#            src/utils/logger.cpp
+#            src/utils/data_buffer.cpp
+#            src/utils/byte_stream.cpp)
+#IF (APPLE)
+#target_link_libraries(mpegts_mux_demo pthread dl z m)
+#ELSEIF (UNIX)
+#target_link_libraries(mpegts_mux_demo pthread rt dl z m)
+#ENDIF ()
+#
+#add_executable(http_server_demo
+#            src/net/http/http_server_demo.cpp
+#            src/net/http/http_server.cpp
+#            src/net/http/http_session.cpp
+#            src/utils/data_buffer.cpp
+#            src/utils/logger.cpp)
+#IF (APPLE)
+#target_link_libraries(http_server_demo  dl z m ssl crypto pthread uv)
+#ELSEIF (UNIX)
+#target_link_libraries(http_server_demo rt dl z m ssl crypto pthread uv)
+#ENDIF ()
 #
 #add_executable(https_server_demo
 #            src/net/http/https_server_demo.cpp
@@ -125,49 +125,49 @@ ENDIF ()
 #            src/utils/data_buffer.cpp
 #            src/utils/logger.cpp)
 #IF (APPLE)
-#target_link_libraries(https_server_demo dl z m ssl crypto pthread boost_thread boost_system)
+#target_link_libraries(https_server_demo dl z m ssl crypto pthread uv)
 #ELSEIF (UNIX)
-#target_link_libraries(https_server_demo rt dl z m ssl crypto pthread boost_thread boost_system)
+#target_link_libraries(https_server_demo rt dl z m ssl crypto pthread uv)
 #ENDIF ()
-
-add_executable(rtmp_play_demo
-            src/net/rtmp/client_demo/rtmp_play_demo.cpp
-            src/net/rtmp/rtmp_client_session.cpp
-            src/net/rtmp/rtmp_session_base.cpp
-            src/net/rtmp/rtmp_control_handler.cpp
-            src/net/rtmp/rtmp_handshake.cpp
-            src/net/rtmp/chunk_stream.cpp
-            src/format/flv/flv_mux.cpp
-            src/utils/logger.cpp
-            src/utils/data_buffer.cpp
-            src/utils/byte_stream.cpp)
-add_dependencies(rtmp_play_demo openssl)
-
-IF (APPLE)
-target_link_libraries(rtmp_play_demo pthread dl z m ssl crypto pthread uv)
-ELSEIF (UNIX)
-target_link_libraries(rtmp_play_demo pthread rt dl z m ssl crypto pthread uv)
-ENDIF ()
-
-add_executable(rtmp_publish_demo
-            src/net/rtmp/client_demo/rtmp_publish_demo.cpp
-            src/net/rtmp/rtmp_client_session.cpp
-            src/net/rtmp/rtmp_session_base.cpp
-            src/net/rtmp/rtmp_control_handler.cpp
-            src/net/rtmp/rtmp_handshake.cpp
-            src/net/rtmp/chunk_stream.cpp
-            src/format/flv/flv_demux.cpp
-            src/format/flv/flv_mux.cpp
-            src/utils/logger.cpp
-            src/utils/data_buffer.cpp
-            src/utils/byte_stream.cpp)
-add_dependencies(rtmp_publish_demo openssl)
-
-IF (APPLE)
-target_link_libraries(rtmp_publish_demo pthread dl z m ssl crypto pthread uv)
-ELSEIF (UNIX)
-target_link_libraries(rtmp_publish_demo pthread rt dl z m ssl crypto pthread uv)
-ENDIF ()
+#
+#add_executable(rtmp_play_demo
+#            src/net/rtmp/client_demo/rtmp_play_demo.cpp
+#            src/net/rtmp/rtmp_client_session.cpp
+#            src/net/rtmp/rtmp_session_base.cpp
+#            src/net/rtmp/rtmp_control_handler.cpp
+#            src/net/rtmp/rtmp_handshake.cpp
+#            src/net/rtmp/chunk_stream.cpp
+#            src/format/flv/flv_mux.cpp
+#            src/utils/logger.cpp
+#            src/utils/data_buffer.cpp
+#            src/utils/byte_stream.cpp)
+#add_dependencies(rtmp_play_demo openssl)
+#
+#IF (APPLE)
+#target_link_libraries(rtmp_play_demo pthread dl z m ssl crypto pthread uv)
+#ELSEIF (UNIX)
+#target_link_libraries(rtmp_play_demo pthread rt dl z m ssl crypto pthread uv)
+#ENDIF ()
+#
+#add_executable(rtmp_publish_demo
+#            src/net/rtmp/client_demo/rtmp_publish_demo.cpp
+#            src/net/rtmp/rtmp_client_session.cpp
+#            src/net/rtmp/rtmp_session_base.cpp
+#            src/net/rtmp/rtmp_control_handler.cpp
+#            src/net/rtmp/rtmp_handshake.cpp
+#            src/net/rtmp/chunk_stream.cpp
+#            src/format/flv/flv_demux.cpp
+#            src/format/flv/flv_mux.cpp
+#            src/utils/logger.cpp
+#            src/utils/data_buffer.cpp
+#            src/utils/byte_stream.cpp)
+#add_dependencies(rtmp_publish_demo openssl)
+#
+#IF (APPLE)
+#target_link_libraries(rtmp_publish_demo pthread dl z m ssl crypto pthread uv)
+#ELSEIF (UNIX)
+#target_link_libraries(rtmp_publish_demo pthread rt dl z m ssl crypto pthread uv)
+#ENDIF ()
 
 add_executable(cpp_media_server
             src/media_server.cpp

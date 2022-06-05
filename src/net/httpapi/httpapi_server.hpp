@@ -7,7 +7,7 @@ class httpapi_server
 {
 public:
     httpapi_server(uv_loop_t* loop, uint16_t port);
-    //httpapi_server(boost::asio::io_context& io_ctx, uint16_t port, const std::string& cert_file, const std::string& key_file);
+    httpapi_server(uv_loop_t* loop, uint16_t port, const std::string& key_file, const std::string& cert_file);
     ~httpapi_server();
 
 private:

@@ -5,6 +5,7 @@
 #include <stdarg.h>
 #include <cstdio> // std::snprintf()
 #include <stdexcept>
+#include <assert.h>
 
 #define LOGGER_BUFFER_SIZE (20*1024)
 
@@ -124,5 +125,15 @@ public:
         int exp_ret_len = std::snprintf(exp_buffer, sizeof(exp_buffer), desc, ##__VA_ARGS__); \
         exp_buffer[exp_ret_len] = 0; \
         throw MediaServerError(exp_buffer); \
-    } while (false)
-#endif
+    } while (false) \
+
+#define CMS_ASSERT(A, desc, ...) \
+    if (!(A)) {\
+        char assert_buffer[1024]; \
+        int assert_ret_len = std::snprintf(assert_buffer, sizeof(assert_buffer), desc, ##__VA_ARGS__); \
+        assert_buffer[assert_ret_len] = 0; \
+        log_errorf("%s", assert_buffer); \
+        assert(0); \
+    } \
+
+#endif //LOGGER_HPP

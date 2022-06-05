@@ -8,6 +8,7 @@
 #include "format/audio_pub.hpp"
 #include "media_stream_manager.hpp"
 #include <stdlib.h>
+#include <assert.h>
 
 static int64_t s_last_ts = 0;
 
@@ -237,6 +238,10 @@ void user_info::on_rtmp_camera_callback(MEDIA_PACKET_PTR pkt_ptr) {
         }
         return;
     }
+
+    CMS_ASSERT((pkt_ptr->buffer_ptr_->data_len() < 200*1024),
+                "buffer size:%lu is too large",
+                pkt_ptr->buffer_ptr_->data_len());
 
     //log_infof("media type:%s, origin dts:%ld, dts:%ld", 
     //        avtype_tostring(pkt_ptr->av_type_).c_str(), org_dts, pkt_ptr->dts_);

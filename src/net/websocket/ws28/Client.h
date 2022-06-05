@@ -8,7 +8,7 @@
 #include <map>
 
 #include "Headers.h"
-#include "TLS.h"
+#include "net/tcp/ssl_server.hpp"
 
 namespace ws28 {
 	namespace detail {
@@ -26,7 +26,7 @@ namespace ws28 {
 	typedef std::unique_ptr<uv_tcp_t, detail::SocketDeleter> SocketHandle;
 	
 	class Server;
-	class Client {
+	class Client : public ssl_server_callbackI {
 		enum { MAX_HEADER_SIZE = 10 };
 		enum : unsigned char { NO_FRAMES = 0 };
 	public:
@@ -58,6 +58,8 @@ namespace ws28 {
 		};
 		
 		Client(Server *server, SocketHandle socket);
+		Client(Server *server, SocketHandle socket,
+		    const std::string& key_file, const std::string& cert_file);
 		
 		Client(const Client &other) = delete;
 		Client& operator=(Client &other) = delete;
@@ -67,11 +69,10 @@ namespace ws28 {
 		void EncryptAndWrite(const char *data, size_t len);
 		
 		void OnRawSocketData(char *data, size_t len);
-		void OnSocketData(char *data, size_t len);
+		void OnSocketData(const char *data, size_t len);
 		void ProcessDataFrame(uint8_t opcode, char *data, size_t len);
 		
 		void InitSecure();
-		void FlushTLS();
 		
 		void Write(const char *data);
 		void Write(const char *data, size_t len);
@@ -90,7 +91,13 @@ namespace ws28 {
 		inline bool IsValidUTF8(const char *str, size_t len){ return true; }
 		
 		inline bool IsBuildingFrames(){ return m_iFrameOpcode != NO_FRAMES; }
-		
+
+private:
+    virtual void plaintext_data_send(const char* data, size_t len) override;
+    virtual void plaintext_data_recv(const char* data, size_t len) override;
+    virtual void encrypted_data_send(const char* data, size_t len) override;
+
+private:
 		Server *m_pServer;
 		SocketHandle m_Socket;
 		void *m_pUserData = nullptr;
@@ -100,7 +107,11 @@ namespace ws28 {
 		bool m_bUsingAlternativeProtocol = false;
 		char m_IP[46];
 		
-		std::unique_ptr<TLS> m_pTLS;
+		bool ssl_enable_ = false;
+		std::string key_file_;
+		std::string cert_file_;
+
+		std::unique_ptr<ssl_server> m_pTLS;
 		
 		std::vector<char> m_Buffer;
 		

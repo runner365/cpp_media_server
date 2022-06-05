@@ -5,7 +5,6 @@
 #include "logger.hpp"
 #include "utils/byte_stream.hpp"
 #include "transcode/transcode.hpp"
-#include "net/websocket/ws_session.hpp"
 #include <sstream>
 #include <assert.h>
 
@@ -67,10 +66,18 @@ int av_outputer::output_packet(MEDIA_PACKET_PTR pkt_ptr) {
     return ret;
 }
 
-flv_websocket::flv_websocket(uv_loop_t* loop, uint16_t port):server_(loop, port, this)
-                        , demuxer_(&outputer_)
+flv_websocket::flv_websocket(uv_loop_t* loop,
+                        uint16_t port):server_(loop, port, this)
+                                    , demuxer_(&outputer_)
 {
 
+}
+
+flv_websocket::flv_websocket(uv_loop_t* loop, uint16_t port,
+                const std::string& key_file,
+                const std::string& cert_file):server_(loop, port, this, key_file, cert_file)
+                                    , demuxer_(&outputer_)
+{
 }
 
 flv_websocket::~flv_websocket()

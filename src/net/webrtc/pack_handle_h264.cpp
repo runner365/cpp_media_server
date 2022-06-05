@@ -61,8 +61,9 @@ void pack_handle_h264::input_rtp_packet(std::shared_ptr<rtp_packet_info> pkt_ptr
 
     if ((nal_type >= 1) && (nal_type <= 23)) {//single nalu
         int64_t dts = pkt_ptr->pkt->get_timestamp();
+        size_t pkt_size = sizeof(NAL_START_CODE) + pkt_ptr->pkt->get_payload_length() + 1024;
 
-        MEDIA_PACKET_PTR h264_pkt_ptr = std::make_shared<MEDIA_PACKET>();
+        MEDIA_PACKET_PTR h264_pkt_ptr = std::make_shared<MEDIA_PACKET>(pkt_size);
 
         h264_pkt_ptr->buffer_ptr_->append_data((char*)NAL_START_CODE, sizeof(NAL_START_CODE));
         h264_pkt_ptr->buffer_ptr_->append_data((char*)payload_data, pkt_ptr->pkt->get_payload_length());
@@ -116,7 +117,7 @@ void pack_handle_h264::input_rtp_packet(std::shared_ptr<rtp_packet_info> pkt_ptr
         packets_queue_.push_back(pkt_ptr);
 
         if (start_flag_ && end_flag_) {
-            MEDIA_PACKET_PTR h264_pkt_ptr = std::make_shared<MEDIA_PACKET>();
+            MEDIA_PACKET_PTR h264_pkt_ptr = std::make_shared<MEDIA_PACKET>(50*1024);
             int64_t dts = 0;
             bool ok = demux_fua(h264_pkt_ptr, dts);
             if (ok) {
@@ -207,7 +208,8 @@ bool pack_handle_h264::demux_stapA(std::shared_ptr<rtp_packet_info> pkt_ptr) {
                 start_offset,  end_offset);
             return false;
         }
-        MEDIA_PACKET_PTR h264_pkt_ptr = std::make_shared<MEDIA_PACKET>();
+        size_t pkt_size = sizeof(NAL_START_CODE) + end_offset - start_offset + 1024;
+        MEDIA_PACKET_PTR h264_pkt_ptr = std::make_shared<MEDIA_PACKET>(pkt_size);
 
         h264_pkt_ptr->buffer_ptr_->append_data((char*)NAL_START_CODE, sizeof(NAL_START_CODE));
         h264_pkt_ptr->buffer_ptr_->append_data((char*)payload_data + start_offset, end_offset - start_offset);

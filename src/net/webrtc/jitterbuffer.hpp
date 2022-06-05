@@ -11,6 +11,8 @@
 #include <memory>
 #include <uv.h>
 
+#define BUFFER_POOL_SIZE 2000
+
 class jitterbuffer : public timer_interface
 {
 public:
@@ -44,6 +46,10 @@ private:
 private:
     int64_t output_seq_ = 0;
     int64_t report_lost_ts_ = -1;
+
+private:
+    uint8_t* pkt_buffers_[BUFFER_POOL_SIZE];
+    size_t buffer_index_ = 0;
 };
 
 #endif

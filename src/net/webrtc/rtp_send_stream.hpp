@@ -13,14 +13,21 @@
 #include <stddef.h>
 #include <string>
 #include <map>
+#include <vector>
 
 using json = nlohmann::json;
 
-typedef struct NACK_PACKET_S {
-    uint32_t last_sent_timestamp;
-    int sent_count;
-    rtp_packet* packet;
-} NACK_PACKET;
+typedef struct STORAGE_ITEM_S {
+    uint8_t data[RTP_PACKET_MAX_SIZE];
+} STORAGE_ITEM;
+
+class NACK_PACKET
+{
+public:
+    uint32_t last_sent_timestamp = 0;
+    int sent_count               = 0;
+    rtp_packet* packet           = nullptr;
+};
 
 class rtp_send_stream
 {
@@ -71,8 +78,10 @@ private:
     rtc_stream_callback* cb_  = nullptr;
 
 private:
-    std::map<uint16_t, NACK_PACKET> rtp_buffer_map_;
-    uint16_t first_seq_ = 0;
+    std::vector<STORAGE_ITEM> storages_;
+    NACK_PACKET* rtp_packet_array[65536];
+    int first_seq_ = -1;
+    int pkt_count_ = 0;
 
 private:
     stream_statics send_statics_;

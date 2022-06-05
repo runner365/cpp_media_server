@@ -27,6 +27,8 @@ friend class http_response;
 
 public:
     http_session(uv_loop_t* loop, uv_stream_t* handle, http_callbackI* callback);
+    http_session(uv_loop_t* loop, uv_stream_t* handle, http_callbackI* callback,
+                const std::string& key_file, const std::string& cert_file);
     virtual ~http_session();
 
 public:

@@ -130,7 +130,67 @@ struct DataFrameHeader {
 	}
 };
 
-Client::Client(Server *server, SocketHandle socket) : m_pServer(server), m_Socket(std::move(socket)){
+Client::Client(Server *server, SocketHandle socket,
+		    const std::string& key_file, const std::string& cert_file) : m_pServer(server)
+			                                                , m_Socket(std::move(socket))
+															, ssl_enable_(true)
+															, key_file_(key_file)
+															, cert_file_(cert_file)
+{
+	m_Socket->data = this;
+	
+	// Default to true since that's what most people want
+	uv_tcp_nodelay(m_Socket.get(), true);
+	uv_tcp_keepalive(m_Socket.get(), true, 10000);
+	
+	{ // Put IP in m_IP
+		m_IP[0] = '\0';
+		struct sockaddr_storage addr;
+		int addrLen = sizeof(addr);
+		uv_tcp_getpeername(m_Socket.get(), (sockaddr*) &addr, &addrLen);
+		
+		if(addr.ss_family == AF_INET){
+			int r = uv_ip4_name((sockaddr_in*) &addr, m_IP, sizeof(m_IP));
+			(void) r;
+			assert(r == 0);
+		}else if(addr.ss_family == AF_INET6){
+			int r = uv_ip6_name((sockaddr_in6*) &addr, m_IP, sizeof(m_IP));
+			(void) r;
+			assert(r == 0);
+			
+			// Remove this prefix if it exists, it means that we actually have a ipv4
+			static const char *ipv4Prefix = "::ffff:";
+			if(strncmp(m_IP, ipv4Prefix, strlen(ipv4Prefix)) == 0){
+				memmove(m_IP, m_IP + strlen(ipv4Prefix), strlen(m_IP) - strlen(ipv4Prefix) + 1);
+			}
+		}else{
+			// Server::OnConnection will destroy us
+		}
+	}
+	
+	uv_read_start((uv_stream_t*) m_Socket.get(), [](uv_handle_t*, size_t suggested_size, uv_buf_t *buf){
+		buf->base = new char[suggested_size];
+		buf->len = suggested_size;
+	}, [](uv_stream_t* stream, ssize_t nread, const uv_buf_t* buf){
+		auto client = (Client*) stream->data;
+		
+		if(client != nullptr){
+			if(nread < 0){
+				client->Destroy();
+			}else if(nread > 0){
+				client->OnRawSocketData(buf->base, (size_t) nread);
+			}
+		}
+		
+		if(buf != nullptr) delete[] buf->base;
+	});
+	log_infof("Client construct...");
+}
+
+Client::Client(Server *server, SocketHandle socket) : m_pServer(server)
+                                                    , m_Socket(std::move(socket))
+													, ssl_enable_(false)
+{
 	m_Socket->data = this;
 	
 	// Default to true since that's what most people want
@@ -312,9 +372,8 @@ void Client::Write(uv_buf_t bufs[N]){
 	if(!m_Socket) return;
 	if(IsSecure()){
 		for(size_t i = 0; i < N; ++i){
-			if(!m_pTLS->Write(bufs[i].base, bufs[i].len)) return Destroy();
+			m_pTLS->ssl_write((uint8_t*)bufs[i].base, bufs[i].len);
 		}
-		FlushTLS();
 	}else{
 		WriteRaw<N>(bufs);
 	}
@@ -384,33 +443,31 @@ void Client::OnRawSocketData(char *data, size_t len){
 		
 		assert(!IsSecure());
 		
-		if(m_pServer->GetSSLContext() != nullptr && (data[0] == 0x16 || uint8_t(data[0]) == 0x80)){
+		if(m_pServer->SslIsEnable() && (data[0] == 0x16 || uint8_t(data[0]) == 0x80)){
 			if(m_pServer->m_fnCheckTCPConnection && !m_pServer->m_fnCheckTCPConnection(GetIP(), true)){
 				return Destroy();
 			}
-			
 			InitSecure();
-		}else{
+		} else{
 			if(m_pServer->m_fnCheckTCPConnection && !m_pServer->m_fnCheckTCPConnection(GetIP(), false)){
 				return Destroy();
 			}
 		}
 	}
 	
-	if(IsSecure()){
-		if(!m_pTLS->ReceivedData(data, len, [&](char *data, size_t len){
-			OnSocketData(data, len);
-		})){
-			return Destroy();
+	if(IsSecure()) {
+		int ret = m_pTLS->handshake(data, len);
+		if (ret != 0) {
+			Destroy();
+			return;
 		}
-		
-		FlushTLS();
-	}else{
+		m_pTLS->handle_ssl_data_recv((uint8_t*)data, len);
+	} else {
 		OnSocketData(data, len);
 	}
 }
 
-void Client::OnSocketData(char *data, size_t len){
+void Client::OnSocketData(const char *data, size_t len){
 	if(m_pServer == nullptr) return;
 	
 	// This gives us an extra byte just in case
@@ -933,17 +990,27 @@ void Client::Send(const char *data, size_t len, uint8_t opcode){
 }
 
 void Client::InitSecure(){
-	m_pTLS = std::make_unique<TLS>(m_pServer->GetSSLContext());
+	m_pTLS = std::make_unique<ssl_server>(key_file_, cert_file_, this);
 }
 
-void Client::FlushTLS(){
-	assert(m_pTLS != nullptr);
-	m_pTLS->ForEachPendingWrite([&](const char *data, size_t len){
-		uv_buf_t bufs[1];
-		bufs[0].base = (char*) data;
-		bufs[0].len = len;
-		WriteRaw<1>(bufs);
-	});
+void Client::plaintext_data_send(const char* data, size_t len) {
+    uv_buf_t bufs[1];
+
+	bufs[0] = uv_buf_init(const_cast<char*>(data), len);
+	
+	WriteRaw<1>(bufs);
+}
+
+void Client::plaintext_data_recv(const char* data, size_t len) {
+    OnSocketData(data, len);
+}
+
+void Client::encrypted_data_send(const char* data, size_t len) {
+    uv_buf_t bufs[1];
+
+	bufs[0] = uv_buf_init(const_cast<char*>(data), len);
+	
+	WriteRaw<1>(bufs);
 }
 
 void Client::Cork(bool v){

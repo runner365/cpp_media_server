@@ -5,7 +5,7 @@
 #include <stddef.h>
 #include <string>
 
-#define TCP_DEF_RECV_BUFFER_SIZE (8*1024)
+#define TCP_DEF_RECV_BUFFER_SIZE (5*1024)
 
 typedef struct {
   uv_write_t req;

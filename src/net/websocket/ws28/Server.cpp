@@ -6,8 +6,9 @@
 
 namespace ws28{
 
-Server::Server(uv_loop_t *loop, SSL_CTX *ctx) : m_pLoop(loop), m_pSSLContext(ctx){
-
+Server::Server(uv_loop_t *loop) : m_pLoop(loop)
+                                , ssl_enable_(false)
+{
 	m_fnCheckConnection = [](Client*, HTTPRequest &req) -> bool {
 		auto host = req.headers.Get("host");
 		if(!host) return true; // No host header, default to accept
@@ -23,9 +24,33 @@ Server::Server(uv_loop_t *loop, SSL_CTX *ctx) : m_pLoop(loop), m_pSSLContext(ctx
 
 		return true;
 		//return origin == host;
-		
 	};
-	
+}
+
+Server::Server(uv_loop_t *loop,
+            const std::string& key_file,
+			const std::string cert_file):m_pLoop(loop)
+			                        , ssl_enable_(true)
+									, key_file_(key_file)
+									, cert_file_(cert_file)
+                            
+{
+	m_fnCheckConnection = [](Client*, HTTPRequest &req) -> bool {
+		auto host = req.headers.Get("host");
+		if(!host) return true; // No host header, default to accept
+		
+		auto origin = req.headers.Get("origin");
+		if(!origin) return true;
+
+        if (!(origin == host)) {
+		    log_warnf("server check origin:%s, host:%s",
+		        std::string(origin.value()).c_str(),
+				std::string(host.value()).c_str());
+		}
+
+		return true;
+		//return origin == host;
+	};
 }
 
 bool Server::Listen(int port, bool ipv4Only){
@@ -101,7 +126,13 @@ void Server::OnConnection(uv_stream_t* server, int status){
 	socket->data = nullptr;
 
 	if(uv_accept(server, (uv_stream_t*) socket.get()) == 0){
-		auto client = new Client(this, std::move(socket));
+		Client* client = nullptr;
+		if (ssl_enable_) {
+			client = new Client(this, std::move(socket), key_file_, cert_file_);
+		} else {
+			client = new Client(this, std::move(socket));
+		}
+		
 		m_Clients.emplace_back(client);
 		
 		// If for whatever reason uv_tcp_getpeername failed (happens... somehow?)
