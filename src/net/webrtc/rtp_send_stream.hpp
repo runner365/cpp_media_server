@@ -18,16 +18,11 @@
 using json = nlohmann::json;
 
 typedef struct STORAGE_ITEM_S {
-    uint8_t data[RTP_PACKET_MAX_SIZE];
-} STORAGE_ITEM;
-
-class NACK_PACKET
-{
-public:
     uint32_t last_sent_timestamp = 0;
     int sent_count               = 0;
     rtp_packet* packet           = nullptr;
-};
+    uint8_t data[RTP_PACKET_MAX_SIZE];
+} STORAGE_ITEM;
 
 class rtp_send_stream
 {
@@ -79,7 +74,7 @@ private:
 
 private:
     std::vector<STORAGE_ITEM> storages_;
-    NACK_PACKET* rtp_packet_array[65536];
+    std::vector<STORAGE_ITEM*> rtp_packet_array;
     int first_seq_ = -1;
     int pkt_count_ = 0;
 

@@ -100,6 +100,7 @@ public:
     bool update_abs_time(uint32_t abs_time_24bits);
 
     void set_need_delete(bool flag) { this->need_delete = flag; }
+    bool get_need_delete() { return this->need_delete; }
     void enable_debug() { debug_enable = true; }
     void disable_debug() { debug_enable = false; }
     bool is_debug() { return debug_enable; }
