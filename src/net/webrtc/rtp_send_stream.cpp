@@ -79,6 +79,8 @@ void rtp_send_stream::save_buffer(rtp_packet* input_pkt) {
             break;
         }
         size_t index = first_seq_ % STORAGE_MAX_SIZE;
+
+        rtp_packet_array[first_seq_] = nullptr;
         if (storages_[index].packet == nullptr) {
             first_seq_ = (first_seq_ + 1) % 65536;
             storages_[index].last_sent_timestamp = 0;
@@ -120,7 +122,6 @@ void rtp_send_stream::clear_buffer() {
         storages_[i].packet              = nullptr;
         storages_[i].last_sent_timestamp = 0;
         storages_[i].sent_count          = 0;
-
     }
     pkt_count_ = 0;
 }
