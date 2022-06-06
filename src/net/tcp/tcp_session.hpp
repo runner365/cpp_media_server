@@ -297,6 +297,9 @@ inline static void on_uv_alloc(uv_handle_t* handle,
 inline static void on_uv_read(uv_stream_t* handle, ssize_t nread, const uv_buf_t* buf) {
     tcp_session* session = (tcp_session*)handle->data;
     if (session) {
+        if (nread == 0) {
+            return;
+        }
         session->on_read(nread, buf);
     }
     return;
