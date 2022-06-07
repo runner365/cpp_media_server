@@ -249,7 +249,6 @@ add_executable(cpp_media_server
             src/net/websocket/ws28/Client.cpp
             src/net/websocket/ws28/Client.h
             src/net/websocket/ws28/Headers.h
-            src/net/websocket/ws28/TLS.h
             src/net/websocket/wsimple/protoo_pub.hpp
             src/net/websocket/wsimple/flv_websocket.cpp
             src/net/websocket/wsimple/flv_websocket.hpp
