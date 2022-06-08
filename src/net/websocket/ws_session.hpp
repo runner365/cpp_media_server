@@ -3,6 +3,9 @@
 #include "ws28/Server.h"
 
 class websocket_server;
+class flv_demuxer;
+class av_outputer;
+
 class websocket_session
 {
 public:
@@ -10,44 +13,23 @@ public:
                 const std::string& path,
                 const std::string& ip,
                 ws28::Client* client,
-                websocket_server* server):method_(method)
-                        , path_(path)
-                        , ip_(ip)
-                        , client_(client)
-                        , server_(server)
-    {
-        close_ = false;
-    }
-    ~websocket_session()
-    {
-    }
+                websocket_server* server);
+    ~websocket_session();
 
 public:
-    std::string method() {
-        return method_;
-    }
-    std::string path() {
-        return path_;
-    }
-    std::string remote_ip() {
-        return ip_;
-    }
+    std::string method();
+    std::string path();
+    std::string remote_ip();
+    ws28::Client* get_client();
+    websocket_server* get_server();
+    void set_close(bool flag);
+    bool is_close();
+    std::string get_uri();
+    void set_uri(const std::string& uri);
 
-    ws28::Client* get_client() {
-        return client_;
-    }
-
-    websocket_server* get_server() {
-        return server_;
-    }
-
-    void set_close(bool flag) {
-        close_ = flag;
-    }
-
-    bool is_close() {
-        return close_;
-    }
+public:
+    flv_demuxer* demuxer_  = nullptr;
+    av_outputer* outputer_ = nullptr;
 
 private:
 	std::string method_;
@@ -56,6 +38,9 @@ private:
     ws28::Client* client_ = nullptr;
     websocket_server* server_ = nullptr;
     bool close_ = false;
+
+    std::string uri_;
+
 };
 
 #endif //WEBSOCKET_SESSION_HPP

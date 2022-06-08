@@ -4,7 +4,9 @@
 #include "flv_mux.hpp"
 #include "logger.hpp"
 #include "utils/byte_stream.hpp"
+#include "format/flv/flv_demux.hpp"
 #include "transcode/transcode.hpp"
+#include "net/websocket/ws_session.hpp"
 #include <sstream>
 #include <assert.h>
 
@@ -68,7 +70,6 @@ int av_outputer::output_packet(MEDIA_PACKET_PTR pkt_ptr) {
 
 flv_websocket::flv_websocket(uv_loop_t* loop,
                         uint16_t port):server_(loop, port, this)
-                                    , demuxer_(&outputer_)
 {
 
 }
@@ -76,7 +77,6 @@ flv_websocket::flv_websocket(uv_loop_t* loop,
 flv_websocket::flv_websocket(uv_loop_t* loop, uint16_t port,
                 const std::string& key_file,
                 const std::string& cert_file):server_(loop, port, this, key_file, cert_file)
-                                    , demuxer_(&outputer_)
 {
 }
 
@@ -90,35 +90,40 @@ void flv_websocket::on_accept(websocket_session* session) {
 }
 
 void flv_websocket::on_read(websocket_session* session, const char* data, size_t len) {
-    if (uri_.empty()) {
-        const char* uri_data = data;
-        assert(uri_data[0] == 0x02);
-        uint16_t str_len = read_2bytes((uint8_t*)uri_data + 1);
-        std::string str(uri_data + 3, str_len);
-        std::size_t pos = str.find(".flv");
-        if (pos != str.npos) {
-            uri_ = str.substr(0, pos);
+    if (session->get_uri().empty()) {
+        std::string uri = session->path();
+        size_t pos = uri.find(".flv");
+        if (pos != std::string::npos) {
+            uri = uri.substr(0, pos);
         }
-        if (uri_[0] == '/') {
-            uri_ = uri_.substr(1);
+        if (uri[0] == '/') {
+            uri = uri.substr(1);
         }
-        log_infof("websocket uri:%s", uri_.c_str());
-        media_stream_manager::add_publisher(uri_);
-        return;
+        log_infof("websocket uri:%s, path:%s", uri.c_str(), session->path().c_str());
+
+        session->set_uri(uri);
+        media_stream_manager::add_publisher(uri);
+    }
+    
+    if (session->outputer_ == nullptr) {
+        session->outputer_ = new av_outputer();
+    }
+
+    if (session->demuxer_ == nullptr) {
+        session->demuxer_ = new flv_demuxer(session->outputer_);
     }
 
     MEDIA_PACKET_PTR pkt_ptr = std::make_shared<MEDIA_PACKET>();
     pkt_ptr->buffer_ptr_->append_data(data, len);
-    pkt_ptr->key_ = uri_;
+    pkt_ptr->key_ = session->get_uri();
     pkt_ptr->fmt_type_ = MEDIA_FORMAT_FLV;
-    demuxer_.input_packet(pkt_ptr);
+    session->demuxer_->input_packet(pkt_ptr);
 }
 
-
 void flv_websocket::on_close(websocket_session* session) {
-    log_errorf("flv in websocket is closed, uri:%s", uri_.c_str());
-    if (!uri_.empty()) {
-        media_stream_manager::remove_publisher(uri_);
+    log_errorf("flv in websocket is closed, uri:%s", session->get_uri().c_str());
+    if (!session->get_uri().empty()) {
+        media_stream_manager::remove_publisher(session->get_uri());
     }
     outputer_.release();
 }

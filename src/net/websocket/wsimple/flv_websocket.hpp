@@ -3,7 +3,6 @@
 #include "media_packet.hpp"
 #include "av_format_interface.hpp"
 #include "net/websocket/ws_server.hpp"
-#include "flv_demux.hpp"
 #include <uv.h>
 
 class transcode;
@@ -11,7 +10,7 @@ class av_outputer : public av_format_callback
 {
 public:
     av_outputer();
-    ~av_outputer();
+    virtual ~av_outputer();
 
 public:
     void release();
@@ -39,8 +38,6 @@ public:
 
 private:
     websocket_server server_;
-    std::string uri_;
-    flv_demuxer demuxer_;
     av_outputer outputer_;
 };
 
