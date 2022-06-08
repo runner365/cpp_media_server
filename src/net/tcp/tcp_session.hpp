@@ -231,7 +231,10 @@ private:
         if (close_) {
             return;
         }
-        if (nread <= 0) {
+        if (nread == 0) {
+            return;
+        }
+        if (nread < 0) {
             callback_->on_read(-1, nullptr, 0);
             return;
         }
