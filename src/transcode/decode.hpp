@@ -40,7 +40,7 @@ public:
     ~decode_oper();
 
 public:
-    int input_avpacket(AVPacket* pkt, MEDIA_CODEC_TYPE codec_type);
+    int input_avpacket(AVPacket* pkt, MEDIA_CODEC_TYPE codec_type, bool change_pts = true);
 
 private:
     int open_decode(AVCodecContext*& ctx, enum AVCodecID codec_id);

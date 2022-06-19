@@ -238,6 +238,9 @@ int audio_encode::send_frame(AVFrame* frame) {
             last_audio_pts_ = dst_frame_p->pts;
             dst_frame_p->pts = av_rescale_q(dst_frame_p->pts, filter_tb, codec_ctx_->time_base);
             dst_frame_p->pict_type = AV_PICTURE_TYPE_NONE;
+            //log_infof("encode last_audio_pts_:%ld, frame pts:%ld, filter_tb:%d/%d, codec tb:%d/%d",
+            //        last_audio_pts_, dst_frame_p->pts, filter_tb.num, filter_tb.den,
+            //        codec_ctx_->time_base.num, codec_ctx_->time_base.den);
 
             ret = avcodec_send_frame(codec_ctx_, dst_frame_p);
             av_frame_free(&dst_frame_p);
@@ -273,6 +276,7 @@ int audio_encode::send_frame(AVFrame* frame) {
                 if (audio_codec_type_ == MEDIA_CODEC_OPUS) {
                     reset_opus_timestamp(audio_pkt_p);
                 }
+                
                 if (cb_) {
                     cb_->on_avpacket_callback(audio_pkt_p, audio_codec_type_, extra_data_, extra_data_size_);
                 }

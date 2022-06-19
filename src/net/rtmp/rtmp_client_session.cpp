@@ -136,7 +136,7 @@ void rtmp_client_session::on_read(int ret_code, const char* data, size_t data_si
         cb_->on_close(ret);
         return;
     } else if (ret == RTMP_NEED_READ_MORE) {
-        log_infof("handle_message need read more...");
+        log_debugf("handle_message need read more...");
         try_read();
         return;
     }

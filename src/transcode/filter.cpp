@@ -209,7 +209,6 @@ int stream_filter::init_audio_filter(AVCodecContext* dec_codec_ctx_p, const char
         goto end;
     }
 
-
     _sample_fmt = sample_fmt;
     _sample_rate = sample_rate;
     _channels = dec_codec_ctx_p->channels;
@@ -305,6 +304,144 @@ int stream_filter::init_audio_filter(AVCodecContext* dec_codec_ctx_p, const char
        buffersink_ctx->inputs[0]->time_base.num, buffersink_ctx->inputs[0]->time_base.den,
        buffersink_ctx->inputs[0]->request_samples);
     end:
+    avfilter_inout_free(&inputs);
+    avfilter_inout_free(&outputs);
+
+    return ret;
+}
+
+int stream_filter::init_audio_filter(enum AVSampleFormat sample_fmt, int sample_rate, 
+        int channels, uint64_t channel_layout,
+        enum AVSampleFormat target_sample_fmt, int target_sample_rate,
+        int target_channels, uint64_t target_channel_layout,
+        int target_frame_size, const char* filter_spec_sz)
+{
+    if(_audio_init_flag) {
+        return 0;
+    }
+    int ret = 0;
+    char args[512];
+
+    const AVFilter *buffersrc = NULL;
+    const AVFilter *buffersink = NULL;
+    
+    AVFilterContext *buffersrc_ctx = NULL;
+    AVFilterContext *buffersink_ctx = NULL;
+
+    AVFilterInOut *outputs = avfilter_inout_alloc();
+    AVFilterInOut *inputs  = avfilter_inout_alloc();
+    AVFilterGraph *filter_graph = avfilter_graph_alloc();
+
+    _sample_fmt = sample_fmt;
+    _sample_rate = sample_rate;
+    _channels = channels;
+    _channel_layout = channel_layout;
+    strcpy(_audio_filter_spec_sz, filter_spec_sz);
+
+    const char* audio_fmt_name = av_get_sample_fmt_name(sample_fmt);
+    if (audio_fmt_name == nullptr) {
+        audio_fmt_name = av_get_sample_fmt_name(AV_SAMPLE_FMT_FLTP);
+    }
+
+    if (!outputs || !inputs || !filter_graph) {
+        ret = AVERROR(ENOMEM);
+        goto end;
+    }
+
+    buffersrc = avfilter_get_by_name("abuffer");
+    buffersink = avfilter_get_by_name("abuffersink");
+    if (!buffersrc || !buffersink) {
+        log_errorf("filtering source or sink element not found");
+        ret = AVERROR_UNKNOWN;
+        goto end;
+    }
+    if (!channel_layout)
+        channel_layout = av_get_default_channel_layout(channels);
+    _channel_layout = channel_layout;
+    snprintf(args, sizeof(args),
+            "time_base=%d/%d:sample_rate=%d:sample_fmt=%s:channel_layout=0x%lu",
+            1, sample_rate, sample_rate,
+            audio_fmt_name, channel_layout);
+    
+    log_infof("init_audio_filter input args:%s", args);
+    log_infof("init audio filter output dscr:%s", _audio_filter_spec_sz);
+
+    ret = avfilter_graph_create_filter(&buffersrc_ctx, buffersrc, "in",
+            args, NULL, filter_graph);
+    if (ret < 0) {
+        log_errorf("Cannot create audio buffer source");
+        goto end;
+    }
+    ret = avfilter_graph_create_filter(&buffersink_ctx, buffersink, "out",
+            NULL, NULL, filter_graph);
+    if (ret < 0) {
+        log_errorf("Cannot create audio buffer sink");
+        goto end;
+    }
+    ret = av_opt_set_bin(buffersink_ctx, "sample_fmts",
+            (uint8_t*)&target_sample_fmt, sizeof(target_sample_fmt),
+            AV_OPT_SEARCH_CHILDREN);
+    if (ret < 0) {
+        log_errorf("Cannot set output sample format");
+        goto end;
+    }
+    ret = av_opt_set_bin(buffersink_ctx, "channel_layouts",
+            (uint8_t*)&target_channel_layout,
+            sizeof(target_channel_layout), AV_OPT_SEARCH_CHILDREN);
+    if (ret < 0) {
+        log_errorf("Cannot set output channel layout");
+        goto end;
+    }
+    ret = av_opt_set_bin(buffersink_ctx, "sample_rates",
+            (uint8_t*)&target_sample_rate, sizeof(target_sample_rate),
+            AV_OPT_SEARCH_CHILDREN);
+    if (ret < 0) {
+        log_errorf("Cannot set output sample rate");
+        goto end;
+    }
+
+    /* Endpoints for the filter graph. */
+    outputs->name       = av_strdup("in");
+    outputs->filter_ctx = buffersrc_ctx;
+    outputs->pad_idx    = 0;
+    outputs->next       = NULL;
+
+    inputs->name       = av_strdup("out");
+    inputs->filter_ctx = buffersink_ctx;
+    inputs->pad_idx    = 0;
+    inputs->next       = NULL;
+
+    if (!outputs->name || !inputs->name) {
+        ret = AVERROR(ENOMEM);
+        log_errorf("audio avfilter out of memory error:%d", ret);
+        goto end;
+    }
+
+    if ((ret = avfilter_graph_parse_ptr(filter_graph, filter_spec_sz,
+                    &inputs, &outputs, NULL)) < 0){
+        log_errorf("audio avfilter_graph_parse_ptr error:%d", ret);
+        goto end;
+    }
+
+    if ((ret = avfilter_graph_config(filter_graph, NULL)) < 0) {
+        log_errorf("audio avfilter_graph_config error:%d", ret);
+        goto end;
+    }
+
+    log_infof("before set: input request_samples:%d", 
+        buffersink_ctx->inputs[0]->request_samples);
+    buffersink_ctx->inputs[0]->request_samples = target_frame_size;
+    /* Fill FilteringContext */
+    _audio_filter_ctx.buffersrc_ctx = buffersrc_ctx;
+    _audio_filter_ctx.buffersink_ctx = buffersink_ctx;
+    _audio_filter_ctx.filter_graph = filter_graph;
+
+    _audio_init_flag = true;
+    log_infof("init_audio_filter ok, output dscr:%s", filter_spec_sz);
+    log_infof("init_audio_filter ok sink_ctx timebase:%d/%d, input request_samples:%d",
+       buffersink_ctx->inputs[0]->time_base.num, buffersink_ctx->inputs[0]->time_base.den,
+       buffersink_ctx->inputs[0]->request_samples);
+end:
     avfilter_inout_free(&inputs);
     avfilter_inout_free(&outputs);
 

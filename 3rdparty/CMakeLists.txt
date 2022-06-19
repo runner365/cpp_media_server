@@ -132,4 +132,13 @@ ExternalProject_Add(ffmpeg
     )
 ENDIF ()
 
-
+IF (APPLE)
+ExternalProject_Add(sdl
+    URL ${CMAKE_CURRENT_SOURCE_DIR}/SDL2-2.0.14.tar.gz
+    SOURCE_DIR  ${CMAKE_CURRENT_BINARY_DIR}/sdl
+    BUILD_IN_SOURCE 1
+    CONFIGURE_COMMAND ./configure --prefix=${PREFIX_DIR}
+    BUILD_COMMAND make -j4
+    INSTALL_COMMAND make install
+    )
+    ENDIF ()

@@ -106,6 +106,19 @@ add_subdirectory(3rdparty)
 #target_link_libraries(mpegts_mux_demo pthread rt dl z m)
 #ENDIF ()
 #
+
+#add_executable(http_client_demo
+#            src/net/http/http_client_demo.cpp
+#            src/net/http/http_client.cpp
+#            src/net/http/http_client.hpp
+#            src/utils/data_buffer.cpp
+#            src/utils/logger.cpp)
+#IF (APPLE)
+#target_link_libraries(http_client_demo  dl z m ssl crypto pthread uv)
+#ELSEIF (UNIX)
+#target_link_libraries(http_client_demo rt dl z m ssl crypto pthread uv)
+#ENDIF ()
+#
 #add_executable(http_server_demo
 #            src/net/http/http_server_demo.cpp
 #            src/net/http/http_server.cpp
@@ -117,7 +130,7 @@ add_subdirectory(3rdparty)
 #ELSEIF (UNIX)
 #target_link_libraries(http_server_demo rt dl z m ssl crypto pthread uv)
 #ENDIF ()
-#
+
 #add_executable(https_server_demo
 #            src/net/http/https_server_demo.cpp
 #            src/net/http/http_server.cpp
@@ -360,3 +373,46 @@ target_link_libraries(cpp_media_server
     uv)
 ENDIF ()
 
+IF (NATIVE_CLIENT STREQUAL on)
+add_executable(native_client
+            src/native_client/client.cpp
+            src/native_client/client.hpp
+            src/native_client/rtmp_player.cpp
+            src/native_client/rtmp_player.hpp
+            src/native_client/sdl_player.hpp
+            src/native_client/sdl_player.cpp
+            src/net/http/http_client.cpp
+            src/net/http/http_client.hpp
+            src/net/rtmp/rtmp_client_session.cpp
+            src/net/rtmp/rtmp_client_session.hpp
+            src/net/rtmp/rtmp_session_base.cpp
+            src/net/rtmp/rtmp_session_base.hpp
+            src/net/rtmp/rtmp_control_handler.cpp
+            src/net/rtmp/rtmp_control_handler.hpp
+            src/net/rtmp/rtmp_handshake.cpp
+            src/net/rtmp/rtmp_handshake.hpp
+            src/net/rtmp/chunk_stream.cpp
+            src/net/rtmp/chunk_stream.hpp
+            src/utils/logger.cpp
+            src/utils/logger.hpp
+            src/utils/data_buffer.cpp
+            src/utils/data_buffer.hpp
+            src/utils/byte_stream.cpp
+            src/utils/byte_stream.hpp
+            src/transcode/transcode_pub.hpp
+            src/transcode/decode.cpp
+            src/transcode/decode.hpp
+            src/transcode/filter.cpp
+            src/transcode/filter.hpp
+            )
+add_dependencies(native_client ffmpeg openssl libx264 libopus sdl)
+
+IF (APPLE)
+target_link_libraries(native_client pthread dl z m ssl crypto pthread
+            SDL2 iconv bz2
+            "-framework CoreFoundation -framework Security -framework VideoToolbox -framework CoreMedia -framework CoreVideo -framework AudioToolbox"
+            avfilter avformat avcodec avutil postproc swscale swresample
+            uv)
+ENDIF ()
+
+ENDIF()

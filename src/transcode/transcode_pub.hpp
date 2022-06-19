@@ -33,6 +33,8 @@ extern "C"
 }
 #endif
 #include "utils/av/av.hpp"
+#include "utils/av/media_packet.hpp"
+#include "utils/logger.hpp"
 
 #define VIDEO_STREAM_ID 0
 #define AUDIO_STREAM_ID 1
@@ -77,6 +79,35 @@ inline enum AVCodecID get_codecid(MEDIA_CODEC_TYPE codec_type) {
     }
 
     return ret_id;
+}
+
+inline AVPacket* get_avpacket(MEDIA_PACKET_PTR pkt_ptr, int pos = 0) {
+    uint8_t* data = (uint8_t*)pkt_ptr->buffer_ptr_->data() + pos;
+    size_t data_size = pkt_ptr->buffer_ptr_->data_len() - pos;
+    AVPacket* pkt = av_packet_alloc();
+    av_init_packet(pkt);
+    int ret = av_new_packet(pkt, data_size);
+    if (ret < 0) {
+        av_packet_free(&pkt);
+        log_errorf("av_new_packet error");
+        return nullptr;
+    }
+    memcpy(pkt->data, data, data_size);
+
+    if (pkt_ptr->av_type_ == MEDIA_VIDEO_TYPE) {
+        pkt->stream_index = VIDEO_STREAM_ID;
+    } else if (pkt_ptr->av_type_ == MEDIA_AUDIO_TYPE) {
+        pkt->stream_index = AUDIO_STREAM_ID;
+    } else {
+        av_packet_free(&pkt);
+        log_errorf("unkown media type:%d", pkt_ptr->av_type_);
+        return nullptr;
+    }
+
+    pkt->dts = pkt_ptr->dts_;
+    pkt->pts = pkt_ptr->pts_;
+
+    return pkt;
 }
 
 class decode_callback

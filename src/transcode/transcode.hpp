@@ -42,7 +42,6 @@ public:
                                       uint8_t* extra_data, size_t extra_data_size) override;
 
 private:
-    AVPacket* get_avpacket(MEDIA_PACKET_PTR pkt_ptr, int pos = 0);
     MEDIA_PACKET_PTR get_media_packet(AVPacket* pkt, MEDIA_CODEC_TYPE codec_type);
 
 private:

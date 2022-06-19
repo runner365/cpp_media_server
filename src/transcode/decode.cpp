@@ -47,7 +47,7 @@ int decode_oper::open_decode(AVCodecContext*& ctx, enum AVCodecID codec_id) {
     return ret;
 }
 
-int decode_oper::input_avpacket(AVPacket* pkt, MEDIA_CODEC_TYPE codec_type) {
+int decode_oper::input_avpacket(AVPacket* pkt, MEDIA_CODEC_TYPE codec_type, bool change_pts) {
     int ret = 0;
     AVCodecContext* dec_ctx = NULL;
 
@@ -76,6 +76,7 @@ int decode_oper::input_avpacket(AVPacket* pkt, MEDIA_CODEC_TYPE codec_type) {
         log_errorf("avcodec_send_packet type %d failed, ret=%d\n",
                 pkt->stream_index, ret);
         ffmpeg_log_err(ret);
+        log_info_data(pkt->data, pkt->size, "error data");
         return ret;
     }
 
@@ -90,8 +91,22 @@ int decode_oper::input_avpacket(AVPacket* pkt, MEDIA_CODEC_TYPE codec_type) {
         }
 
         AVRational standard_ration = av_make_q(1, 1000);
-        dec_frame->pts = av_rescale_q(dec_frame->pts, standard_ration, dec_ctx->time_base);
+        if (change_pts) {
+            //int64_t pre_dts = dec_frame->pts;
+            if ((dec_ctx->time_base.den != 0) && (dec_ctx->time_base.num != 0)) {
+                dec_frame->pts = av_rescale_q(dec_frame->pts, standard_ration, dec_ctx->time_base);
+            } else {
+                AVRational dec_tb;
+                dec_tb.den = dec_frame->sample_rate;
+                dec_tb.num = 1;
+                dec_frame->pts = av_rescale_q(dec_frame->pts, standard_ration, dec_tb);
+            }
+            //log_infof("opus decode pre_dts:%ld, decode frame pts:%ld", pre_dts, dec_frame->pts);
+        }
+        
         if (cb_) {
+            //log_infof("decode pts:%ld, dec tb:%d/%d, stream index:%d",
+            //        dec_frame->pts, dec_ctx->time_base.den, dec_ctx->time_base.num, pkt->stream_index);
             cb_->on_avframe_callback(pkt->stream_index, dec_frame);
         }
         av_frame_free(&dec_frame);

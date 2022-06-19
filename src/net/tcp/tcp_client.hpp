@@ -126,8 +126,10 @@ private:
     }
 
     void on_read(ssize_t nread, const uv_buf_t* buf) {
-        if (nread <= 0) {
-            callback_->on_read(-1, nullptr, 0);
+        if (nread < 0) {
+            callback_->on_read(nread, nullptr, 0);
+            return;
+        } else if (nread == 0) {
             return;
         }
         callback_->on_read(0, buf->base, nread);
@@ -154,7 +156,6 @@ inline void on_uv_client_connected(uv_connect_t *conn, int status) {
 inline void on_uv_client_write(uv_write_t* req, int status) {
     tcp_client* client = static_cast<tcp_client*>(req->handle->data);
 
-    log_infof("uv write callback status:%d, client:%p", status, client);
     if (client) {
         client->on_write((write_req_t*)req, status);
     }

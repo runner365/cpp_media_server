@@ -22,6 +22,11 @@ public: //init audio filter
     int init_audio_filter(enum AVSampleFormat sample_fmt, int sample_rate, 
         int channels, uint64_t channel_layout,
         AVCodecContext* enc_codec_ctx_p, const char* filter_spec_sz);
+    int init_audio_filter(enum AVSampleFormat sample_fmt, int sample_rate, 
+                        int channels, uint64_t channel_layout,
+                        enum AVSampleFormat target_sample_fmt, int target_sample_rate,
+                        int target_channels, uint64_t target_channel_layout,
+                        int target_frame_size, const char* filter_spec_sz);
     int init_audio_filter(AVCodecContext* dec_codec_ctx_p, const char* filter_spec_sz, enum AVSampleFormat fmt,
             uint64_t channel_layout, int sample_rate, int frame_size);
 

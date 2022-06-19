@@ -80,9 +80,6 @@ private:
     std::string preset_;
     int bitrate_   = 0;
     int framerate_ = 0;
-
-private:
-    stream_filter filter_;
 };
 
 #endif

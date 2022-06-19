@@ -30,6 +30,9 @@ void GetDemo(const http_request* request, std::shared_ptr<http_response> respons
 
     log_infof("%s", ss.str().c_str());
     std::string ret_str = make_response();
+
+    log_infof("response data len:%lu", ret_str.length());
+    log_infof("response data:%s", ret_str.c_str());
     response->write(ret_str.c_str(), ret_str.length());
 
     return;

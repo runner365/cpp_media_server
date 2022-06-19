@@ -92,6 +92,8 @@ enum HEVC_NALU_TYPE
         NAL_UNIT_INVALID,
 };
 
+#define GET_H264_NALU_TYPE(code) ((code) & 0x1f)
+
 #define GET_HEVC_NALU_TYPE(code) (HEVC_NALU_TYPE)((code & 0x7E)>>1)
 
 typedef struct HEVC_NALU_DATA_S {
