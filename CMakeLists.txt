@@ -376,11 +376,16 @@ ENDIF ()
 IF (NATIVE_CLIENT STREQUAL on)
 add_executable(native_client
             src/native_client/client.cpp
-            src/native_client/client.hpp
+            src/native_client/base_player.cpp
+            src/native_client/base_player.hpp
             src/native_client/rtmp_player.cpp
             src/native_client/rtmp_player.hpp
+            src/native_client/httpflv_player.cpp
+            src/native_client/httpflv_player.hpp
             src/native_client/sdl_player.hpp
             src/native_client/sdl_player.cpp
+            src/format/flv/flv_demux.cpp
+            src/format/flv/flv_demux.hpp
             src/net/http/http_client.cpp
             src/net/http/http_client.hpp
             src/net/rtmp/rtmp_client_session.cpp

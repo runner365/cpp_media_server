@@ -17,6 +17,7 @@ public:
 
 public:
     int input_packet(MEDIA_PACKET_PTR pkt_ptr);
+    int input_packet(const uint8_t* data, size_t data_len, const std::string& key);
     bool has_video() {return has_video_;}
     bool has_audio() {return has_audio_;}
 

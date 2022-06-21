@@ -65,7 +65,7 @@ private:
     int64_t start_pts_ = -1;
     int64_t video_pts_ = -1;
     int64_t audio_pts_ = -1;
-    int64_t buffer_duration_ = 100;//ms
+    int64_t buffer_duration_ = 500;//ms
 
 private:
     bool videoInit_             = false;

@@ -24,10 +24,11 @@ http_client::~http_client()
     }
 }
 
-int http_client::get(const std::string& supath, std::map<std::string, std::string> headers) {
+int http_client::get(const std::string& subpath, std::map<std::string, std::string> headers) {
     method_  = HTTP_GET;
-    subpath_ = supath;
+    subpath_ = subpath;
 
+    log_infof("http get connect host:%s, port:%d, subpath:%s", host_.c_str(), port_, subpath.c_str());
     client_->connect(host_, port_);
     return 0;
 }
@@ -49,6 +50,7 @@ void http_client::close() {
 void http_client::on_connect(int ret_code) {
     std::stringstream http_stream;
 
+    log_infof("on connect code:%d", ret_code);
     if (method_ == HTTP_GET) {
         http_stream << "GET " << subpath_ << " HTTP/1.1\r\n";
     } else if (method_ == HTTP_POST) {

@@ -149,3 +149,15 @@ int flv_demuxer::input_packet(MEDIA_PACKET_PTR pkt_ptr) {
     
     return ret;
 }
+
+int flv_demuxer::input_packet(const uint8_t* data, size_t data_len, const std::string& key) {
+    buffer_.append_data((char*)data, data_len);
+    key_ = key;
+
+    int ret = 0;
+    do {
+        ret = handle_packet();
+    } while (ret == 0);
+    
+    return ret;
+}
