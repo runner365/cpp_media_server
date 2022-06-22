@@ -4,6 +4,7 @@
 
 base_player::base_player()
 {
+    filter_ = new stream_filter();
 }
 
 base_player::~base_player()
@@ -199,7 +200,7 @@ void base_player::updata_pps(uint8_t* pps, size_t pps_len) {
 }
 
 void base_player::handle_video_avframe(AVFrame* frame) {
-    log_debugf("+++ get video avframe stream, format:%s, %dx%d, pts:%ld",
+    log_infof("+++ get video avframe stream, format:%s, %dx%d, pts:%ld",
             av_get_pix_fmt_name((enum AVPixelFormat)frame->format),
             frame->width, frame->height, frame->pts);
     player_->insertVideoFrame(frame);
@@ -240,7 +241,7 @@ void base_player::handle_audio_avframe(AVFrame* frame) {
         //filtered_frame->pts = av_rescale_q(filtered_frame->pts, filter_tb, standard_tb);
 
         //display audio frame
-        log_debugf("--- get audio avframe stream, format:%s, nb_samples:%d, channels:%d, pts:%ld",
+        log_infof("--- get audio avframe stream, format:%s, nb_samples:%d, channels:%d, pts:%ld",
             av_get_sample_fmt_name((enum AVSampleFormat)filtered_frame->format),
             filtered_frame->nb_samples, filtered_frame->channels, filtered_frame->pts);
 

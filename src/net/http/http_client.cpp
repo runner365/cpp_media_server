@@ -146,7 +146,6 @@ void http_client::on_read(int ret_code, const char* data, size_t data_size) {
             client_->async_read();
         }
     } else {
-        log_infof("http stream, read more");
         cb_->on_http_read(0, resp_ptr_);
         client_->async_read();
     }

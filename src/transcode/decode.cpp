@@ -92,7 +92,7 @@ int decode_oper::input_avpacket(AVPacket* pkt, MEDIA_CODEC_TYPE codec_type, bool
 
         AVRational standard_ration = av_make_q(1, 1000);
         if (change_pts) {
-            //int64_t pre_dts = dec_frame->pts;
+            int64_t pre_dts = dec_frame->pts;
             if ((dec_ctx->time_base.den != 0) && (dec_ctx->time_base.num != 0)) {
                 dec_frame->pts = av_rescale_q(dec_frame->pts, standard_ration, dec_ctx->time_base);
             } else {
@@ -101,12 +101,12 @@ int decode_oper::input_avpacket(AVPacket* pkt, MEDIA_CODEC_TYPE codec_type, bool
                 dec_tb.num = 1;
                 dec_frame->pts = av_rescale_q(dec_frame->pts, standard_ration, dec_tb);
             }
-            //log_infof("opus decode pre_dts:%ld, decode frame pts:%ld", pre_dts, dec_frame->pts);
+            log_infof("opus decode pre_dts:%ld, decode frame pts:%ld", pre_dts, dec_frame->pts);
         }
         
         if (cb_) {
-            //log_infof("decode pts:%ld, dec tb:%d/%d, stream index:%d",
-            //        dec_frame->pts, dec_ctx->time_base.den, dec_ctx->time_base.num, pkt->stream_index);
+            log_infof("decode pts:%ld, dec tb:%d/%d, stream index:%d",
+                    dec_frame->pts, dec_ctx->time_base.den, dec_ctx->time_base.num, pkt->stream_index);
             cb_->on_avframe_callback(pkt->stream_index, dec_frame);
         }
         av_frame_free(&dec_frame);

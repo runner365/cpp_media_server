@@ -7,7 +7,6 @@
 
 rtmp_player::rtmp_player(uv_loop_t* loop):loop_(loop)
 {
-    filter_ = new stream_filter();
 }
 
 rtmp_player::~rtmp_player()
