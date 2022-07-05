@@ -7,111 +7,38 @@
 #include <sstream>
 
 static RTCP_FB support_rtcp_fb_list[] = {
-    {
-        .payload = 0,
-        .type = "goog-remb",
-        .subtype = ""
-    },
-    {
-        .payload = 0,
-        .type = "nack",
-        .subtype = ""
-    },
-    {
-        .payload = 0,
-        .type = "rrtr",
-        .subtype = ""
-    },
-    {
-        .payload = 0,
-        .type = "nack",
-        .subtype = "pli"
-    },
+    {0,"goog-remb",""},
+    {0,"nack",""},
+    {0,"rrtr",""},
+    {0,"nack","pli"},
 };
 
 static HEADER_EXT support_header_ext_list[] = {
-    {
-        .uri = "urn:ietf:params:rtp-hdrext:sdes:mid",
-        .value = 0
-    },
-    {
-        .uri = "http://www.webrtc.org/experiments/rtp-hdrext/abs-send-time",
-        .value = 0
-    }
+    {"urn:ietf:params:rtp-hdrext:sdes:mid", 0},
+    {"http://www.webrtc.org/experiments/rtp-hdrext/abs-send-time",0}
 };
 
 static RTP_ENCODING support_rtp_encoding_list[] = {
-    {
-        .codec = "VP8",
-        .payload = 0,
-        .clock_rate = 90000,
-        .media_type = MEDIA_VIDEO_TYPE
-    },
-    {
-        .codec = "H264",
-        .payload = 0,
-        .clock_rate = 90000,
-        .media_type = MEDIA_VIDEO_TYPE
-    },
-    {
-        .codec = "rtx",
-        .payload = 0,
-        .clock_rate = 90000,
-        .media_type = MEDIA_UNKOWN_TYPE
-    },
-    {
-        .codec = "opus",
-        .payload = 0,
-        .clock_rate = 48000,
-        .media_type = MEDIA_AUDIO_TYPE
-    }
+    {"VP8",  0, 90000, "", MEDIA_VIDEO_TYPE},
+    {"H264", 0, 90000, "", MEDIA_VIDEO_TYPE},
+    {"rtx",  0, 90000, "", MEDIA_UNKOWN_TYPE},
+    {"opus", 0, 48000, "", MEDIA_AUDIO_TYPE}
 };
 
 static SSRC_INFO support_ssrc_info_list[] = {
-    {
-        .attribute = "cname",
-        .value = "",
-        .ssrc = 0
-    }
+    {"cname","",0}
 };
 
 static FMTP support_fmtp_list[] = {
-    {
-        .config  = "useinbandfec=1",
-        .payload = 0
-    },
-    {
-        .config  = "apt=",
-        .payload = 0
-    },
-    {
-        .config  = "x-google-start-bitrate",
-        .payload = 0
-    },
-    {
-        .config  = "profile-level-id=42e01f;level-asymmetry-allowed=1;packetization-mode=1",
-        .payload = 0
-    },
-    {
-        .config  = "profile-level-id=42e01f;packetization-mode=1;level-asymmetry-allowed=1",
-        .payload = 0
-    },
-    {
-        .config  = "level-asymmetry-allowed=1;packetization-mode=1;profile-level-id=42e01f",
-        .payload = 0
-    },
-    {
-        .config  = "level-asymmetry-allowed=1;profile-level-id=42e01f;packetization-mode=1",
-        .payload = 0
-    },
-    {
-        .config  = "packetization-mode=1;level-asymmetry-allowed=1;profile-level-id=42e01f",
-        .payload = 0
-    },
-    {
-        .config  = "packetization-mode=1;profile-level-id=42e01f;level-asymmetry-allowed=1",
-        .payload = 0
-    }
+    {"useinbandfec=1",0},
+    {"apt=", 0},
+    {"x-google-start-bitrate", 0},
+    {"profile-level-id=42e01f;level-asymmetry-allowed=1;packetization-mode=1", 0},
+    {"profile-level-id=42e01f;packetization-mode=1;level-asymmetry-allowed=1", 0},
+    {"level-asymmetry-allowed=1;packetization-mode=1;profile-level-id=42e01f", 0},
+    {"level-asymmetry-allowed=1;profile-level-id=42e01f;packetization-mode=1", 0},
+    {"packetization-mode=1;level-asymmetry-allowed=1;profile-level-id=42e01f", 0},
+    {"packetization-mode=1;profile-level-id=42e01f;level-asymmetry-allowed=1", 0}
 };
 
 static int get_apt_payload(const std::string& apt) {

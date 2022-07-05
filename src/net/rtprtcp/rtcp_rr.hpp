@@ -8,7 +8,6 @@
 #include <stddef.h>
 #include <string>
 #include <cstring>
-#include <arpa/inet.h>
 #include <sstream>
 
 /*

@@ -3,12 +3,14 @@
 #include "utils/logger.hpp"
 #include "utils/timeex.hpp"
 #include "net/webrtc/rtp_h264_pack.hpp"
-#include "transcode/transcode.hpp"
 #include "format/h264_header.hpp"
 #include "format/audio_pub.hpp"
 #include "media_stream_manager.hpp"
 #include <stdlib.h>
 #include <assert.h>
+#ifdef ENABLE_FFMPEG
+#include "transcode/transcode.hpp"
+#endif
 
 static int64_t s_last_ts = 0;
 
@@ -57,11 +59,13 @@ user_info::~user_info() {
         std::shared_ptr<webrtc_session> session_ptr = item.second;
         session_ptr->close_session();
     }
+#ifdef EANBLE_FFMPEG
     if (trans_) {
         trans_->stop();
         delete trans_;
         trans_ = nullptr;
     }
+#endif
 }
 
 void user_info::reset_media_info() {
@@ -207,6 +211,7 @@ void user_info::on_rtmp_camera_callback(MEDIA_PACKET_PTR pkt_ptr) {
         return;
     }
     if (pkt_ptr->av_type_ == MEDIA_AUDIO_TYPE) {
+#ifdef ENABLE_FFMPEG
         if (!trans_) {
             trans_ = new transcode();
             trans_->set_output_audio_fmt("libfdk_aac");
@@ -236,6 +241,7 @@ void user_info::on_rtmp_camera_callback(MEDIA_PACKET_PTR pkt_ptr) {
             media_stream_manager::writer_media_packet(ret_pkt_ptr);
             //send_buffer(ret_pkt_ptr);
         }
+#endif
         return;
     }
 
@@ -274,11 +280,13 @@ live_user_info::live_user_info(const std::string& uid,
 
 live_user_info::~live_user_info()
 {
+#ifdef ENABLE_FFMPEG
     if (trans_) {
         trans_->stop();
         delete trans_;
         trans_ = nullptr;
     }
+#endif
 }
 
 void live_user_info::updata_sps(uint8_t* sps, size_t sps_len) {
@@ -425,7 +433,7 @@ int live_user_info::handle_audio_data(MEDIA_PACKET_PTR pkt_ptr) {
         publisher_id += "audio";
         room_cb_->on_rtppacket_publisher2room(publisher_id, "audio", single_pkt);
     }
-
+#ifdef EANBLE_FFMPEG
     if (pkt_ptr->codec_type_ == MEDIA_CODEC_AAC) {
         MEDIA_PACKET_PTR raw_pkt_ptr = pkt_ptr->copy();
         if (!trans_) {
@@ -492,6 +500,7 @@ int live_user_info::handle_audio_data(MEDIA_PACKET_PTR pkt_ptr) {
 
         }
     }
+#endif
     return 0;
 }
 

@@ -5,7 +5,6 @@
 #include <string>
 #include <string.h>
 #include <assert.h>
-#include <arpa/inet.h>
 #include "rtprtcp_pub.hpp"
 
 /*

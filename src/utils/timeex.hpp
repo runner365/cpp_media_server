@@ -4,7 +4,7 @@
 #include <stdint.h>
 #include <string>
 #include <cmath>
-
+#include <ctime>
 #define NTP_FRACT_UNIT (1LL << 32)
 
 typedef struct NTP_TIMESTAMP_S

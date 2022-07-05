@@ -7,7 +7,6 @@
 #include <cstring>
 #include <sstream>
 #include <stdio.h>
-#include <arpa/inet.h>  // htonl(), htons(), ntohl(), ntohs()
 #include <vector>
 
 /*

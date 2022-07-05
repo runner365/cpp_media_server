@@ -32,7 +32,7 @@ int Config::load(const std::string& conf_file) {
         std::cout << "read file error:" << n << "\r\n";
         return -2;
     }
-
+    buffer_[n] = 0;
     return init(buffer_, n);
 }
 

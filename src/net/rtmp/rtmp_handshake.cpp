@@ -368,7 +368,7 @@ int c1s1_handle::try_schema1(uint8_t* data) {
 }
 
 void c1s1_handle::prepare_digest() {
-    c1_digest_offset_ = random();
+    c1_digest_offset_ = rand();
 
     uint32_t real_offset = calc_valid_digest_offset(c1_digest_offset_);
     digest_random0_size_ = real_offset;
@@ -391,7 +391,7 @@ void c1s1_handle::prepare_digest() {
 }
 
 void c1s1_handle::prepare_key() {
-    c1_key_offset_ = random();
+    c1_key_offset_ = rand();
 
     uint32_t real_offset = calc_valid_key_offset(c1_key_offset_);
     key_random0_size_ = real_offset;

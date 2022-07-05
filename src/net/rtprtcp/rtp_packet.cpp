@@ -3,7 +3,6 @@
 #include "logger.hpp"
 #include "timeex.hpp"
 #include "byte_stream.hpp"
-#include <arpa/inet.h>
 #include <sstream>
 #include <cstring>
 #include <assert.h>

@@ -39,6 +39,18 @@ static uint32_t make_live_audio_ssrc() {
     return ssrc;
 }
 
+static CANDIDATE_INFO make_candidate(std::shared_ptr<webrtc_session> session_ptr){
+    CANDIDATE_INFO candidate_data;
+    candidate_data.foundation = "0";
+    candidate_data.component = 1;
+    candidate_data.transport = "udp";
+    candidate_data.priority = 2113667327;
+    candidate_data.ip = session_ptr->get_candidates_ip();
+    candidate_data.port = session_ptr->get_candidates_port();
+    candidate_data.type = "host";
+    return candidate_data;
+}
+
 std::shared_ptr<room_service> GetorCreate_room_service(const std::string& roomId) {
     auto iter = s_rooms.find(roomId);
     if (iter != s_rooms.end()) {
@@ -770,17 +782,7 @@ void room_service::handle_publish(const std::string& id, const std::string& meth
     finger_print_info fingerprint = session_ptr->get_local_finger_print(info.finger_print.type);
     support_info.finger_print.hash = fingerprint.value;
 
-    CANDIDATE_INFO candidate_data = {
-        .foundation = "0",
-        .component  = 1,
-        .transport  = "udp",
-        .priority   = 2113667327,
-        .ip         = session_ptr->get_candidates_ip(),
-        .port       = session_ptr->get_candidates_port(),
-        .type       = "host"
-    };
-
-    support_info.candidates.push_back(candidate_data);
+    support_info.candidates.push_back(make_candidate(session_ptr));
 
     /********* suppot publish rtc information is ready ************/
     std::string resp_sdp_str = user_ptr->rtc_media_info_2_sdp(support_info);
@@ -1135,17 +1137,8 @@ void room_service::handle_live_subscribe(const std::string& id,
     finger_print_info fingerprint = session_ptr->get_local_finger_print(info.finger_print.type);
     support_info.finger_print.hash = fingerprint.value;
 
-    CANDIDATE_INFO candidate_data = {
-        .foundation = "0",
-        .component  = 1,
-        .transport  = "udp",
-        .priority   = 2113667327,
-        .ip         = session_ptr->get_candidates_ip(),
-        .port       = session_ptr->get_candidates_port(),
-        .type       = "host"
-    };
 
-    support_info.candidates.push_back(candidate_data);
+    support_info.candidates.push_back(make_candidate(session_ptr));
     //log_infof("get live subscribe support media info:\r\n%s", support_info.dump().c_str());
 
     std::string resp_sdp_str = user_ptr->rtc_media_info_2_sdp(support_info);
@@ -1290,17 +1283,7 @@ void room_service::handle_webrtc_subscribe(const std::string& id,
     finger_print_info fingerprint = session_ptr->get_local_finger_print(info.finger_print.type);
     support_info.finger_print.hash = fingerprint.value;
 
-    CANDIDATE_INFO candidate_data = {
-        .foundation = "0",
-        .component  = 1,
-        .transport  = "udp",
-        .priority   = 2113667327,
-        .ip         = session_ptr->get_candidates_ip(),
-        .port       = session_ptr->get_candidates_port(),
-        .type       = "host"
-    };
-
-    support_info.candidates.push_back(candidate_data);
+    support_info.candidates.push_back(make_candidate(session_ptr));
     //log_infof("get subscribe support media info:\r\n%s", support_info.dump().c_str());
 
     std::string resp_sdp_str = user_ptr->rtc_media_info_2_sdp(support_info);
@@ -1373,17 +1356,7 @@ int room_service::handle_http_publish(const std::string& uid, const std::string&
     finger_print_info fingerprint = session_ptr->get_local_finger_print(info.finger_print.type);
     support_info.finger_print.hash = fingerprint.value;
 
-    CANDIDATE_INFO candidate_data = {
-        .foundation = "0",
-        .component  = 1,
-        .transport  = "udp",
-        .priority   = 2113667327,
-        .ip         = session_ptr->get_candidates_ip(),
-        .port       = session_ptr->get_candidates_port(),
-        .type       = "host"
-    };
-
-    support_info.candidates.push_back(candidate_data);
+    support_info.candidates.push_back(make_candidate(session_ptr));
 
     /********* suppot publish rtc information is ready ************/
     resp_sdp = user_ptr->rtc_media_info_2_sdp(support_info);
@@ -1558,17 +1531,7 @@ int room_service::handle_http_webrtc_subscribe(std::shared_ptr<user_info> user_p
     finger_print_info fingerprint = session_ptr->get_local_finger_print(info.finger_print.type);
     support_info.finger_print.hash = fingerprint.value;
 
-    CANDIDATE_INFO candidate_data = {
-        .foundation = "0",
-        .component  = 1,
-        .transport  = "udp",
-        .priority   = 2113667327,
-        .ip         = session_ptr->get_candidates_ip(),
-        .port       = session_ptr->get_candidates_port(),
-        .type       = "host"
-    };
-
-    support_info.candidates.push_back(candidate_data);
+    support_info.candidates.push_back(make_candidate(session_ptr));
     //log_infof("http subscribe support media info:\r\n%s", support_info.dump().c_str());
 
     resp_sdp = user_ptr->rtc_media_info_2_sdp(support_info);
@@ -1722,17 +1685,7 @@ int room_service::handle_http_live_subscribe(std::shared_ptr<user_info> user_ptr
     finger_print_info fingerprint = session_ptr->get_local_finger_print(info.finger_print.type);
     support_info.finger_print.hash = fingerprint.value;
 
-    CANDIDATE_INFO candidate_data = {
-        .foundation = "0",
-        .component  = 1,
-        .transport  = "udp",
-        .priority   = 2113667327,
-        .ip         = session_ptr->get_candidates_ip(),
-        .port       = session_ptr->get_candidates_port(),
-        .type       = "host"
-    };
-
-    support_info.candidates.push_back(candidate_data);
+    support_info.candidates.push_back(make_candidate(session_ptr));
     //log_infof("get live subscribe support media info:\r\n%s", support_info.dump().c_str());
 
     resp_sdp = user_ptr->rtc_media_info_2_sdp(support_info);

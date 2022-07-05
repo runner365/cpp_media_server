@@ -3,9 +3,7 @@
 #include <string>
 #include <stdint.h>
 #include <stddef.h>
-#include <arpa/inet.h>  // htonl(), htons(), ntohl(), ntohs()
-#include <netinet/in.h> // sockaddr_in, sockaddr_in6
-#include <sys/socket.h> // struct sockaddr, struct sockaddr_storage, AF_INET, AF_INET6
+#include "ipaddress.hpp"
 
 #define STUN_HEADER_SIZE 20
 

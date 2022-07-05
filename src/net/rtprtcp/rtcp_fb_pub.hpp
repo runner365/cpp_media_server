@@ -4,9 +4,12 @@
 #include <stddef.h>
 #include <string>
 #include <cstring>
-
 #include <stdio.h>
+#ifdef WIN32
+#include <WinSock2.h>
+#else
 #include <arpa/inet.h>  // htonl(), htons(), ntohl(), ntohs()
+#endif
 
 /*
     0                   1                   2                   3

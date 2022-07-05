@@ -267,7 +267,7 @@ int audio_encode::send_frame(AVFrame* frame) {
 
                 audio_pkt_p->pts = (audio_pkt_p->pts < 0) ? 0 :audio_pkt_p->pts;
                 audio_pkt_p->dts = (audio_pkt_p->dts < 0) ? 0 :audio_pkt_p->dts;
-                av_packet_rescale_ts(audio_pkt_p, codec_ctx_->time_base, AV_TIME_BASE_Q);
+                av_packet_rescale_ts(audio_pkt_p, codec_ctx_->time_base, { 1, AV_TIME_BASE });
                 audio_pkt_p->dts = audio_pkt_p->dts / 1000;
                 audio_pkt_p->pts = audio_pkt_p->pts / 1000;
                 if (audio_codec_type_ == MEDIA_CODEC_OPUS) {

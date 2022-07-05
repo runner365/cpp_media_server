@@ -4,7 +4,6 @@
 #include <stdint.h>
 #include <stddef.h>
 #include <string>
-#include <arpa/inet.h>
 #include <map>
 
 #define RTP_SEQ_MOD (1<<16)

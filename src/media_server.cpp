@@ -17,7 +17,9 @@
 #include <stdint.h>
 #include <stddef.h>
 #include <iostream>
+#ifndef WIN32
 #include <unistd.h>
+#endif
 
 uv_loop_t* MediaServer::loop_ = uv_default_loop();
 uv_loop_t* MediaServer::hls_loop_ = uv_loop_new();
@@ -245,7 +247,11 @@ uv_loop_t* get_global_io_context() {
 
 int main(int argn, char** argv) {
     std::string cfg_file;
-
+#ifdef WIN32
+    if(argn > 2 && !_stricmp(argv[1],"-c") ) {
+        cfg_file = argv[2];
+    }
+#else
     int opt = 0;
     while ((opt = getopt(argn, argv, "c:")) != -1) {
       switch (opt) {
@@ -259,7 +265,7 @@ int main(int argn, char** argv) {
           return -1;
       }
     }
-
+#endif
     MediaServer::Run(cfg_file);
 
     return 0;
