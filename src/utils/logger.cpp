@@ -50,13 +50,13 @@ void Logger::logf(const char* level, const char* buffer, const char* filename, i
     std::stringstream ss;
     std::string name(filename);
 
-    size_t pos = name.rfind("/");
+    size_t pos = name.find_last_of("/\\");
     if (pos != name.npos) {
         name = name.substr(pos + 1);
     }
 
     ss << "[" << level << "]" << "[" << get_now_str() << "]"
-       << "[" << name << ":" << line << "]"
+       << "[" << name << ":" << line << "] "
        << buffer << "\r\n";
     
     if (filename_.empty()) {
