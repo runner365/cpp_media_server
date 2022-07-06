@@ -2,6 +2,11 @@
 #include "rtmp_client_session.hpp"
 #include "rtmp_server_session.hpp"
 #include "utils/timeex.hpp"
+#ifdef WIN32
+extern "C" {
+#include <openssl/applink.c>
+};
+#endif
 
 c1s1_handle::c1s1_handle() {
     digest_random0_ = nullptr;
