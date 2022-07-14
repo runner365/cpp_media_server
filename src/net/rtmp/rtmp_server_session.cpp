@@ -61,8 +61,8 @@ void rtmp_server_session::close() {
         }
     }
 
-    callback_->on_close(session_ptr_->get_remote_endpoint());
     session_ptr_->close();
+    callback_->on_close(session_ptr_->get_remote_endpoint());
 }
 
 void rtmp_server_session::on_write(int ret_code, size_t sent_size) {
