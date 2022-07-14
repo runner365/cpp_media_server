@@ -196,7 +196,6 @@ int64_t sdl_player::get_audioframe_queue_duration() {
 
 void sdl_player::on_callback(uint8_t* stream, int len) {
     int pos = 0;
-    int len1 = 0;
 
     while (len > 0) {
         while ((get_audioframe_queue_len() > 2) && (get_audioframe_queue_duration() > buffer_duration_)) {
@@ -218,16 +217,18 @@ void sdl_player::on_callback(uint8_t* stream, int len) {
 
         av_frame_free(&frame);
 
-        len1 = (audio_buffer_.data_len() >= len) ? len : audio_buffer_.data_len();
+        if (len > audio_buffer_.data_len()) {
+            std::this_thread::sleep_for(std::chrono::milliseconds(5));
+            continue;
+        }
 
-        memcpy(stream + pos, audio_buffer_.data(), len1);
-        audio_buffer_.consume_data(len1);
-        pos += len1;
+        memcpy(stream, audio_buffer_.data(), len);
+        audio_buffer_.consume_data(len);
 
-        len -= len1;
+        len  = 0;
     }
 
-
+    return;
 }
 
 int sdl_player::initVideo(int width, int height) {
