@@ -28,6 +28,7 @@ public:
 
     char* data();
     size_t data_len();
+    size_t buffer_size();
     bool require(size_t len);
 
 public:

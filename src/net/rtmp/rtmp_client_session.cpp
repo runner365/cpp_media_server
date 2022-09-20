@@ -81,8 +81,8 @@ int rtmp_client_session::rtmp_send(std::shared_ptr<data_buffer> data_ptr) {
     return 0;
 }
 
-data_buffer* rtmp_client_session::get_recv_buffer() {
-    return &recv_buffer_;
+std::shared_ptr<data_buffer> rtmp_client_session::get_recv_buffer() {
+    return recv_buffer_ptr_;
 }
 
 void rtmp_client_session::close() {
@@ -106,7 +106,7 @@ void rtmp_client_session::on_connect(int ret_code) {
     }
 
     client_phase_ = client_c0c1_phase;
-    recv_buffer_.reset();
+    recv_buffer_ptr_->reset();
     (void)hs_.send_c0c1();
     log_infof("rtmp client connected...");
     try_read();
@@ -128,7 +128,7 @@ void rtmp_client_session::on_read(int ret_code, const char* data, size_t data_si
         return;
     }
 
-    recv_buffer_.append_data(data, data_size);
+    recv_buffer_ptr_->append_data(data, data_size);
 
     int ret = handle_message();
     if (ret < 0) {
@@ -147,10 +147,10 @@ int rtmp_client_session::handle_message() {
     int ret = 0;
 
     if (client_phase_ == client_c0c1_phase) {
-        if (!recv_buffer_.require(rtmp_client_handshake::s0s1s2_size)) {
+        if (!recv_buffer_ptr_->require(rtmp_client_handshake::s0s1s2_size)) {
             return RTMP_NEED_READ_MORE;
         }
-        uint8_t* p = (uint8_t*)recv_buffer_.data();
+        uint8_t* p = (uint8_t*)recv_buffer_ptr_->data();
         ret = hs_.parse_s0s1s2(p, rtmp_client_handshake::s0s1s2_size);
         if (ret < 0) {
             log_errorf("rtmp handshake parse s0s1s3 error:%d", ret);
@@ -172,7 +172,7 @@ int rtmp_client_session::handle_message() {
         }
         log_infof("rtmp client connect...");
         client_phase_ = client_connect_resp_phase;
-        recv_buffer_.reset();
+        recv_buffer_ptr_->reset();
         return RTMP_NEED_READ_MORE;
     }
     
@@ -199,7 +199,7 @@ int rtmp_client_session::handle_message() {
             log_errorf("rtmp create stream error:%d", ret);
             return ret;
         }
-        recv_buffer_.reset();
+        recv_buffer_ptr_->reset();
         client_phase_ = client_create_stream_resp_phase;
         return RTMP_NEED_READ_MORE;
     }
@@ -218,7 +218,7 @@ int rtmp_client_session::handle_message() {
                 client_phase_ = client_create_play_phase;
             }
             log_infof("change to rtmp phase:%s", get_client_phase_desc(client_phase_));
-            recv_buffer_.reset();
+            recv_buffer_ptr_->reset();
         } else {
             log_errorf("rtmp connect unkown return:%d", ret);
             return -1;
@@ -231,7 +231,7 @@ int rtmp_client_session::handle_message() {
             log_errorf("rtmp play error:%d", ret);
             return ret;
         }
-        recv_buffer_.reset();
+        recv_buffer_ptr_->reset();
         client_phase_ = client_media_handle_phase;
         return RTMP_NEED_READ_MORE;
     }
@@ -242,7 +242,7 @@ int rtmp_client_session::handle_message() {
             log_errorf("rtmp publish error:%d", ret);
             return ret;
         }
-        recv_buffer_.reset();
+        recv_buffer_ptr_->reset();
         client_phase_ = client_media_handle_phase;
         log_infof("client publish send done.");
         return RTMP_NEED_READ_MORE;
@@ -275,26 +275,26 @@ int rtmp_client_session::receive_resp_message() {
 
         //check whether chunk stream is ready(data is full)
         if (!cs_ptr || !cs_ptr->is_ready()) {
-            if (recv_buffer_.data_len() > 0) {
+            if (recv_buffer_ptr_->data_len() > 0) {
                 continue;
             }
             return RTMP_NEED_READ_MORE;
         }
 
         if ((cs_ptr->type_id_ >= RTMP_CONTROL_SET_CHUNK_SIZE) && (cs_ptr->type_id_ <= RTMP_CONTROL_SET_PEER_BANDWIDTH)) {
-            ret = ctrl_handler_.handle_rtmp_control_message(cs_ptr, false);
+            ret = ctrl_handler_.handle_rtmp_control_message(std::move(cs_ptr), false);
             if (ret < RTMP_OK) {
                 log_infof("handle_rtmp_control_message error:%d", ret);
                 return ret;
             }
             cs_ptr->reset();
-            if (recv_buffer_.data_len() > 0) {
+            if (recv_buffer_ptr_->data_len() > 0) {
                 continue;
             }
             break;
         } else if (cs_ptr->type_id_ == RTMP_COMMAND_MESSAGES_AMF0) {
             std::vector<AMF_ITERM*> amf_vec;
-            ret = ctrl_handler_.handle_server_command_message(cs_ptr, amf_vec);
+            ret = ctrl_handler_.handle_server_command_message(std::move(cs_ptr), amf_vec);
             if (ret < RTMP_OK) {
                 for (auto iter : amf_vec) {
                     AMF_ITERM* temp = iter;
@@ -308,13 +308,13 @@ int rtmp_client_session::receive_resp_message() {
                 delete temp;
             }
             cs_ptr->reset();
-            if (recv_buffer_.data_len() > 0) {
+            if (recv_buffer_ptr_->data_len() > 0) {
                 continue;
             }
             break;
         }  else if ((cs_ptr->type_id_ == RTMP_MEDIA_PACKET_VIDEO) || (cs_ptr->type_id_ == RTMP_MEDIA_PACKET_AUDIO)
                 || (cs_ptr->type_id_ == RTMP_COMMAND_MESSAGES_META_DATA0) || (cs_ptr->type_id_ == RTMP_COMMAND_MESSAGES_META_DATA3)) {
-            MEDIA_PACKET_PTR pkt_ptr = get_media_packet(cs_ptr);
+            MEDIA_PACKET_PTR pkt_ptr = get_media_packet(std::move(cs_ptr));
             if (!pkt_ptr || !(pkt_ptr->buffer_ptr_) || pkt_ptr->buffer_ptr_->data_len() == 0) {
                 return -1;
             }
@@ -322,11 +322,11 @@ int rtmp_client_session::receive_resp_message() {
             //handle video/audio
             //TODO: send media data to client callback....
             if (cb_) {
-                cb_->on_message(RTMP_OK, pkt_ptr);
+                cb_->on_message(RTMP_OK, std::move(pkt_ptr));
             }
 
             cs_ptr->reset();
-            if (recv_buffer_.data_len() > 0) {
+            if (recv_buffer_ptr_->data_len() > 0) {
                 continue;
             }
             ret = RTMP_NEED_READ_MORE;

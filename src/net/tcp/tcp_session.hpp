@@ -40,6 +40,7 @@ public:
     tcp_session(uv_loop_t* loop,
             uv_stream_t* server_uv_handle,
             tcp_session_callbackI* callback):callback_(callback)
+                                            , ssl_(nullptr)
     {
         buffer_    = (char*)malloc(buffer_size_);
         uv_handle_ = (uv_tcp_t*)malloc(sizeof(uv_tcp_t));
@@ -254,10 +255,12 @@ private:
     }
 
     void on_write(write_req_t* req, int status) {
-        write_req_t* wr;
-      
+        write_req_t* wr = (write_req_t*) req;
+
+        if (close_) {
+            return;
+        }
         /* Free the read/write buffer and the request */
-        wr = (write_req_t*) req;
         if (ssl_enable_ && ssl_) {
             if (ssl_->get_state() == TLS_DATA_RECV_STATE) {
                 if (callback_ && !close_) {

@@ -347,6 +347,8 @@ add_executable(cpp_media_server
             src/utils/config.hpp
             src/utils/data_buffer.cpp
             src/utils/data_buffer.hpp
+            src/utils/data_buffer_pool.cpp
+            src/utils/data_buffer_pool.hpp
             src/utils/byte_stream.cpp
             src/utils/byte_stream.hpp
             src/utils/byte_crypto.cpp

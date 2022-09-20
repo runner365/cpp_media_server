@@ -2,6 +2,7 @@
 #include "rtmp_session_base.hpp"
 #include "rtmp_server_session.hpp"
 #include "rtmp_client_session.hpp"
+#include "data_buffer_pool.hpp"
 #include "rtmp_pub.hpp"
 #include "logger.hpp"
 
@@ -10,18 +11,27 @@ static const int FORMAT1_HEADER_LEN = 7;
 static const int FORMAT2_HEADER_LEN = 3;
 static const int EXT_TS_LEN = 4;
 
-chunk_stream::chunk_stream(rtmp_session_base* session, uint8_t fmt, uint16_t csid, uint32_t chunk_size) {
-    session_ = session;
-    fmt_     = fmt;
-    csid_    = csid;
-    chunk_size_     = chunk_size;
-    msg_count_      = 0;
-    chunk_all_ptr_  = std::make_shared<data_buffer>(50*1024);
-    chunk_data_ptr_ = std::make_shared<data_buffer>(50*1024);
+chunk_stream::chunk_stream(rtmp_session_base* session, uint8_t fmt, uint16_t csid,
+                        uint32_t chunk_size, bool write_flag, size_t data_size) {
+    session_    = session;
+    fmt_        = fmt;
+    csid_       = csid;
+    chunk_size_ = chunk_size;
+    msg_count_  = 0;
+    if (write_flag) {
+        write_data_ptr_ = DataBufferPool::get_instance().get_data_buffer(data_size);
+    } else {
+        read_data_ptr_  = DataBufferPool::get_instance().get_data_buffer(data_size);
+    }
 }
 
 chunk_stream::~chunk_stream() {
-
+    if (read_data_ptr_) {
+        DataBufferPool::get_instance().release(read_data_ptr_);
+    }
+    if (write_data_ptr_) {
+        DataBufferPool::get_instance().release(write_data_ptr_);
+    }
 }
 
 bool chunk_stream::is_ready() {
@@ -121,7 +131,7 @@ int chunk_stream::gen_control_message(RTMP_CONTROL_TYPE ctrl_type, uint32_t size
 }
 
 int chunk_stream::read_msg_format0(uint8_t input_fmt, uint16_t input_csid) {
-    data_buffer* buffer_p = session_->get_recv_buffer();
+    std::shared_ptr<data_buffer> buffer_p = session_->get_recv_buffer();
 
     if (!buffer_p->require(FORMAT0_HEADER_LEN)) {
         return RTMP_NEED_READ_MORE;
@@ -133,6 +143,7 @@ int chunk_stream::read_msg_format0(uint8_t input_fmt, uint16_t input_csid) {
     uint8_t* p  = (uint8_t*)buffer_p->data();
     uint32_t ts = read_3bytes(p);
     if (ts >= 0xffffff) {
+        log_warnf("rtmp ts:%x", ts);
         //require 4 bytes
         ext_ts_flag_ = true;
         if (!buffer_p->require(FORMAT0_HEADER_LEN + EXT_TS_LEN)) {
@@ -168,7 +179,7 @@ int chunk_stream::read_msg_format0(uint8_t input_fmt, uint16_t input_csid) {
 }
 
 int chunk_stream::read_msg_format1(uint8_t input_fmt, uint16_t input_csid) {
-    data_buffer* buffer_p = session_->get_recv_buffer();
+    std::shared_ptr<data_buffer> buffer_p = session_->get_recv_buffer();
 
     if (!buffer_p->require(FORMAT1_HEADER_LEN)) {
         return RTMP_NEED_READ_MORE;
@@ -211,7 +222,7 @@ int chunk_stream::read_msg_format1(uint8_t input_fmt, uint16_t input_csid) {
 }
 
 int chunk_stream::read_msg_format2(uint8_t input_fmt, uint16_t input_csid) {
-    data_buffer* buffer_p = session_->get_recv_buffer();
+    std::shared_ptr<data_buffer> buffer_p = session_->get_recv_buffer();
 
     if (!buffer_p->require(FORMAT2_HEADER_LEN)) {
         return RTMP_NEED_READ_MORE;
@@ -247,7 +258,7 @@ int chunk_stream::read_msg_format2(uint8_t input_fmt, uint16_t input_csid) {
 }
 
 int chunk_stream::read_msg_format3(uint8_t input_fmt, uint16_t input_csid) {
-    data_buffer* buffer_p = session_->get_recv_buffer();
+    std::shared_ptr<data_buffer> buffer_p = session_->get_recv_buffer();
     uint8_t* p;
 
     if (remain_ == 0) {
@@ -284,8 +295,8 @@ int chunk_stream::read_msg_format3(uint8_t input_fmt, uint16_t input_csid) {
             }
         }
         //chunk stream data reset
-        chunk_all_ptr_->reset();
-        chunk_data_ptr_->reset();
+        write_data_ptr_->reset();
+        read_data_ptr_->reset();
         remain_      = msg_len_;
         chunk_ready_ = false;
     } else {
@@ -340,12 +351,12 @@ int chunk_stream::read_message_payload() {
         return RTMP_OK;
     }
 
-    data_buffer* buffer_p = session_->get_recv_buffer();
+    std::shared_ptr<data_buffer> buffer_p = session_->get_recv_buffer();
     require_len_ = (remain_ > chunk_size_) ? chunk_size_ : remain_;
     if (!buffer_p->require(require_len_)) {
         return RTMP_NEED_READ_MORE;
     }
-    chunk_data_ptr_->append_data(buffer_p->data(), require_len_);
+    read_data_ptr_->append_data(buffer_p->data(), require_len_);
     buffer_p->consume_data(require_len_);
 
     remain_ -= require_len_;
@@ -360,7 +371,7 @@ int chunk_stream::read_message_payload() {
 }
 
 void chunk_stream::dump_header() {
-    data_buffer* buffer_p = session_->get_recv_buffer();
+    std::shared_ptr<data_buffer> buffer_p = session_->get_recv_buffer();
     log_infof("basic header: fmt=%d, csid:%d; message header: timestamp=%lu, \
 msglen=%u, typeid:%d, msg streamid:%u, remain:%ld, recv buffer len:%lu, chunk_size_:%u",
         fmt_, csid_, timestamp32_, msg_len_, type_id_, msg_stream_id_, remain_,
@@ -370,32 +381,32 @@ msglen=%u, typeid:%d, msg streamid:%u, remain:%ld, recv buffer len:%lu, chunk_si
 void chunk_stream::dump_payload() {
     char desc[128];
 
-    snprintf(desc, sizeof(desc), "chunk stream payload:%lu", chunk_data_ptr_->data_len());
-    log_info_data((uint8_t*)chunk_data_ptr_->data(), chunk_data_ptr_->data_len(), desc);
+    snprintf(desc, sizeof(desc), "chunk stream payload:%lu", read_data_ptr_->data_len());
+    log_info_data((uint8_t*)read_data_ptr_->data(), read_data_ptr_->data_len(), desc);
 }
 
 void chunk_stream::dump_alldata() {
     char desc[128];
 
-    snprintf(desc, sizeof(desc), "chunk stream all data:%lu", chunk_all_ptr_->data_len());
-    log_info_data((uint8_t*)chunk_all_ptr_->data(), chunk_all_ptr_->data_len(), desc);
+    snprintf(desc, sizeof(desc), "chunk stream all data:%lu", write_data_ptr_->data_len());
+    log_info_data((uint8_t*)write_data_ptr_->data(), write_data_ptr_->data_len(), desc);
 }
 
 int chunk_stream::gen_data(uint8_t* data, int len) {
     if (csid_ < 64) {
         uint8_t fmt_csid_data[1];
         fmt_csid_data[0] = (fmt_ << 6) | (csid_ & 0x3f);
-        chunk_all_ptr_->append_data((char*)fmt_csid_data, sizeof(fmt_csid_data));
+        write_data_ptr_->append_data((char*)fmt_csid_data, sizeof(fmt_csid_data));
     } else if ((csid_ - 64) < 256) {
         uint8_t fmt_csid_data[2];
         fmt_csid_data[0] = (fmt_ << 6) & 0xc0;
         fmt_csid_data[1] = csid_;
-        chunk_all_ptr_->append_data((char*)fmt_csid_data, sizeof(fmt_csid_data));
+        write_data_ptr_->append_data((char*)fmt_csid_data, sizeof(fmt_csid_data));
     } else if ((csid_ - 64) < 65536) {
         uint8_t fmt_csid_data[3];
         fmt_csid_data[0] = ((fmt_ << 6) & 0xc0) | 0x01;
         write_2bytes(fmt_csid_data + 1, csid_);
-        chunk_all_ptr_->append_data((char*)fmt_csid_data, sizeof(fmt_csid_data));
+        write_data_ptr_->append_data((char*)fmt_csid_data, sizeof(fmt_csid_data));
     } else {
         log_errorf("csid error:%d", csid_);
         return -1;
@@ -411,7 +422,7 @@ int chunk_stream::gen_data(uint8_t* data, int len) {
         *p = type_id_;
         p++;
         write_4bytes(p, msg_stream_id_);
-        chunk_all_ptr_->append_data((char*)header_data, sizeof(header_data));
+        write_data_ptr_->append_data((char*)header_data, sizeof(header_data));
     } else if (fmt_ == 1) {
         uint8_t header_data[7];
         uint8_t* p = header_data;
@@ -420,25 +431,29 @@ int chunk_stream::gen_data(uint8_t* data, int len) {
         write_3bytes(p, msg_len_);
         p += 3;
         *p = type_id_;
-        chunk_all_ptr_->append_data((char*)header_data, sizeof(header_data));
+        write_data_ptr_->append_data((char*)header_data, sizeof(header_data));
     } else if (fmt_ == 2) {
         uint8_t header_data[3];
         uint8_t* p = header_data;
         write_3bytes(p, timestamp32_);
-        chunk_all_ptr_->append_data((char*)header_data, sizeof(header_data));
+        write_data_ptr_->append_data((char*)header_data, sizeof(header_data));
     } else {
         //need do nothing
     }
 
-    chunk_all_ptr_->append_data((char*)data, (size_t)len);
+    write_data_ptr_->append_data((char*)data, (size_t)len);
     return RTMP_OK;
 }
 
 void chunk_stream::reset() {
     phase_ = CHUNK_STREAM_PHASE_HEADER;
     chunk_ready_ = false;
-    chunk_all_ptr_->reset();
-    chunk_data_ptr_->reset();
+    if (write_data_ptr_) {
+        write_data_ptr_->reset();
+    }
+    if (read_data_ptr_) {
+        read_data_ptr_->reset();
+    }
 }
 
 int write_data_by_chunk_stream(rtmp_session_base* session, uint16_t csid,
@@ -471,7 +486,7 @@ int write_data_by_chunk_stream(rtmp_session_base* session, uint16_t csid,
         } else {
             len = chunk_size;
         }
-        chunk_stream* c = new chunk_stream(session, fmt, csid, chunk_size);
+        chunk_stream* c = new chunk_stream(session, fmt, csid, chunk_size, true, 256);
 
         c->timestamp32_ = timestamp;
         c->msg_len_     = input_buffer.data_len();
@@ -479,7 +494,7 @@ int write_data_by_chunk_stream(rtmp_session_base* session, uint16_t csid,
         c->msg_stream_id_ = msg_stream_id;
         c->gen_data(p, len);
         
-        session->rtmp_send(c->chunk_all_ptr_);
+        session->rtmp_send(c->write_data_ptr_);
 
         delete c;
     }
@@ -516,7 +531,7 @@ int write_data_by_chunk_stream(rtmp_session_base* session, uint16_t csid,
         } else {
             len = chunk_size;
         }
-        chunk_stream* c = new chunk_stream(session, fmt, csid, chunk_size);
+        chunk_stream* c = new chunk_stream(session, fmt, csid, chunk_size, true, chunk_size+128);
 
         c->timestamp32_ = timestamp;
         c->msg_len_     = input_buffer_ptr->data_len();
@@ -526,7 +541,7 @@ int write_data_by_chunk_stream(rtmp_session_base* session, uint16_t csid,
         
         //c->dump_header();
         //c->dump_alldata();
-        session->rtmp_send(c->chunk_all_ptr_);
+        session->rtmp_send(c->write_data_ptr_);
 
         delete c;
     }

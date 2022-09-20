@@ -49,24 +49,6 @@ data_buffer::~data_buffer() {
     }
 }
 
-static int get_new_size(int new_len) {
-    int ret = new_len;
-
-    if (new_len <= 50*1024) {
-        ret = 50*1024;
-    } else if ((new_len > 50*1024) && (new_len <= 100*1024)) {
-        ret = 100*1024;
-    } else if ((new_len > 100*1024) && (new_len <= 200*1024)) {
-        ret = 200*1024;
-    } else if ((new_len > 200*1024) && (new_len <= 500*1024)) {
-        ret = 500*1024;
-    } else {
-        ret = new_len;
-    }
-
-    return ret;
-}
-
 int data_buffer::append_data(const char* input_data, size_t input_len) {
     if ((input_data == nullptr) || (input_len == 0)) {
         return 0;
@@ -75,8 +57,8 @@ int data_buffer::append_data(const char* input_data, size_t input_len) {
     if ((size_t)end_ + input_len > (buffer_size_ - PRE_RESERVE_HEADER_SIZE)) {
         if (data_len_ + input_len >= (buffer_size_ - PRE_RESERVE_HEADER_SIZE)) {
             int new_len = data_len_ + (int)input_len + EXTRA_LEN;
+            size_t old_buffer_size = buffer_size_;
             
-            new_len = get_new_size(new_len);
             char* new_buffer = new char[new_len];
             memcpy(new_buffer + PRE_RESERVE_HEADER_SIZE, buffer_ + start_, data_len_);
             memcpy(new_buffer + PRE_RESERVE_HEADER_SIZE + data_len_, input_data, input_len);
@@ -86,6 +68,8 @@ int data_buffer::append_data(const char* input_data, size_t input_len) {
             data_len_    += input_len;
             start_     = PRE_RESERVE_HEADER_SIZE;
             end_       = start_ + data_len_;
+            log_debugf("make new buffer size:%d, input_len:%lu, start:%d, end:%d, old buffer size:%lu",
+                    new_len, input_len, start_, end_, old_buffer_size);
             return data_len_;
         }
         if (data_len_ >= start_) {
@@ -140,6 +124,10 @@ char* data_buffer::data() {
 
 size_t data_buffer::data_len() {
     return data_len_;
+}
+
+size_t data_buffer::buffer_size() {
+    return buffer_size_;
 }
 
 bool data_buffer::require(size_t len) {

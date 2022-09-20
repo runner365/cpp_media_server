@@ -41,7 +41,7 @@ public:
     virtual ~rtmp_session_base();
     
 public:
-    virtual data_buffer* get_recv_buffer() = 0;
+    virtual std::shared_ptr<data_buffer> get_recv_buffer() = 0;
     virtual int rtmp_send(char* data, int len) = 0;
     virtual int rtmp_send(std::shared_ptr<data_buffer> data_ptr) = 0;
 
@@ -57,7 +57,7 @@ protected:
     MEDIA_PACKET_PTR get_media_packet(CHUNK_STREAM_PTR cs_ptr);
 
 public:
-    data_buffer recv_buffer_;
+    std::shared_ptr<data_buffer> recv_buffer_ptr_;
     bool fmt_ready_ = false;
     uint8_t fmt_    = 0;
     uint16_t csid_  = 0;

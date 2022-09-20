@@ -46,7 +46,7 @@ public:
     void close();
 
 protected://implement rtmp_session_base
-    data_buffer* get_recv_buffer() override;
+    std::shared_ptr<data_buffer> get_recv_buffer() override;
     int rtmp_send(char* data, int len) override;
     int rtmp_send(std::shared_ptr<data_buffer> data_ptr) override;
 

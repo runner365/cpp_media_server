@@ -15,7 +15,8 @@ class rtmp_session_base;
 class chunk_stream
 {
 public:
-    chunk_stream(rtmp_session_base* session, uint8_t fmt, uint16_t csid, uint32_t chunk_size);
+    chunk_stream(rtmp_session_base* session, uint8_t fmt, uint16_t csid,
+                uint32_t chunk_size, bool write_flag = false, size_t data_size = 64*1024);
     ~chunk_stream();
 
 public:
@@ -49,8 +50,8 @@ public:
     int64_t  remain_          = 0;
     int64_t  require_len_     = 0;
     uint32_t chunk_size_      = CHUNK_DEF_SIZE;
-    std::shared_ptr<data_buffer> chunk_all_ptr_;
-    std::shared_ptr<data_buffer> chunk_data_ptr_;
+    std::shared_ptr<data_buffer> write_data_ptr_;
+    std::shared_ptr<data_buffer> read_data_ptr_;
 
 private:
     rtmp_session_base* session_ = nullptr;

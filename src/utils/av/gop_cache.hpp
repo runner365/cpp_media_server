@@ -9,11 +9,11 @@ public:
     gop_cache(uint32_t min_gop = 1);
     ~gop_cache();
 
-    int insert_packet(MEDIA_PACKET_PTR pkt_ptr);
+    void insert_packet(MEDIA_PACKET_PTR pkt_ptr);
     int writer_gop(av_writer_base* writer_p);
 
 private:
-    std::list<MEDIA_PACKET_PTR> packet_list;
+    std::list<MEDIA_PACKET_PTR> packet_list_;
     MEDIA_PACKET_PTR video_hdr_;
     MEDIA_PACKET_PTR audio_hdr_;
     MEDIA_PACKET_PTR metadata_hdr_;

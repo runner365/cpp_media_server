@@ -2,7 +2,7 @@
 #define MEDIA_PACKET_HPP
 #include "av.hpp"
 #include "data_buffer.hpp"
-
+#include "data_buffer_pool.hpp"
 #include <stdint.h>
 #include <string>
 #include <memory>
@@ -13,14 +13,15 @@ class MEDIA_PACKET
 public:
     MEDIA_PACKET()
     {
-        buffer_ptr_ = std::make_shared<data_buffer>();
+        buffer_ptr_ = DataBufferPool::get_instance().get_data_buffer(10*1024);
     }
     MEDIA_PACKET(size_t len)
     {
-        buffer_ptr_ = std::make_shared<data_buffer>(len);
+        buffer_ptr_ = DataBufferPool::get_instance().get_data_buffer(len + PRE_RESERVE_HEADER_SIZE);
     }
     ~MEDIA_PACKET()
     {
+        DataBufferPool::get_instance().release(std::move(buffer_ptr_));
     }
 
     std::shared_ptr<MEDIA_PACKET> copy() {

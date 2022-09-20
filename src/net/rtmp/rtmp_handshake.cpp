@@ -644,20 +644,20 @@ int rtmp_server_handshake::handle_c0c1() {
     const size_t c0_size = 1;
     const size_t c1_size = 1536;
 
-    if (!session_->recv_buffer_.require(c0_size + c1_size)) {
+    if (!session_->recv_buffer_ptr_->require(c0_size + c1_size)) {
         return RTMP_NEED_READ_MORE;
     }
-    return parse_c0c1(session_->recv_buffer_.data());
+    return parse_c0c1(session_->recv_buffer_ptr_->data());
 }
 
 int rtmp_server_handshake::handle_c2() {
     const size_t c2_size = 1536;
 
-    if (!session_->recv_buffer_.require(c2_size)) {
+    if (!session_->recv_buffer_ptr_->require(c2_size)) {
         return RTMP_NEED_READ_MORE;
     }
     //TODO_JOB: handle c2 data.
-    session_->recv_buffer_.consume_data(c2_size);
+    session_->recv_buffer_ptr_->consume_data(c2_size);
     return RTMP_OK;
 }
 

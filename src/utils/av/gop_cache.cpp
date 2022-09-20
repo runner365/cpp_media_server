@@ -9,34 +9,33 @@ gop_cache::~gop_cache() {
 
 }
 
-int gop_cache::insert_packet(MEDIA_PACKET_PTR pkt_ptr) {
+void gop_cache::insert_packet(MEDIA_PACKET_PTR pkt_ptr) {
     if (pkt_ptr->av_type_ == MEDIA_VIDEO_TYPE) {
         if (pkt_ptr->is_seq_hdr_) {
             video_hdr_ = pkt_ptr;
-            return packet_list.size();
+            return;
         }
         if (pkt_ptr->is_key_frame_) {
             gop_count_++;
             if ((gop_count_%min_gop_) == 0) {
-                packet_list.clear();
+                packet_list_.clear();
             }
         }
     } else if (pkt_ptr->av_type_ == MEDIA_AUDIO_TYPE) {
         if (pkt_ptr->is_seq_hdr_) {
             audio_hdr_ = pkt_ptr;
-            return packet_list.size();
+            return;
         }
     } else if (pkt_ptr->av_type_ == MEDIA_METADATA_TYPE) {
         metadata_hdr_ = pkt_ptr;
-        log_infof("update rtmp metadata len:%lu", metadata_hdr_->buffer_ptr_->data_len())
-        return packet_list.size();
+        return;
     } else {
         log_warnf("unkown av type:%d", pkt_ptr->av_type_);
-        return -1;
+        return;
     }
 
-    packet_list.push_back(pkt_ptr);
-    return packet_list.size();
+    packet_list_.emplace_back(std::move(pkt_ptr));
+    return;
 }
 
 int gop_cache::writer_gop(av_writer_base* writer_p) {
@@ -69,9 +68,8 @@ int gop_cache::writer_gop(av_writer_base* writer_p) {
         }
     }
 
-    for (auto iter : packet_list) {
-        MEDIA_PACKET_PTR pkt_ptr = iter;
-        ret = writer_p->write_packet(pkt_ptr);
+    for (auto& iter : packet_list_) {
+        ret = writer_p->write_packet(iter);
         if (ret < 0) {
             return ret;
         }

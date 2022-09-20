@@ -26,8 +26,8 @@ void rtmp_server_session::try_read() {
     session_ptr_->async_read();
 }
 
-data_buffer* rtmp_server_session::get_recv_buffer() {
-    return &recv_buffer_;
+std::shared_ptr<data_buffer> rtmp_server_session::get_recv_buffer() {
+    return recv_buffer_ptr_;
 }
 
 int rtmp_server_session::rtmp_send(char* data, int len) {
@@ -80,7 +80,7 @@ void rtmp_server_session::on_read(int ret_code, const char* data, size_t data_si
         return;
     }
 
-    recv_buffer_.append_data(data, data_size);
+    recv_buffer_ptr_->append_data(data, data_size);
     int ret = handle_request();
     if (ret < 0) {
         close();
@@ -108,14 +108,14 @@ int rtmp_server_session::receive_chunk_stream() {
 
         //check whether chunk stream is ready(data is full)
         if (!cs_ptr || !cs_ptr->is_ready()) {
-            if (recv_buffer_.data_len() > 0) {
+            if (recv_buffer_ptr_->data_len() > 0) {
                 continue;
             }
             return RTMP_NEED_READ_MORE;
         }
 
         //check whether we need to send rtmp control ack
-        (void)send_rtmp_ack(cs_ptr->chunk_data_ptr_->data_len());
+        (void)send_rtmp_ack(cs_ptr->read_data_ptr_->data_len());
 
         if ((cs_ptr->type_id_ >= RTMP_CONTROL_SET_CHUNK_SIZE) && (cs_ptr->type_id_ <= RTMP_CONTROL_SET_PEER_BANDWIDTH)) {
             ret = ctrl_handler_.handle_rtmp_control_message(cs_ptr);
@@ -124,7 +124,7 @@ int rtmp_server_session::receive_chunk_stream() {
                 return ret;
             }
             cs_ptr->reset();
-            if (recv_buffer_.data_len() > 0) {
+            if (recv_buffer_ptr_->data_len() > 0) {
                 continue;
             }
             break;
@@ -150,7 +150,7 @@ int rtmp_server_session::receive_chunk_stream() {
                 play_writer_ = new rtmp_writer(this);
                 media_stream_manager::add_player(play_writer_);
             }
-            if (recv_buffer_.data_len() > 0) {
+            if (recv_buffer_ptr_->data_len() > 0) {
                 continue;
             }
             break;
@@ -169,18 +169,17 @@ int rtmp_server_session::receive_chunk_stream() {
 
             keep_alive();
             //handle video/audio
-            media_stream_manager::writer_media_packet(pkt_ptr);
+            media_stream_manager::writer_media_packet(std::move(pkt_ptr));
 
             cs_ptr->reset();
-            if (recv_buffer_.data_len() > 0) {
+            if (recv_buffer_ptr_->data_len() > 0) {
                 continue;
             }
         } else {
-            log_warnf("unkown chunk type id:%d", cs_ptr->type_id_);
+            log_warnf("unkown chunk type id:%d, rec buffer len:%lu",
+                    cs_ptr->type_id_, recv_buffer_ptr_->data_len());
             cs_ptr->reset();
-            if (recv_buffer_.data_len() > 0) {
-                continue;
-            }
+            ret = -1;
         }
         break;
     }
@@ -198,7 +197,7 @@ int rtmp_server_session::handle_request() {
         } else if (ret == RTMP_SIMPLE_HANDSHAKE) {
             log_infof("try to rtmp handshake in simple mode");
         }
-        recv_buffer_.reset();//be ready to receive c2;
+        recv_buffer_ptr_->reset();//be ready to receive c2;
         log_infof("rtmp session phase become c0c1.");
         ret = hs_.send_s0s1s2();
         server_phase_ = handshake_c2_phase;
@@ -210,9 +209,9 @@ int rtmp_server_session::handle_request() {
             return ret;
         }
 
-        log_infof("rtmp session phase become rtmp connect, buffer len:%lu", recv_buffer_.data_len());
+        log_infof("rtmp session phase become rtmp connect, buffer len:%lu", recv_buffer_ptr_->data_len());
         server_phase_ = connect_phase;
-        if (recv_buffer_.data_len() == 0) {
+        if (recv_buffer_ptr_->data_len() == 0) {
             return RTMP_NEED_READ_MORE;
         } else {
             ret = receive_chunk_stream();

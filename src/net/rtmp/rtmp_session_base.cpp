@@ -1,6 +1,7 @@
 #include "rtmp_session_base.hpp"
 #include "rtmp_pub.hpp"
 #include "flv_pub.hpp"
+#include "data_buffer_pool.hpp"
 
 const char* server_phase_desc_list[] = {"handshake c2 phase",
                                         "connect phase",
@@ -25,38 +26,40 @@ const char* get_client_phase_desc(RTMP_CLIENT_SESSION_PHASE phase) {
     return client_phase_desc_list[phase];
 }
 
-rtmp_session_base::rtmp_session_base():recv_buffer_(50*1024)
+rtmp_session_base::rtmp_session_base()
 {
+    recv_buffer_ptr_ = DataBufferPool::get_instance().get_data_buffer(50*1024);
 }
 
 rtmp_session_base::~rtmp_session_base()
 {
+    DataBufferPool::get_instance().release(std::move(recv_buffer_ptr_));
 }
 
 int rtmp_session_base::read_fmt_csid() {
     uint8_t* p = nullptr;
 
-    if (recv_buffer_.require(1)) {
-        p = (uint8_t*)recv_buffer_.data();
+    if (recv_buffer_ptr_->require(1)) {
+        p = (uint8_t*)recv_buffer_ptr_->data();
         fmt_  = ((*p) >> 6) & 0x3;
         csid_ = (*p) & 0x3f;
-        recv_buffer_.consume_data(1);
+        recv_buffer_ptr_->consume_data(1);
     } else {
         return RTMP_NEED_READ_MORE;
     }
 
     if (csid_ == 0) {
-        if (recv_buffer_.require(1)) {//need 1 byte
-            p = (uint8_t*)recv_buffer_.data();
-            recv_buffer_.consume_data(1);
+        if (recv_buffer_ptr_->require(1)) {//need 1 byte
+            p = (uint8_t*)recv_buffer_ptr_->data();
+            recv_buffer_ptr_->consume_data(1);
             csid_ = 64 + *p;
         } else {
             return RTMP_NEED_READ_MORE;
         }
     } else if (csid_ == 1) {
-        if (recv_buffer_.require(2)) {//need 2 bytes
-            p = (uint8_t*)recv_buffer_.data();
-            recv_buffer_.consume_data(2);
+        if (recv_buffer_ptr_->require(2)) {//need 2 bytes
+            p = (uint8_t*)recv_buffer_ptr_->data();
+            recv_buffer_ptr_->consume_data(2);
             csid_ = 64;
             csid_ += *p++;
             csid_ += *p;
@@ -91,13 +94,13 @@ MEDIA_PACKET_PTR rtmp_session_base::get_media_packet(CHUNK_STREAM_PTR cs_ptr) {
     MEDIA_PACKET_PTR pkt_ptr;
     uint32_t ts_delta = 0;
 
-    if (cs_ptr->chunk_data_ptr_->data_len() < 2) {
-        log_errorf("rtmp chunk media size:%lu is too small", cs_ptr->chunk_data_ptr_->data_len());
+    if (cs_ptr->read_data_ptr_->data_len() < 2) {
+        log_errorf("rtmp chunk media size:%lu is too small", cs_ptr->read_data_ptr_->data_len());
         return pkt_ptr;
     }
-    uint8_t* p = (uint8_t*)cs_ptr->chunk_data_ptr_->data();
+    uint8_t* p = (uint8_t*)cs_ptr->read_data_ptr_->data();
 
-    pkt_ptr = std::make_shared<MEDIA_PACKET>();
+    pkt_ptr = std::make_shared<MEDIA_PACKET>(cs_ptr->read_data_ptr_->data_len());
 
     pkt_ptr->typeid_   = cs_ptr->type_id_;
     pkt_ptr->fmt_type_ = MEDIA_FORMAT_FLV;
@@ -175,7 +178,7 @@ MEDIA_PACKET_PTR rtmp_session_base::get_media_packet(CHUNK_STREAM_PTR cs_ptr) {
     pkt_ptr->dts_  = cs_ptr->timestamp32_;
     pkt_ptr->pts_  = pkt_ptr->dts_ + ts_delta;
     pkt_ptr->buffer_ptr_->reset();
-    pkt_ptr->buffer_ptr_->append_data(cs_ptr->chunk_data_ptr_->data(), cs_ptr->chunk_data_ptr_->data_len());
+    pkt_ptr->buffer_ptr_->append_data(cs_ptr->read_data_ptr_->data(), cs_ptr->read_data_ptr_->data_len());
 
     pkt_ptr->app_        = req_.app_;
     pkt_ptr->streamname_ = req_.stream_name_;
