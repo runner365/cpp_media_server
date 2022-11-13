@@ -1,7 +1,7 @@
 #ifndef CO_TCP_SERVER_HPP
 #define CO_TCP_SERVER_HPP
 #include "uv.h"
-#include "utils/cpp20_coroutine.hpp"
+#include "cpp20_coroutine.hpp"
 #include <stdint.h>
 #include <stddef.h>
 #include <string>
@@ -14,8 +14,13 @@ class CoServerBase
 {
 public:
     virtual uv_stream_t* get_stream_handle() = 0;
+    #ifdef __APPLE__
     virtual void set_continuation(std::experimental::coroutine_handle<>) = 0;
     virtual std::experimental::coroutine_handle<> get_continuation() = 0;
+    #else
+    virtual void set_continuation(std::coroutine_handle<>) = 0;
+    virtual std::coroutine_handle<> get_continuation() = 0;
+    #endif
 };
 
 
@@ -75,12 +80,19 @@ public:
         this->conn_streams_.pop();
         return ret;
     }
-
+    #ifdef __APPLE__
     virtual void set_continuation(std::experimental::coroutine_handle<> continuation) override {
+    #else
+    virtual void set_continuation(std::coroutine_handle<> continuation) override {
+    #endif
         this->continuation_ = continuation;
     }
 
+    #ifdef __APPLE__
     virtual std::experimental::coroutine_handle<> get_continuation() override {
+    #else
+    virtual std::coroutine_handle<> get_continuation() override {
+    #endif
         return this->continuation_;
     }
 
@@ -94,7 +106,7 @@ public:
         server->conn_streams_.push(handle);
 
         if (server->suspend_flag_) {
-            server->suspend_flag_ = true;
+            server->suspend_flag_ = false;
             server->continuation_.resume();
         }
         

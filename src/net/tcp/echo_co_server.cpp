@@ -1,28 +1,38 @@
 #include "co_tcp_server.hpp"
 #include "co_tcp_session.hpp"
-#include "utils/cpp20_coroutine.hpp"
+#include "cpp20_coroutine.hpp"
 #include <stdio.h>
 #include <iostream>
 
 cpp20_co_task session_handle(CoTcpSession* session) {
+    long send_total = 0;
+    long recv_total = 0;
     while (true) {
+        std::cout << "sync_read...\r\n";
         RecvData data = co_await session->sync_read();
         if (data.data_ == nullptr || data.len_ == 0) {
             delete session;
-            std::cout << "session is closed...\r\n";
+            std::cout << "sync read error, session is closed...\r\n";
             break;
         }
     
-        std::string recv_str((char*)data.data_, data.len_);
-        std::cout << "receive data:" << recv_str << "\r\n";
+        //std::string recv_str((char*)data.data_, data.len_);
+        //std::cout << "receive data:" << recv_str << "\r\n";
+        recv_total += data.len_;
+        std::cout << "sync_read get len:" << data.len_  << "\r\n";
     
         long ret = co_await session->sync_write(data.data_, data.len_);
         if (ret < 0) {
             delete session;
-            std::cout << "session is closed...\r\n";
+            std::cout << "sync write error, session is closed...\r\n";
             break;
         }
-        std::cout << "send back len:" << ret << "\r\n";
+        send_total += ret;
+        std::cout << "send total:" << send_total
+                << ", recv total:" << recv_total << "\r\n";
+
+        free(data.data_);
+        data.data_ = nullptr;
     }
     
 }

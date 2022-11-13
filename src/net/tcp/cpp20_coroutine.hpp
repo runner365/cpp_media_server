@@ -3,11 +3,21 @@
 #include <stdint.h>
 #include <stddef.h>
 #include <string>
+#include <stdexcept>
+#include <assert.h>
 #ifdef __APPLE__
 #include <experimental/coroutine>
 #else
 #include <coroutine>
 #endif
+
+class MediaServerError : public std::runtime_error
+{
+public:
+    explicit MediaServerError(const char* description) : std::runtime_error(description)
+    {
+    }
+};
 
 typedef struct cpp20_co_task_s
 {
@@ -25,6 +35,5 @@ typedef struct cpp20_co_task_s
         void unhandled_exception() {}
     };
 } cpp20_co_task;
-
 
 #endif

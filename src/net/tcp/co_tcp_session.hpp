@@ -1,12 +1,13 @@
 #ifndef CO_TCP_SESSION_HPP
 #define CO_TCP_SESSION_HPP
 #include "uv.h"
-#include "utils/cpp20_coroutine.hpp"
-#include "utils/logger.hpp"
+#include "cpp20_coroutine.hpp"
+
 #include <stdint.h>
 #include <stddef.h>
 #include <string>
 #include <queue>
+#include <cstring>
 
 typedef struct {
   uv_write_t req;
@@ -21,8 +22,18 @@ public:
 
 class CoSessionBase {
 public:
-    virtual void set_continuation(std::experimental::coroutine_handle<>) = 0;
-    virtual std::experimental::coroutine_handle<> get_continuation() = 0;
+    #ifdef __APPLE__
+    virtual void set_send_continuation(std::experimental::coroutine_handle<>) = 0;
+    virtual std::experimental::coroutine_handle<> get_send_continuation() = 0;
+    virtual void set_recv_continuation(std::experimental::coroutine_handle<>) = 0;
+    virtual std::experimental::coroutine_handle<> get_recv_continuation() = 0;
+    #else
+    virtual void set_send_continuation(std::coroutine_handle<>) = 0;
+    virtual std::coroutine_handle<> get_send_continuation() = 0;
+    virtual void set_recv_continuation(std::coroutine_handle<>) = 0;
+    virtual std::coroutine_handle<> get_recv_continuation() = 0;
+    #endif
+    virtual size_t recv_queue_size() = 0;
     virtual RecvData get_recvdata() = 0;
     virtual long sent_length() = 0;
 };
@@ -38,14 +49,14 @@ struct tcp_recvdata_awaitable_res
             uio_awaiter(CoSessionBase* server) : server_(server)
             {
             }
-            constexpr bool await_ready() const noexcept { return false; }
+            constexpr bool await_ready() const noexcept { return server_->recv_queue_size() > 0; }
 
 #ifdef __APPLE__
             void await_suspend(std::experimental::coroutine_handle<> continuation) noexcept {
 #else
             void await_suspend(std::coroutine_handle<> continuation) noexcept {
 #endif
-                server_->set_continuation(continuation);
+                server_->set_recv_continuation(continuation);
             }
 
             RecvData await_resume() {
@@ -78,7 +89,7 @@ struct tcp_sendreturn_awaitable_res
 #else
             void await_suspend(std::coroutine_handle<> continuation) noexcept {
 #endif
-                server_->set_continuation(continuation);
+                server_->set_send_continuation(continuation);
             }
 
             long await_resume() {
@@ -130,24 +141,32 @@ public:
 public:
     tcp_recvdata_awaitable_res sync_read() {
         if (close_) {
+            recv_suspend_flag_ = true;
             return tcp_recvdata_awaitable_res(this);
         }
 
         if (!uv_handle_) {
+            recv_suspend_flag_ = true;
             return tcp_recvdata_awaitable_res(this);
         }
-    
-        int err = uv_read_start(
-                            reinterpret_cast<uv_stream_t*>(uv_handle_),
-                            static_cast<uv_alloc_cb>(&CoTcpSession::on_co_uv_alloc),
-                            static_cast<uv_read_cb>(&CoTcpSession::on_co_uv_read));
-    
-        if (err != 0) {
-            if (err == UV_EALREADY) {
-                return tcp_recvdata_awaitable_res(this);
+        
+        if (!read_start_) {
+            read_start_ = true;
+            int err = uv_read_start(reinterpret_cast<uv_stream_t*>(uv_handle_),
+                                static_cast<uv_alloc_cb>(&CoTcpSession::on_co_uv_alloc),
+                                static_cast<uv_read_cb>(&CoTcpSession::on_co_uv_read));
+
+            if (err != 0) {
+                if (err == UV_EALREADY) {
+                    recv_suspend_flag_ = true;
+                    return tcp_recvdata_awaitable_res(this);
+                }
+                throw MediaServerError("uv_read_start() failed");
             }
-            throw MediaServerError("uv_read_start() failed");
         }
+        std::cout << "sync_read data queue:" << recv_queue_.size() << "\r\n";
+
+        recv_suspend_flag_ = true;
         return tcp_recvdata_awaitable_res(this);
     }
 
@@ -162,6 +181,7 @@ public:
             free(new_data);
             throw MediaServerError("uv_write error");
         }
+        send_suspend_flag_ = true;
         return tcp_sendreturn_awaitable_res(this);
     }
 
@@ -191,30 +211,44 @@ public:
             recv_data.data_ = nullptr;
             recv_data.len_  = 0;
             recv_queue_.push(recv_data);
-            continuation_.resume();
+            if (recv_suspend_flag_) {
+                recv_suspend_flag_ = false;
+                recv_continuation_.resume();
+            }
             return;
         }
         if (nread == 0) {
             recv_data.data_ = nullptr;
             recv_data.len_  = 0;
             recv_queue_.push(recv_data);
-            continuation_.resume();
+            if (recv_suspend_flag_) {
+                recv_suspend_flag_ = false;
+                recv_continuation_.resume();
+            }
             return;
         }
         if (nread < 0) {
             recv_data.data_ = nullptr;
             recv_data.len_  = 0;
             recv_queue_.push(recv_data);
-            continuation_.resume();
+            if (recv_suspend_flag_) {
+                recv_suspend_flag_ = false;
+                recv_continuation_.resume();
+            }
             return;
         }
+        recv_total_ += nread;
+        std::cout << "session recv total:" << recv_total_ << "\r\n";
         recv_data.len_  = nread;
         recv_data.data_ = (uint8_t*)malloc(nread);
         memcpy(recv_data.data_, (uint8_t*)(buf->base), nread);
         recv_queue_.push(recv_data);
 
         free(buf->base);
-        continuation_.resume();
+        if (recv_suspend_flag_) {
+            recv_suspend_flag_ = false;
+            recv_continuation_.resume();
+        }
     }
 
     void on_write(co_write_req_t* req, int status) {
@@ -222,24 +256,58 @@ public:
 
         if (close_) {
             sent_length_ = 0;
-            continuation_.resume();
+            if (send_suspend_flag_) {
+                send_suspend_flag_ = false;
+                send_continuation_.resume();
+            }
             return;
         }
         sent_length_ = wr->buf.len;
 
         free(wr->buf.base);
         free(wr);
-        continuation_.resume();
+        if (send_suspend_flag_) {
+            send_suspend_flag_ = false;
+            send_continuation_.resume();
+        }
         return;
     }
 
 public:
-    virtual void set_continuation(std::experimental::coroutine_handle<> continuation) override {
-        continuation_ = continuation;
+    #ifdef __APPLE__
+    virtual void set_send_continuation(std::experimental::coroutine_handle<> continuation) override {
+    #else
+    virtual void set_send_continuation(std::coroutine_handle<> continuation) override {
+    #endif
+        send_continuation_ = continuation;
     }
 
-    virtual std::experimental::coroutine_handle<> get_continuation() override {
-        return continuation_;
+    #ifdef __APPLE__
+    virtual std::experimental::coroutine_handle<> get_send_continuation() override {
+    #else
+    virtual std::coroutine_handle<> get_send_continuation() override {
+    #endif
+        return send_continuation_;
+    }
+
+    #ifdef __APPLE__
+    virtual void set_recv_continuation(std::experimental::coroutine_handle<> continuation) override {
+    #else
+    virtual void set_recv_continuation(std::coroutine_handle<> continuation) override {
+    #endif
+        recv_continuation_ = continuation;
+    }
+
+    #ifdef __APPLE__
+    virtual std::experimental::coroutine_handle<> get_recv_continuation() override {
+    #else
+    virtual std::coroutine_handle<> get_recv_continuation() override {
+    #endif
+        return recv_continuation_;
+    }
+
+    virtual size_t recv_queue_size() override {
+        return recv_queue_.size();
     }
 
     virtual RecvData get_recvdata() override {
@@ -299,12 +367,20 @@ private:
 
 private:
 #ifdef __APPLE__
-    std::experimental::coroutine_handle<> continuation_;
+    std::experimental::coroutine_handle<> send_continuation_;
+    std::experimental::coroutine_handle<> recv_continuation_;
 #else
-    std::coroutine_handle<> continuation_;
+    std::coroutine_handle<> send_continuation_;
+    std::coroutine_handle<> recv_continuation_;
 #endif
+    bool recv_suspend_flag_ = false;
+    bool send_suspend_flag_ = false;
     std::queue<RecvData> recv_queue_;
     long sent_length_ = -1;
+    bool read_start_ = false;
+
+private:
+    size_t recv_total_ = 0;
     
 };
 
