@@ -101,11 +101,11 @@ int decode_oper::input_avpacket(AVPacket* pkt, MEDIA_CODEC_TYPE codec_type, bool
                 dec_tb.num = 1;
                 dec_frame->pts = av_rescale_q(dec_frame->pts, standard_ration, dec_tb);
             }
-            log_infof("opus decode pre_dts:%ld, decode frame pts:%ld", pre_dts, dec_frame->pts);
+            log_debugf("opus decode pre_dts:%ld, decode frame pts:%ld", pre_dts, dec_frame->pts);
         }
         
         if (cb_) {
-            log_infof("decode pts:%ld, dec tb:%d/%d, stream index:%d",
+            log_debugf("decode pts:%ld, dec tb:%d/%d, stream index:%d",
                     dec_frame->pts, dec_ctx->time_base.den, dec_ctx->time_base.num, pkt->stream_index);
             cb_->on_avframe_callback(pkt->stream_index, dec_frame);
         }
