@@ -294,19 +294,19 @@ void Client::Destroy(){
 template<size_t N>
 void Client::WriteRaw(uv_buf_t bufs[N]){
 	if(!m_Socket) return;
+
+	size_t totalLength = 0;
 	
+	for(size_t i = 0; i < N; ++i){
+		auto &buf = bufs[i];
+		totalLength += buf.len;
+	}
 	// Try to write without allocating memory first, if that doesn't work, we call WriteRawQueue
 	int written = uv_try_write((uv_stream_t*) m_Socket.get(), bufs, N);
 	if(written == UV_EAGAIN) written = 0;
-		
+
+    log_infof("uv_try_write return %d", written);
 	if(written >= 0){
-		size_t totalLength = 0;
-		
-		for(size_t i = 0; i < N; ++i){
-			auto &buf = bufs[i];
-			totalLength += buf.len;
-		}
-		
 		size_t skipping = (size_t) written;
 		if(skipping == totalLength) return; // Complete write
 		

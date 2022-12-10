@@ -6,6 +6,7 @@
 #include <stdint.h>
 #include <stddef.h>
 #include <stdio.h>
+#include <algorithm>
 
 inline int string_split(const std::string& input_str, const std::string& split_str, std::vector<std::string>& output_vec) {
     if (input_str.length() == 0) {
@@ -42,6 +43,14 @@ inline std::string data_to_string(uint8_t* data, size_t len) {
             " %02x", data[index]);
     }
     return std::string(print_data);
+}
+
+inline void string2lower(std::string& data) {
+    std::transform(data.begin(), data.end(), data.begin(), ::tolower);
+}
+
+inline void string2upper(std::string& data) {
+    std::transform(data.begin(), data.end(), data.begin(), ::toupper);
 }
 
 #endif //STRING_EXTEN_HPP

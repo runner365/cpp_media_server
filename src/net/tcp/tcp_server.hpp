@@ -38,6 +38,7 @@ public:
 
     virtual ~tcp_server()
     {
+        std::cout << "tcp server destruct...\r\n";
     }
 
     void close() {

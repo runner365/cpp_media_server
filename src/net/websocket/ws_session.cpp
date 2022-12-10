@@ -1,46 +1,234 @@
 #include "ws_session.hpp"
-#include "wsimple/flv_websocket.hpp"
-#include "format/flv/flv_demux.hpp"
+#include "ws_server.hpp"
+#include "utils/stringex.hpp"
+#include "utils/base64.h"
+#include "utils/logger.hpp"
+#include <iostream>
+#include <openssl/sha.h>
 
-websocket_session::websocket_session(const std::string& method,
-                const std::string& path,
-                const std::string& ip,
-                ws28::Client* client,
-                websocket_server* server):method_(method)
-                        , path_(path)
-                        , ip_(ip)
-                        , client_(client)
-                        , server_(server)
+websocket_session::websocket_session(uv_loop_t* loop, uv_stream_t* handle,
+                websocket_server* server):server_(server)
 {
     close_ = false;
+    session_ptr_ = std::make_unique<tcp_session>(loop, handle, this);
+    uuid_ = make_uuid();
+
+    session_ptr_->async_read();
+    log_infof("websocket session construct uuid:%s, ssl disable", uuid_.c_str());
+}
+
+websocket_session::websocket_session(uv_loop_t* loop, uv_stream_t* handle,
+                websocket_server* server,
+                const std::string& key_file, const std::string& cert_file):server_(server)
+{
+    close_ = false;
+    session_ptr_ = std::make_unique<tcp_session>(loop, handle, this, key_file, cert_file);
+    uuid_ = make_uuid();
+
+    session_ptr_->async_read();
+    log_infof("websocket session construct uuid:%s, ssl enable", uuid_.c_str());
 }
 
 websocket_session::~websocket_session()
 {
-    if (demuxer_) {
-        delete demuxer_;
-        demuxer_ = nullptr;
+    log_infof("websocket session destruct");
+}
+
+std::string websocket_session::get_uuid() {
+    return uuid_;
+}
+
+void websocket_session::on_write(int ret_code, size_t sent_size) {
+
+}
+
+void websocket_session::on_read(int ret_code, const char* data, size_t data_size) {
+    if (ret_code != 0) {
+        return;
     }
-    if (outputer_) {
-        delete outputer_;
-        outputer_ = nullptr;
+
+    recv_buffer_.append_data(data, data_size);
+    
+    int ret;
+
+    if (!http_request_ready_) {
+        try {
+            ret = on_handle_http_request();
+            if (ret == WS_RET_READ_MORE) {
+                session_ptr_->async_read();
+            } else if (ret == WS_RET_OK) {
+                ret = send_http_response();
+                if (ret != WS_RET_OK) {
+                    if (server_ != nullptr) {
+                        server_->session_close(this);
+                    }
+                    return;
+                }
+                session_ptr_->async_read();
+            } else {
+                send_error_response();
+                if (server_ != nullptr) {
+                    server_->session_close(this);
+                }
+            }
+        } catch(const MediaServerError& e) {
+            send_error_response();
+            log_errorf("exception:%s", e.what());
+            if (server_ != nullptr) {
+                server_->session_close(this);
+            }
+        }
+        return;
     }
+    log_infof("recv data size:%lu", data_size);
+}
+
+void websocket_session::send_error_response() {
+    std::string resp_msg = "HTTP/1.1 400 Bad Request\r\n\r\n";
+
+    log_infof("send error message:%s", resp_msg.c_str());
+    session_ptr_->async_write(resp_msg.c_str(), resp_msg.length());
+}
+
+int websocket_session::send_http_response() {
+    std::stringstream ss;
+
+    gen_hashcode();
+
+    ss << "HTTP/1.1 101 Switching Protocols" << "\r\n";
+    ss << "Server: WebSockify Python/2.6.6" << "\r\n";
+    ss << "Sec-WebSocket-Version: 13" << "\r\n";
+    ss << "Upgrade: websocket" << "\r\n";
+    ss << "Connection: Upgrade" << "\r\n";
+    ss << "Sec-WebSocket-Accept: " << hash_code_ << "\r\n";
+    if (sec_ws_protocol_.empty()) {
+        ss << "Sec-WebSocket-Protocol: "  << "binary" << "\r\n";
+    } else {
+        ss << "Sec-WebSocket-Protocol: "  << sec_ws_protocol_ << "\r\n";
+    }
+    ss << "\r\n";
+
+    log_infof("send response:%s", ss.str().c_str());
+    session_ptr_->async_write(ss.str().c_str(), ss.str().length() + 1);
+    return WS_RET_OK;
+}
+
+int websocket_session::on_handle_http_request() {
+    std::string content(recv_buffer_.data(), recv_buffer_.data_len());
+
+    size_t pos = content.find("\r\n\r\n");
+    if (pos == content.npos) {
+        return WS_RET_READ_MORE;
+    }
+    std::vector<std::string> lines;
+
+    http_request_ready_ = true;
+    content = content.substr(0, pos);
+
+    int ret = string_split(content, "\r\n", lines);
+    if (ret <= 0 || lines.empty()) {
+        throw MediaServerError("websocket http header error");
+    }
+
+    //headers_
+    std::vector<std::string> http_items;
+    string_split(lines[0], " ", http_items);
+    if (http_items.size() != 3) {
+        log_infof("http header error:%s", lines[0].c_str());
+        throw MediaServerError("websocket http header error");
+    }
+    method_ = http_items[0];
+    uri_ = http_items[1];
+
+    log_infof("http method:%s", method_.c_str());
+    log_infof("http uri:%s", uri_.c_str());
+    
+    string2lower(method_);
+    
+    int index = 0;
+    for (auto& line : lines) {
+        if (index++ == 0) {
+            continue;
+        }
+
+        size_t pos = line.find(" ");
+        if (pos == line.npos) {
+            continue;
+        }
+        std::string key = line.substr(0, pos - 1);//remove ':'
+        std::string value = line.substr(pos + 1);
+
+        string2lower(key);
+        headers_[key] = value;
+        log_infof("http header:%s %s", key.c_str(), value.c_str());
+    }
+
+    auto connection_iter = headers_.find("connection");
+    if (connection_iter == headers_.end()) {
+        throw MediaServerError("websocket http header error: Connection not exist");
+    }
+    string2lower(connection_iter->second);
+    if (connection_iter->second != "upgrade") {
+        log_errorf("http header error:%s %s",
+                connection_iter->first.c_str(),
+                connection_iter->second.c_str());
+        throw MediaServerError("websocket http header error: Connection is not upgrade");
+    }
+
+    auto upgrade_iter = headers_.find("upgrade");
+    if (upgrade_iter == headers_.end()) {
+        throw MediaServerError("websocket http header error: Upgrade not exist");
+    }
+    string2lower(upgrade_iter->second);
+    if (upgrade_iter->second != "websocket") {
+        log_errorf("http header error:%s %s",
+                connection_iter->first.c_str(),
+                connection_iter->second.c_str());
+        throw MediaServerError("websocket http header error: upgrade is not websocket");
+    }
+
+    auto ver_iter = headers_.find("sec-websocket-version");
+    if (ver_iter != headers_.end()) {
+        sec_ws_ver_ = atoi(ver_iter->second.c_str());
+    } else {
+        sec_ws_ver_ = 13;
+    }
+
+    auto key_iter = headers_.find("sec-websocket-key");
+    if (key_iter != headers_.end()) {
+        sec_ws_key_ = key_iter->second;
+    } else {
+        throw MediaServerError("websocket http header error: Sec-WebSocket-Key not exist");
+    }
+
+    auto protocal_iter = headers_.find("sec-webSocket-protocol");
+    if (protocal_iter != headers_.end()) {
+        sec_ws_protocol_ = protocal_iter->second;
+    }
+
+    return WS_RET_OK;
+}
+
+void websocket_session::gen_hashcode() {
+    std::string sec_key = sec_ws_key_;
+	sec_key += "258EAFA5-E914-47DA-95CA-C5AB0DC85B11";
+	unsigned char hash[20];
+    SHA_CTX sha1;
+
+    SHA1_Init(&sha1);
+    SHA1_Update(&sha1, sec_key.data(), sec_key.size());
+    SHA1_Final(hash, &sha1);
+	
+	hash_code_ = base64_encode(hash, sizeof(hash));
+    return;
 }
 
 std::string websocket_session::method() {
     return method_;
 }
 
-std::string websocket_session::path() {
-    return path_;
-}
-
-std::string websocket_session::remote_ip() {
-    return ip_;
-}
-
-ws28::Client* websocket_session::get_client() {
-    return client_;
+std::string websocket_session::remote_address() {
+    return session_ptr_->get_remote_endpoint();
 }
 
 websocket_server* websocket_session::get_server() {
@@ -57,8 +245,4 @@ bool websocket_session::is_close() {
 
 std::string websocket_session::get_uri() {
     return uri_;
-}
-
-void websocket_session::set_uri(const std::string& uri) {
-    uri_ = uri;
 }

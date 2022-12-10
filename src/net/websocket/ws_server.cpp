@@ -1,95 +1,64 @@
 #include "ws_server.hpp"
-#include "tcp_server.hpp"
 #include "ws_session.hpp"
-#include "ws28/Server.h"
-#include "logger.hpp"
-
-void on_connected_callback(ws28::Client* client, ws28::HTTPRequest& req, void* user_data) {
-    websocket_server* server = (websocket_server*)user_data;
-    websocket_session* new_session = new websocket_session(std::string(req.method),
-                                                        std::string(req.path),
-                                                        std::string(req.ip),
-                                                        client, server);
-    log_infof("connected method:%s, path:%s, ip:%s", new_session->method().c_str(),
-            new_session->path().c_str(), new_session->remote_ip().c_str());
-	client->SetUserData((void*)new_session);
-    if (server->cb_) {
-        server->cb_->on_accept(new_session);
-    }
-}
-
-void on_disconnect_callback(ws28::Client* client, void* user_data) {
-	websocket_session* del_session = (websocket_session*)client->GetUserData();
-
-    client->SetCloseFlag(true);
-    if (del_session) {
-        websocket_server* server = (websocket_server*)del_session->get_server();
-        del_session->set_close(true);
-        if (server && server->cb_) {
-            log_infof("websocket is disconnect, server cb:%p", server->cb_);
-            server->cb_->on_close(del_session);
-        }
-    }
-    delete del_session;
-}
-
-void on_client_data_callback(ws28::Client* client, char* data, size_t len, int opcode, void* user_data) {
-    websocket_server* server = (websocket_server*)user_data;
-	websocket_session* session = (websocket_session*)client->GetUserData();
-    if (session && server->cb_) {
-        server->cb_->on_read(session, data, len);
-    }
-}
+#include "tcp/tcp_server.hpp"
+#include "tcp/tcp_session.hpp"
+#include "utils/logger.hpp"
 
 websocket_server::websocket_server(uv_loop_t* loop,
                             uint16_t port,
-                            websocket_server_callbackI* cb):ws_server_(loop)
-                                                        , cb_(cb)
+                            websocket_server_callbackI* cb):cb_(cb)
 {
-    ws_server_.SetMaxMessageSize(256 * 1024 * 1024);
-    ws_server_.SetUserData(this);
-
-	ws_server_.SetClientConnectedCallback(on_connected_callback);
-	ws_server_.SetClientDisconnectedCallback(on_disconnect_callback);
-	ws_server_.SetClientDataCallback(on_client_data_callback);
-	
-	ws_server_.SetHTTPCallback([](ws28::HTTPRequest& req, ws28::HTTPResponse& res){
-		std::stringstream ss;
-		ss << "Hi, you issued a " << req.method << " to " << req.path << "\r\n";
-		ss << "Headers:\r\n";
-		
-		log_infof("http callback: %s", ss.str().c_str());
-	});
-
-    bool ret = ws_server_.Listen(port);
-    log_infof("websocket construct, port:%d return:%d, ssl disable", port, ret);
+    tcp_svr_ptr_ = std::make_unique<tcp_server>(loop, port, this);
+    ssl_enable_ = false;
+    log_infof("websocket construct, port:%d, ssl disable", port);
 }
 
 websocket_server::websocket_server(uv_loop_t* loop, uint16_t port
                                 , websocket_server_callbackI* cb
                                 , const std::string& key_file
-                                , const std::string& cert_file):ws_server_(loop, key_file, cert_file)
-                                                            , cb_(cb)
+                                , const std::string& cert_file):cb_(cb)
+                                                        , key_file_(key_file)
+                                                        , cert_file_(cert_file)
 {
-    ws_server_.SetMaxMessageSize(256 * 1024 * 1024);
-    ws_server_.SetUserData(this);
-
-	ws_server_.SetClientConnectedCallback(on_connected_callback);
-	ws_server_.SetClientDisconnectedCallback(on_disconnect_callback);
-	ws_server_.SetClientDataCallback(on_client_data_callback);
-	
-	ws_server_.SetHTTPCallback([](ws28::HTTPRequest& req, ws28::HTTPResponse& res){
-		std::stringstream ss;
-		ss << "Hi, you issued a " << req.method << " to " << req.path << "\r\n";
-		ss << "Headers:\r\n";
-		
-		log_infof("http callback: %s", ss.str().c_str());
-	});
-
-    bool ret = ws_server_.Listen(port);
-    log_infof("websocket construct, port:%d return:%d, ssl enable", port, ret);
+    tcp_svr_ptr_ = std::make_unique<tcp_server>(loop, port, this);
+    ssl_enable_ = true;
+    log_infof("websocket construct, port:%d ssl enable", port);
 }
 
 websocket_server::~websocket_server()
 {
+    tcp_svr_ptr_->close();
+    log_infof("websocket server destruct...");
+}
+
+void websocket_server::on_accept(int ret_code, uv_loop_t* loop, uv_stream_t* handle) {
+    std::shared_ptr<websocket_session> session_ptr;
+
+    if (ret_code != 0) {
+        return;
+    }
+
+    log_infof("websocket server on accept...");
+    if (ssl_enable_) {
+        session_ptr = std::make_shared<websocket_session>(loop, handle,
+                                                    this,
+                                                    key_file_, cert_file_);
+    } else {
+        session_ptr = std::make_shared<websocket_session>(loop, handle, this);
+    }
+
+    sessions_[session_ptr->get_uuid()] = session_ptr;
+
+    cb_->on_accept(session_ptr);
+    return;
+}
+
+void websocket_server::session_close(websocket_session* session) {
+    auto iter = sessions_.find(session->get_uuid());
+    if (iter == sessions_.end()) {
+        log_errorf("session not found in session map");
+        return;
+    }
+    sessions_.erase(iter);
+    return;
 }
