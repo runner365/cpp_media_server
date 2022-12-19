@@ -223,8 +223,10 @@ void websocket_session::send_ws_frame(uint8_t* data, size_t len, uint8_t op_code
         ws_header->payload_len = len;
         header_len = 2;
     }
+    ws_header->mask = 0;
 
     memcpy(header_start +  header_len, data, len);
+    log_infof("send header len:%lu", header_len);
     log_info_data(header_start, header_len + len, "send header data");
     session_ptr_->async_write((char*)header_start, header_len + len);
 
