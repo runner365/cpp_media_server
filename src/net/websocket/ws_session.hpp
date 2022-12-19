@@ -3,6 +3,7 @@
 #include "tcp/tcp_session.hpp"
 #include "utils/data_buffer.hpp"
 #include "utils/uuid.hpp"
+#include "ws_format.hpp"
 #include <stdint.h>
 #include <stddef.h>
 #include <string>
@@ -13,14 +14,15 @@
 #define WS_RET_OK        0
 
 class websocket_server;
+class websocket_server_callbackI;
 
 class websocket_session : public tcp_session_callbackI
 {
 public:
     websocket_session(uv_loop_t* loop, uv_stream_t* handle,
-                    websocket_server*);
+                    websocket_server*, websocket_server_callbackI*);
     websocket_session(uv_loop_t* loop, uv_stream_t* handle,
-                    websocket_server*,
+                    websocket_server*, websocket_server_callbackI*,
                     const std::string& key_file, const std::string& cert_file);
     virtual ~websocket_session();
 
@@ -33,6 +35,9 @@ public:
     std::string get_uuid();
     std::string remote_address();
 
+public:
+    void send_data_text(const char* data, size_t len);
+    
 protected:
     virtual void on_write(int ret_code, size_t sent_size);
     virtual void on_read(int ret_code, const char* data, size_t data_size);
@@ -42,6 +47,17 @@ private:
     int send_http_response();
     void send_error_response();
     void gen_hashcode();
+    void on_handle_frame();
+    void send_ws_frame(uint8_t* data, size_t len, uint8_t op_code);
+
+private:
+    void handle_ws_ping();
+    void handle_ws_text(uint8_t* data, size_t len);
+    void handle_ws_bin(uint8_t* data, size_t len);
+    void handle_ws_close(uint8_t* data, size_t len);
+
+private:
+    void send_close(uint16_t code, const char *reason, size_t reason_len = 0);
 
 private:
     bool http_request_ready_ = false;
@@ -57,8 +73,11 @@ private:
 private:
     std::string uuid_;
     websocket_server* server_ = nullptr;
+    websocket_server_callbackI* cb_ = nullptr;
     std::unique_ptr<tcp_session> session_ptr_;
     data_buffer recv_buffer_;
+
+    websocket_frame frame_;
 };
 
 #endif //WEBSOCKET_SESSION_HPP

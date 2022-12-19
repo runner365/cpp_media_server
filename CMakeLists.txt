@@ -49,6 +49,7 @@ add_executable(ws_server_demo
             src/net/websocket/ws_server_demo.cpp
             src/net/websocket/ws_server.cpp
             src/net/websocket/ws_session.cpp
+            src/net/websocket/ws_format.cpp
             src/utils/logger.cpp
             src/utils/base64.cpp
             src/utils/byte_crypto.cpp

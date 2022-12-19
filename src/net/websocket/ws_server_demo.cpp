@@ -6,15 +6,17 @@
 class ws_callback_implement : public websocket_server_callbackI
 {
 public:
-    virtual void on_accept(std::shared_ptr<websocket_session> session) {
+    virtual void on_accept(websocket_session* session) {
         log_infof("websocket session accept, uuid:%s", session->get_uuid().c_str());
     }
 
-    virtual void on_read(std::shared_ptr<websocket_session> session, const char* data, size_t len) {
-        log_infof("websocket session on read...");
+    virtual void on_read(websocket_session* session, const char* data, size_t len) {
+        std::string msg(data, len);
+        log_infof("websocket session receive message:%s", msg.c_str());
+        session->send_data_text(data, len);
     }
 
-    virtual void on_close(std::shared_ptr<websocket_session> session) {
+    virtual void on_close(websocket_session* session) {
         log_infof("websocket session on close...");
     }
 };

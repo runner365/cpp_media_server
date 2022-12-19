@@ -7,7 +7,9 @@
 #include <openssl/sha.h>
 
 websocket_session::websocket_session(uv_loop_t* loop, uv_stream_t* handle,
-                websocket_server* server):server_(server)
+                websocket_server* server,
+                websocket_server_callbackI* cb):server_(server)
+                                            , cb_(cb)
 {
     close_ = false;
     session_ptr_ = std::make_unique<tcp_session>(loop, handle, this);
@@ -18,8 +20,9 @@ websocket_session::websocket_session(uv_loop_t* loop, uv_stream_t* handle,
 }
 
 websocket_session::websocket_session(uv_loop_t* loop, uv_stream_t* handle,
-                websocket_server* server,
+                websocket_server* server, websocket_server_callbackI* cb,
                 const std::string& key_file, const std::string& cert_file):server_(server)
+                                                                        , cb_(cb)
 {
     close_ = false;
     session_ptr_ = std::make_unique<tcp_session>(loop, handle, this, key_file, cert_file);
@@ -64,6 +67,7 @@ void websocket_session::on_read(int ret_code, const char* data, size_t data_size
                     }
                     return;
                 }
+                recv_buffer_.reset();
                 session_ptr_->async_read();
             } else {
                 send_error_response();
@@ -80,7 +84,151 @@ void websocket_session::on_read(int ret_code, const char* data, size_t data_size
         }
         return;
     }
+
+
     log_infof("recv data size:%lu", data_size);
+    on_handle_frame();
+}
+
+void websocket_session::on_handle_frame() {
+    int ret = 0;
+
+    log_info_data((uint8_t*)recv_buffer_.data(), recv_buffer_.data_len(), "ws frame");
+    ret = frame_.parse((uint8_t*)recv_buffer_.data(), recv_buffer_.data_len());
+    if (ret != 0) {
+        session_ptr_->async_read();
+        return;
+    }
+
+    if (!frame_.payload_is_ready()) {
+        return;
+    }
+
+    log_infof("ws frame is ready, opcode:%d", frame_.get_oper_code());
+    if (frame_.get_oper_code() == WS_OP_PING_TYPE) {
+        handle_ws_ping();
+    } else if (frame_.get_oper_code() == WS_OP_PONG_TYPE) {
+        log_infof("receive ws pong");
+        return;
+    } else if (frame_.get_oper_code() == WS_OP_CLOSE_TYPE) {
+        handle_ws_close(frame_.get_payload_data(), frame_.get_payload_len());
+    } else if (frame_.get_oper_code() == WS_OP_CONTINUE_TYPE) {
+
+    } else if (frame_.get_oper_code() == WS_OP_TEXT_TYPE) {
+        handle_ws_text(frame_.get_payload_data(), frame_.get_payload_len());
+    } else if (frame_.get_oper_code() == WS_OP_BIN_TYPE) {
+
+    } else {
+        log_errorf("websocket opcode:%d not handle", frame_.get_oper_code());
+    }
+
+
+    recv_buffer_.consume_data(frame_.get_payload_len() + frame_.get_payload_start());
+    frame_.reset();
+    log_infof("after consume recv buffer, buffer len:%lu", recv_buffer_.data_len());
+}
+
+void websocket_session::handle_ws_ping() {
+    send_ws_frame(frame_.get_payload_data(), frame_.get_payload_len(), WS_OP_PONG_TYPE);
+}
+
+void websocket_session::handle_ws_text(uint8_t* data, size_t len) {
+    if (cb_) {
+        cb_->on_read(this, (char*)data, len);
+    }
+}
+
+void websocket_session::handle_ws_bin(uint8_t* data, size_t len) {
+
+}
+
+void websocket_session::handle_ws_close(uint8_t* data, size_t len) {
+    if (close_) {
+        return;
+    }
+
+    if (len <= 1) {
+        send_close(1002, "Incomplete close code");
+    } else {
+		bool invalid = false;
+		uint16_t code = (uint8_t(data[0]) << 8) | uint8_t(data[1]);
+		if(code < 1000 || code >= 5000) {
+            invalid = true;
+        }
+		
+		switch(code){
+		    case 1004:
+		    case 1005:
+		    case 1006:
+		    case 1015:
+		    	invalid = true;
+		    default:;
+		}
+		
+		if(invalid){
+			send_close(1002, "Invalid close code");
+			return;
+		}
+
+        send_ws_frame(data, len, WS_OP_CLOSE_TYPE);
+    }
+
+    close_ = true;
+    session_ptr_->close();
+    log_infof("tcp sesseion closed");
+}
+
+void websocket_session::send_close(uint16_t code, const char *reason, size_t reason_len) {
+    if(reason_len == 0) {
+        reason_len = strlen(reason);
+    }
+    
+    send_ws_frame((uint8_t*)reason, reason_len, WS_OP_CLOSE_TYPE);
+}
+
+void websocket_session::send_data_text(const char* data, size_t len) {
+    send_ws_frame((uint8_t*)data, len, WS_OP_TEXT_TYPE);
+}
+
+void websocket_session::send_ws_frame(uint8_t* data, size_t len, uint8_t op_code) {
+    const size_t MAX_HEADER_LEN = 10;
+    WS_PACKET_HEADER* ws_header;
+    uint8_t* header_start = new uint8_t[MAX_HEADER_LEN + len];
+    size_t header_len = 2;
+
+    ws_header = (WS_PACKET_HEADER*)header_start;
+    memset(header_start, 0, MAX_HEADER_LEN);
+    ws_header->fin = 1;
+    ws_header->opcode = op_code;
+
+    if (len >= 126) {
+		if(len > UINT16_MAX){
+			ws_header->payload_len = 127;
+			*(uint8_t*)(header_start + 2) = (len >> 56) & 0xFF;
+			*(uint8_t*)(header_start + 3) = (len >> 48) & 0xFF;
+			*(uint8_t*)(header_start + 4) = (len >> 40) & 0xFF;
+			*(uint8_t*)(header_start + 5) = (len >> 32) & 0xFF;
+			*(uint8_t*)(header_start + 6) = (len >> 24) & 0xFF;
+			*(uint8_t*)(header_start + 7) = (len >> 16) & 0xFF;
+			*(uint8_t*)(header_start + 8) = (len >> 8) & 0xFF;
+			*(uint8_t*)(header_start + 9) = (len >> 0) & 0xFF;
+            header_len = MAX_HEADER_LEN;
+		} else{
+			ws_header->payload_len = 126;
+			*(uint8_t*)(header_start + 2) = (len >> 8) & 0xFF;
+			*(uint8_t*)(header_start + 3) = (len >> 0) & 0xFF;
+            header_len = 4;
+		}
+    } else {
+        ws_header->payload_len = len;
+        header_len = 2;
+    }
+
+    memcpy(header_start +  header_len, data, len);
+    log_info_data(header_start, header_len + len, "send header data");
+    session_ptr_->async_write((char*)header_start, header_len + len);
+
+    delete[] header_start;
 }
 
 void websocket_session::send_error_response() {
@@ -96,16 +244,17 @@ int websocket_session::send_http_response() {
     gen_hashcode();
 
     ss << "HTTP/1.1 101 Switching Protocols" << "\r\n";
-    ss << "Server: WebSockify Python/2.6.6" << "\r\n";
     ss << "Sec-WebSocket-Version: 13" << "\r\n";
     ss << "Upgrade: websocket" << "\r\n";
     ss << "Connection: Upgrade" << "\r\n";
     ss << "Sec-WebSocket-Accept: " << hash_code_ << "\r\n";
+    /*
     if (sec_ws_protocol_.empty()) {
         ss << "Sec-WebSocket-Protocol: "  << "binary" << "\r\n";
     } else {
         ss << "Sec-WebSocket-Protocol: "  << sec_ws_protocol_ << "\r\n";
     }
+    */
     ss << "\r\n";
 
     log_infof("send response:%s", ss.str().c_str());

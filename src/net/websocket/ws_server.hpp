@@ -12,9 +12,9 @@ class websocket_session;
 class websocket_server_callbackI
 {
 public:
-    virtual void on_accept(std::shared_ptr<websocket_session> session) = 0;
-    virtual void on_read(std::shared_ptr<websocket_session> session, const char* data, size_t len) = 0;
-    virtual void on_close(std::shared_ptr<websocket_session> session) = 0;
+    virtual void on_accept(websocket_session* session) = 0;
+    virtual void on_read(websocket_session* session, const char* data, size_t len) = 0;
+    virtual void on_close(websocket_session* session) = 0;
 };
 
 class websocket_server : public tcp_server_callbackI

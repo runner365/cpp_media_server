@@ -41,15 +41,15 @@ void websocket_server::on_accept(int ret_code, uv_loop_t* loop, uv_stream_t* han
     log_infof("websocket server on accept...");
     if (ssl_enable_) {
         session_ptr = std::make_shared<websocket_session>(loop, handle,
-                                                    this,
+                                                    this, cb_,
                                                     key_file_, cert_file_);
     } else {
-        session_ptr = std::make_shared<websocket_session>(loop, handle, this);
+        session_ptr = std::make_shared<websocket_session>(loop, handle, this, cb_);
     }
 
     sessions_[session_ptr->get_uuid()] = session_ptr;
 
-    cb_->on_accept(session_ptr);
+    cb_->on_accept(session_ptr.get());
     return;
 }
 
