@@ -109,7 +109,6 @@ void websocket_session::on_handle_frame() {
         handle_ws_ping();
     } else if (frame_.get_oper_code() == WS_OP_PONG_TYPE) {
         log_infof("receive ws pong");
-        return;
     } else if (frame_.get_oper_code() == WS_OP_CLOSE_TYPE) {
         handle_ws_close(frame_.get_payload_data(), frame_.get_payload_len());
     } else if (frame_.get_oper_code() == WS_OP_CONTINUE_TYPE) {
@@ -226,7 +225,7 @@ void websocket_session::send_ws_frame(uint8_t* data, size_t len, uint8_t op_code
     ws_header->mask = 0;
 
     memcpy(header_start +  header_len, data, len);
-    log_infof("send header len:%lu", header_len);
+    log_infof("send header len:%lu, data len:%lu", header_len, len);
     log_info_data(header_start, header_len + len, "send header data");
     session_ptr_->async_write((char*)header_start, header_len + len);
 
@@ -246,17 +245,10 @@ int websocket_session::send_http_response() {
     gen_hashcode();
 
     ss << "HTTP/1.1 101 Switching Protocols" << "\r\n";
-    ss << "Sec-WebSocket-Version: 13" << "\r\n";
     ss << "Upgrade: websocket" << "\r\n";
     ss << "Connection: Upgrade" << "\r\n";
     ss << "Sec-WebSocket-Accept: " << hash_code_ << "\r\n";
-    /*
-    if (sec_ws_protocol_.empty()) {
-        ss << "Sec-WebSocket-Protocol: "  << "binary" << "\r\n";
-    } else {
-        ss << "Sec-WebSocket-Protocol: "  << sec_ws_protocol_ << "\r\n";
-    }
-    */
+
     ss << "\r\n";
 
     log_infof("send response:%s", ss.str().c_str());
