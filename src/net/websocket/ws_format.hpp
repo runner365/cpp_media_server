@@ -28,8 +28,6 @@ typedef struct S_WS_PACKET_HEADER
     //only when payload len == 126/127
     uint32_t ext_payload_len_high;
     uint32_t ext_payload_len_low;
-    //only when mask == 1
-    char* masking_key;
 
 } WS_PACKET_HEADER;
 
@@ -69,11 +67,13 @@ public:
         header_        = nullptr;
         header_ready_  = false;
     }
+    
 private:
     data_buffer buffer_;
     int payload_start_   = 0;
     int64_t payload_len_ = 0;
     WS_PACKET_HEADER* header_ = nullptr;
     bool header_ready_ = false;
+    uint8_t masking_key_[4];
 };
 #endif

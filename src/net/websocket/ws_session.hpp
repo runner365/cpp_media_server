@@ -16,6 +16,9 @@
 class websocket_server;
 class websocket_server_callbackI;
 
+class av_format_callback;
+class flv_demuxer;
+
 class websocket_session : public tcp_session_callbackI
 {
 public:
@@ -31,6 +34,8 @@ public:
     websocket_server* get_server();
     void set_close(bool flag);
     bool is_close();
+    std::string path();
+    void set_uri(const std::string& uri);
     std::string get_uri();
     std::string get_uuid();
     std::string remote_address();
@@ -41,7 +46,13 @@ public:
 public:
     void incr_die_count() { die_count_++; }
     int get_die_count() { return die_count_; }
-    
+
+public:
+    av_format_callback* get_output() { return output_; }
+    void set_output(av_format_callback* output) { output_ = output; }
+    flv_demuxer* get_media_demuxer() { return muxer_; }
+    void set_media_demuxer(flv_demuxer* muxer) { muxer_ = muxer; }
+
 protected:
     virtual void on_write(int ret_code, size_t sent_size);
     virtual void on_read(int ret_code, const char* data, size_t data_size);
@@ -51,7 +62,7 @@ private:
     int send_http_response();
     void send_error_response();
     void gen_hashcode();
-    void on_handle_frame();
+    void on_handle_frame(uint8_t* data, size_t len);
     void send_ws_frame(uint8_t* data, size_t len, uint8_t op_code);
 
 private:
@@ -67,6 +78,7 @@ private:
     bool http_request_ready_ = false;
     std::unordered_map<std::string, std::string> headers_;
 	std::string method_;
+    std::string path_;
     std::string uri_;
     int sec_ws_ver_ = -1;
     std::string sec_ws_key_;
@@ -83,6 +95,10 @@ private:
     data_buffer recv_buffer_;
 
     websocket_frame frame_;
+
+private:
+    av_format_callback* output_ = nullptr;
+    flv_demuxer* muxer_ = nullptr;
 };
 
 #endif //WEBSOCKET_SESSION_HPP

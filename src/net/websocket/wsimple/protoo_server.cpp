@@ -36,10 +36,10 @@ void protoo_server::accept(const std::string& id, const std::string& data, void*
     ss << data;
     ss << "}";
 
-    if (session && session->get_client()) {
+    if (session) {
         log_debugf("protoo accept:%s", ss.str().c_str());
         if (!session->is_close()) {
-            session->get_client()->Send(ss.str().c_str(), ss.str().size(), 1);
+            session->send_data_text(ss.str().c_str(), ss.str().size());
         }
     }
 }
@@ -57,9 +57,9 @@ void protoo_server::reject(const std::string& id, int err_code, const std::strin
     ss << "}";
     
     log_debugf("response reject:%s", ss.str().c_str());
-    if (session && session->get_client()) {
+    if (session) {
         if (!session->is_close()) {
-            session->get_client()->Send(ss.str().c_str(), ss.str().size(), 1);
+            session->send_data_text(ss.str().c_str(), ss.str().size());
         }
     }
 }
@@ -76,9 +76,9 @@ void protoo_server::notification(const std::string& method, const std::string& d
     ss << "}";
 
     log_debugf("notification: %s", ss.str().c_str());
-    if (session && session->get_client()) {
+    if (session) {
         if (!session->is_close()) {
-            session->get_client()->Send(ss.str().c_str(), ss.str().size(), 1);
+            session->send_data_text(ss.str().c_str(), ss.str().size());
         }
     }
 }
@@ -253,7 +253,7 @@ void protoo_server::on_accept(websocket_session* session) {
 
 void protoo_server::on_read(websocket_session* session, const char* data, size_t len) {
     std::string body(data, len);
-    //log_infof("protoo server read body:%s, len:%lu", body.c_str(), len);
+    log_infof("protoo server read body:%s, len:%lu", body.c_str(), len);
 
     json protooBodyJson = json::parse(body);
 
@@ -268,12 +268,10 @@ void protoo_server::on_read(websocket_session* session, const char* data, size_t
             return;
         }
 
-        try
-        {
+        try {
             on_request(session, protooBodyJson);
         }
-        catch(const std::exception& e)
-        {
+        catch(const std::exception& e) {
             log_infof("handle request exception:%s", e.what());
             MS_THROW_ERROR("handle request exception:%s", e.what());
             return;
@@ -293,12 +291,10 @@ void protoo_server::on_read(websocket_session* session, const char* data, size_t
             return;
         }
 
-        try
-        {
+        try {
             on_reponse(session, protooBodyJson);
         }
-        catch(const std::exception& e)
-        {
+        catch(const std::exception& e) {
             log_infof("handle response exception:%s", e.what());
             MS_THROW_ERROR("handle response exception:%s", e.what());
         }
@@ -317,12 +313,10 @@ void protoo_server::on_read(websocket_session* session, const char* data, size_t
             return;
         }
 
-        try
-        {
+        try {
             on_notification(session, protooBodyJson);
         }
-        catch(const std::exception& e)
-        {
+        catch(const std::exception& e) {
             log_infof("handle notification exception:%s", e.what());
             MS_THROW_ERROR("handle notification exception:%s", e.what());
         }
@@ -344,12 +338,10 @@ void protoo_server::on_close(websocket_session* session) {
     body_json["uid"] = uid_;
     body_json["roomId"] = roomId_;
 
-    try
-    {
+    try {
         ev_cb_ptr_->on_notification("close", body_json.dump());
     }
-    catch(const std::exception& e)
-    {
+    catch(const std::exception& e) {
         log_errorf("close exception:%s", e.what());
     }
 }

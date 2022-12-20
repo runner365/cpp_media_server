@@ -105,19 +105,19 @@ void flv_websocket::on_read(websocket_session* session, const char* data, size_t
         media_stream_manager::add_publisher(uri);
     }
     
-    if (session->outputer_ == nullptr) {
-        session->outputer_ = new av_outputer();
+    if (session->get_output() == nullptr) {
+        session->set_output(new av_outputer());
     }
 
-    if (session->demuxer_ == nullptr) {
-        session->demuxer_ = new flv_demuxer(session->outputer_);
+    if (session->get_media_demuxer() == nullptr) {
+        session->set_media_demuxer(new flv_demuxer(session->get_output()));
     }
 
     MEDIA_PACKET_PTR pkt_ptr = std::make_shared<MEDIA_PACKET>();
     pkt_ptr->buffer_ptr_->append_data(data, len);
     pkt_ptr->key_ = session->get_uri();
     pkt_ptr->fmt_type_ = MEDIA_FORMAT_FLV;
-    session->demuxer_->input_packet(pkt_ptr);
+    session->get_media_demuxer()->input_packet(pkt_ptr);
 }
 
 void flv_websocket::on_close(websocket_session* session) {

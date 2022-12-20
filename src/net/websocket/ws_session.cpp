@@ -89,14 +89,14 @@ void websocket_session::on_read(int ret_code, const char* data, size_t data_size
         return;
     }
 
-    on_handle_frame();
+    on_handle_frame((uint8_t*)data, data_size);
 }
 
-void websocket_session::on_handle_frame() {
+void websocket_session::on_handle_frame(uint8_t* data, size_t len) {
     int ret = 0;
 
     die_count_ = 0;
-    ret = frame_.parse((uint8_t*)recv_buffer_.data(), recv_buffer_.data_len());
+    ret = frame_.parse(data, len);
     if (ret != 0) {
         session_ptr_->async_read();
         return;
@@ -110,7 +110,7 @@ void websocket_session::on_handle_frame() {
     if (frame_.get_oper_code() == WS_OP_PING_TYPE) {
         handle_ws_ping();
     } else if (frame_.get_oper_code() == WS_OP_PONG_TYPE) {
-        log_infof("receive ws pong");
+        log_debugf("receive ws pong");
     } else if (frame_.get_oper_code() == WS_OP_CLOSE_TYPE) {
         handle_ws_close(frame_.get_payload_data(), frame_.get_payload_len());
     } else if (frame_.get_oper_code() == WS_OP_CONTINUE_TYPE) {
@@ -248,7 +248,7 @@ int websocket_session::send_http_response() {
 
     ss << "\r\n";
 
-    log_infof("send response:%s", ss.str().c_str());
+    log_debugf("send response:%s", ss.str().c_str());
     session_ptr_->async_write(ss.str().c_str(), ss.str().length());
     return WS_RET_OK;
 }
@@ -274,14 +274,14 @@ int websocket_session::on_handle_http_request() {
     std::vector<std::string> http_items;
     string_split(lines[0], " ", http_items);
     if (http_items.size() != 3) {
-        log_infof("http header error:%s", lines[0].c_str());
+        log_errorf("http header error:%s", lines[0].c_str());
         throw MediaServerError("websocket http header error");
     }
     method_ = http_items[0];
-    uri_ = http_items[1];
+    path_ = http_items[1];
 
-    log_infof("http method:%s", method_.c_str());
-    log_infof("http uri:%s", uri_.c_str());
+    log_debugf("http method:%s", method_.c_str());
+    log_debugf("http path:%s", path_.c_str());
     
     string2lower(method_);
     
@@ -300,7 +300,7 @@ int websocket_session::on_handle_http_request() {
 
         string2lower(key);
         headers_[key] = value;
-        log_infof("http header:%s %s", key.c_str(), value.c_str());
+        log_debugf("http header:%s %s", key.c_str(), value.c_str());
     }
 
     auto connection_iter = headers_.find("connection");
@@ -383,6 +383,14 @@ bool websocket_session::is_close() {
     return close_;
 }
 
+void websocket_session::set_uri(const std::string& uri) {
+    uri_ = uri;
+}
+
 std::string websocket_session::get_uri() {
     return uri_;
+}
+
+std::string websocket_session::path() {
+    return path_;
 }

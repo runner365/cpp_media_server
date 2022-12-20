@@ -37,7 +37,11 @@ int websocket_frame::parse(uint8_t* data, size_t len) {
                 if (buffer_.data_len() < 4) {
                     return 1;
                 }
-                payload_len_ = *(uint16_t*)(buffer_.data() + payload_start_);
+                uint8_t* p = (uint8_t*)(buffer_.data() + payload_start_);
+                payload_len_ = 0;
+                payload_len_ |= ((uint16_t)*p) << 8;
+                p++;
+                payload_len_ |= *p;
                 payload_start_ += 2;
             }
         }
@@ -46,8 +50,12 @@ int websocket_frame::parse(uint8_t* data, size_t len) {
             if (buffer_.data_len() < (payload_start_ + 4)) {
                 return 1;
             }
-            header_->masking_key = (char*)data + payload_start_;
+            uint8_t* p = data + payload_start_;
             payload_start_ += 4;
+            masking_key_[0] = p[0];
+            masking_key_[1] = p[1];
+            masking_key_[2] = p[2];
+            masking_key_[3] = p[3];
         }
         header_ready_ = true;
     }
@@ -57,19 +65,19 @@ int websocket_frame::parse(uint8_t* data, size_t len) {
     }
 
     if (header_->mask) {
-        size_t frameLength = header_->payload_len;
-        char* p = buffer_.data() + payload_start_;
+        size_t frame_length = payload_len_;
+        uint8_t* p = (uint8_t*)buffer_.data() + payload_start_;
 
-        size_t temp_len = frameLength & ~3;
+        size_t temp_len = frame_length & ~3;
 		for(size_t i = 0; i < temp_len; i += 4){
-			p[i + 0] ^= header_->masking_key[0];
-			p[i + 1] ^= header_->masking_key[1];
-			p[i + 2] ^= header_->masking_key[2];
-			p[i + 3] ^= header_->masking_key[3];
+			p[i + 0] ^= masking_key_[0];
+			p[i + 1] ^= masking_key_[1];
+			p[i + 2] ^= masking_key_[2];
+			p[i + 3] ^= masking_key_[3];
 		}
 		
-		for(size_t i = temp_len; i < frameLength; ++i){
-			p[i] ^= header_->masking_key[i % 4];
+		for(size_t i = temp_len; i < frame_length; ++i){
+			p[i] ^= masking_key_[i % 4];
 		}
 	}
 

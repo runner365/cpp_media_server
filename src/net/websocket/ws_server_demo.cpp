@@ -38,9 +38,7 @@ int main(int argn, char** argv)
 
     log_infof("input tcp port:%d", port);
     try {
-        s_server_ptr = std::make_unique<websocket_server>(loop, port, &cb,
-                                        "./certs/server.key",
-                                        "./certs/server.crt");
+        s_server_ptr = std::make_unique<websocket_server>(loop, port, &cb);
         uv_run(loop, UV_RUN_DEFAULT);
     } catch(const std::exception& e) {
         std::cerr << "exception: " << e.what() << '\n';

@@ -14,8 +14,8 @@ static const size_t RTP_AUDIO_BUFFER_MAX = 100;
 static const size_t STORAGE_MAX_SIZE     = 2000;
 
 rtp_send_stream::rtp_send_stream(const std::string& media_type, bool nack_enable,
-                        rtc_stream_callback* cb):rtp_packet_array(65536, nullptr)
-                                                , media_type_(media_type)
+                        rtc_stream_callback* cb):media_type_(media_type)
+                                                , rtp_packet_array(65536, nullptr)
                                                 , nack_enable_(nack_enable)
                                                 , cb_(cb)
 {
