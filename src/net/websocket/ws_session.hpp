@@ -38,6 +38,10 @@ public:
 public:
     void send_data_text(const char* data, size_t len);
     
+public:
+    void incr_die_count() { die_count_++; }
+    int get_die_count() { return die_count_; }
+    
 protected:
     virtual void on_write(int ret_code, size_t sent_size);
     virtual void on_read(int ret_code, const char* data, size_t data_size);
@@ -69,6 +73,7 @@ private:
     std::string sec_ws_protocol_;
     std::string hash_code_;
     bool close_ = false;
+    int die_count_ = 0;
 
 private:
     std::string uuid_;

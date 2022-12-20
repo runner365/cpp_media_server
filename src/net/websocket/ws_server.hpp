@@ -1,6 +1,7 @@
 #ifndef WS_SERVER_HPP
 #define WS_SERVER_HPP
 #include "tcp/tcp_server.hpp"
+#include "utils/timer.hpp"
 #include <unordered_map>
 #include <memory>
 #include <string>
@@ -17,7 +18,7 @@ public:
     virtual void on_close(websocket_session* session) = 0;
 };
 
-class websocket_server : public tcp_server_callbackI
+class websocket_server : public tcp_server_callbackI, public timer_interface
 {
 public:
     websocket_server(uv_loop_t* loop, uint16_t port, websocket_server_callbackI* cb);
@@ -31,6 +32,9 @@ public:
 private:
     virtual void on_accept(int ret_code, uv_loop_t* loop, uv_stream_t* handle);
 
+private:
+    virtual void on_timer();
+    
 private:
     std::unique_ptr<tcp_server> tcp_svr_ptr_;
     std::unordered_map<std::string, std::shared_ptr<websocket_session>> sessions_;

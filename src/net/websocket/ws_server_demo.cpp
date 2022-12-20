@@ -12,7 +12,7 @@ public:
 
     virtual void on_read(websocket_session* session, const char* data, size_t len) {
         std::string msg(data, len);
-        log_infof("websocket session receive message:%s", msg.c_str());
+        //log_infof("websocket session receive message:%s", msg.c_str());
         session->send_data_text(data, len);
     }
 
@@ -38,7 +38,9 @@ int main(int argn, char** argv)
 
     log_infof("input tcp port:%d", port);
     try {
-        s_server_ptr = std::make_unique<websocket_server>(loop, port, &cb);
+        s_server_ptr = std::make_unique<websocket_server>(loop, port, &cb,
+                                        "./certs/server.key",
+                                        "./certs/server.crt");
         uv_run(loop, UV_RUN_DEFAULT);
     } catch(const std::exception& e) {
         std::cerr << "exception: " << e.what() << '\n';

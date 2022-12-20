@@ -20,7 +20,6 @@ int websocket_frame::parse(uint8_t* data, size_t len) {
         payload_len_ = header_->payload_len;
         payload_start_ = 2;
     
-        log_infof("header payload len:%d", header_->payload_len);
         if (header_->payload_len == 126 || header_->payload_len == 127) {
             if (header_->payload_len == 127) {
                 int64_t ext_len = 0;
@@ -53,8 +52,6 @@ int websocket_frame::parse(uint8_t* data, size_t len) {
         header_ready_ = true;
     }
     
-    log_infof("ws header offset:%d, payload len:%ld",
-            payload_start_, payload_len_);
     if (buffer_.data_len() < (payload_start_ + payload_len_)) {
         return 1;
     }

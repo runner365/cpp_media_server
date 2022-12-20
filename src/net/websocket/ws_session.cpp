@@ -34,6 +34,10 @@ websocket_session::websocket_session(uv_loop_t* loop, uv_stream_t* handle,
 
 websocket_session::~websocket_session()
 {
+    if (!close_) {
+        session_ptr_->close();
+    }
+    
     log_infof("websocket session destruct");
 }
 
@@ -85,15 +89,13 @@ void websocket_session::on_read(int ret_code, const char* data, size_t data_size
         return;
     }
 
-
-    log_infof("recv data size:%lu", data_size);
     on_handle_frame();
 }
 
 void websocket_session::on_handle_frame() {
     int ret = 0;
 
-    log_info_data((uint8_t*)recv_buffer_.data(), recv_buffer_.data_len(), "ws frame");
+    die_count_ = 0;
     ret = frame_.parse((uint8_t*)recv_buffer_.data(), recv_buffer_.data_len());
     if (ret != 0) {
         session_ptr_->async_read();
@@ -101,10 +103,10 @@ void websocket_session::on_handle_frame() {
     }
 
     if (!frame_.payload_is_ready()) {
+        session_ptr_->async_read();
         return;
     }
 
-    log_infof("ws frame is ready, opcode:%d", frame_.get_oper_code());
     if (frame_.get_oper_code() == WS_OP_PING_TYPE) {
         handle_ws_ping();
     } else if (frame_.get_oper_code() == WS_OP_PONG_TYPE) {
@@ -124,7 +126,6 @@ void websocket_session::on_handle_frame() {
 
     recv_buffer_.consume_data(frame_.get_payload_len() + frame_.get_payload_start());
     frame_.reset();
-    log_infof("after consume recv buffer, buffer len:%lu", recv_buffer_.data_len());
 }
 
 void websocket_session::handle_ws_ping() {
@@ -166,15 +167,13 @@ void websocket_session::handle_ws_close(uint8_t* data, size_t len) {
 		
 		if(invalid){
 			send_close(1002, "Invalid close code");
-			return;
-		}
-
-        send_ws_frame(data, len, WS_OP_CLOSE_TYPE);
+		} else {
+            send_ws_frame(data, len, WS_OP_CLOSE_TYPE);
+        }
     }
 
     close_ = true;
     session_ptr_->close();
-    log_infof("tcp sesseion closed");
 }
 
 void websocket_session::send_close(uint16_t code, const char *reason, size_t reason_len) {
@@ -192,8 +191,10 @@ void websocket_session::send_data_text(const char* data, size_t len) {
 void websocket_session::send_ws_frame(uint8_t* data, size_t len, uint8_t op_code) {
     const size_t MAX_HEADER_LEN = 10;
     WS_PACKET_HEADER* ws_header;
-    uint8_t* header_start = new uint8_t[MAX_HEADER_LEN + len];
+    uint8_t header_start[MAX_HEADER_LEN];
     size_t header_len = 2;
+
+    die_count_ = 0;
 
     ws_header = (WS_PACKET_HEADER*)header_start;
     memset(header_start, 0, MAX_HEADER_LEN);
@@ -224,12 +225,8 @@ void websocket_session::send_ws_frame(uint8_t* data, size_t len, uint8_t op_code
     }
     ws_header->mask = 0;
 
-    memcpy(header_start +  header_len, data, len);
-    log_infof("send header len:%lu, data len:%lu", header_len, len);
-    log_info_data(header_start, header_len + len, "send header data");
-    session_ptr_->async_write((char*)header_start, header_len + len);
-
-    delete[] header_start;
+    session_ptr_->async_write((char*)header_start, header_len);
+    session_ptr_->async_write((char*)data, len);
 }
 
 void websocket_session::send_error_response() {
@@ -252,7 +249,7 @@ int websocket_session::send_http_response() {
     ss << "\r\n";
 
     log_infof("send response:%s", ss.str().c_str());
-    session_ptr_->async_write(ss.str().c_str(), ss.str().length() + 1);
+    session_ptr_->async_write(ss.str().c_str(), ss.str().length());
     return WS_RET_OK;
 }
 
