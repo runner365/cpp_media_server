@@ -125,5 +125,4 @@ void flv_websocket::on_close(websocket_session* session) {
     if (!session->get_uri().empty()) {
         media_stream_manager::remove_publisher(session->get_uri());
     }
-    outputer_.release();
 }

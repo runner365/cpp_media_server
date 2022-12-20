@@ -38,6 +38,13 @@ websocket_session::~websocket_session()
         session_ptr_->close();
     }
     
+    if (output_) {
+        delete output_;
+    }
+
+    if (demuxer_) {
+        delete demuxer_;
+    }
     log_infof("websocket session destruct");
 }
 
@@ -107,6 +114,7 @@ void websocket_session::on_handle_frame(uint8_t* data, size_t len) {
         return;
     }
 
+    log_debugf("frame oper code:%d", frame_.get_oper_code());
     if (frame_.get_oper_code() == WS_OP_PING_TYPE) {
         handle_ws_ping();
     } else if (frame_.get_oper_code() == WS_OP_PONG_TYPE) {
@@ -118,11 +126,11 @@ void websocket_session::on_handle_frame(uint8_t* data, size_t len) {
     } else if (frame_.get_oper_code() == WS_OP_TEXT_TYPE) {
         handle_ws_text(frame_.get_payload_data(), frame_.get_payload_len());
     } else if (frame_.get_oper_code() == WS_OP_BIN_TYPE) {
-
+        handle_ws_bin(frame_.get_payload_data(), frame_.get_payload_len());
     } else {
         log_errorf("websocket opcode:%d not handle", frame_.get_oper_code());
+        //handle_ws_text(frame_.get_payload_data(), frame_.get_payload_len());
     }
-
 
     recv_buffer_.consume_data(frame_.get_payload_len() + frame_.get_payload_start());
     frame_.reset();
@@ -139,7 +147,9 @@ void websocket_session::handle_ws_text(uint8_t* data, size_t len) {
 }
 
 void websocket_session::handle_ws_bin(uint8_t* data, size_t len) {
-
+    if (cb_) {
+        cb_->on_read(this, (char*)data, len);
+    }
 }
 
 void websocket_session::handle_ws_close(uint8_t* data, size_t len) {

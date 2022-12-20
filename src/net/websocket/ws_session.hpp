@@ -50,8 +50,8 @@ public:
 public:
     av_format_callback* get_output() { return output_; }
     void set_output(av_format_callback* output) { output_ = output; }
-    flv_demuxer* get_media_demuxer() { return muxer_; }
-    void set_media_demuxer(flv_demuxer* muxer) { muxer_ = muxer; }
+    flv_demuxer* get_media_demuxer() { return demuxer_; }
+    void set_media_demuxer(flv_demuxer* muxer) { demuxer_ = muxer; }
 
 protected:
     virtual void on_write(int ret_code, size_t sent_size);
@@ -98,7 +98,7 @@ private:
 
 private:
     av_format_callback* output_ = nullptr;
-    flv_demuxer* muxer_ = nullptr;
+    flv_demuxer* demuxer_ = nullptr;
 };
 
 #endif //WEBSOCKET_SESSION_HPP

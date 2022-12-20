@@ -38,7 +38,6 @@ public:
 
 private:
     websocket_server server_;
-    av_outputer outputer_;
 };
 
 #endif
