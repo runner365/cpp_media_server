@@ -10,6 +10,12 @@
 #include <sstream>
 #include <assert.h>
 
+typedef struct flv_user_data_s
+{
+    av_outputer* output;
+    flv_demuxer* demuxer;
+} flv_user_data;
+
 av_outputer::av_outputer()
 {
 }
@@ -105,19 +111,18 @@ void flv_websocket::on_read(websocket_session* session, const char* data, size_t
         media_stream_manager::add_publisher(uri);
     }
     
-    if (session->get_output() == nullptr) {
-        session->set_output(new av_outputer());
-    }
-
-    if (session->get_media_demuxer() == nullptr) {
-        session->set_media_demuxer(new flv_demuxer(session->get_output()));
+    if (session->get_user_data() == nullptr) {
+        flv_user_data* user_data = new flv_user_data();
+        user_data->output = new av_outputer();
+        user_data->demuxer = new flv_demuxer(user_data->output);
+        session->set_user_data((void*)user_data);
     }
 
     MEDIA_PACKET_PTR pkt_ptr = std::make_shared<MEDIA_PACKET>();
     pkt_ptr->buffer_ptr_->append_data(data, len);
     pkt_ptr->key_ = session->get_uri();
     pkt_ptr->fmt_type_ = MEDIA_FORMAT_FLV;
-    session->get_media_demuxer()->input_packet(pkt_ptr);
+    ((flv_user_data*)(session->get_user_data()))->demuxer->input_packet(pkt_ptr);
 }
 
 void flv_websocket::on_close(websocket_session* session) {
@@ -125,4 +130,10 @@ void flv_websocket::on_close(websocket_session* session) {
     if (!session->get_uri().empty()) {
         media_stream_manager::remove_publisher(session->get_uri());
     }
+    flv_user_data* user_data = (flv_user_data*)(session->get_user_data());
+
+    delete user_data->demuxer;
+    delete user_data->output;
+    delete user_data;
+    session->set_user_data(nullptr);
 }

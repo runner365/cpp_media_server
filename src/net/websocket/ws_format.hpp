@@ -24,11 +24,6 @@ typedef struct S_WS_PACKET_HEADER
 
     uint8_t payload_len : 7;
     uint8_t mask : 1;
-    
-    //only when payload len == 126/127
-    uint32_t ext_payload_len_high;
-    uint32_t ext_payload_len_low;
-
 } WS_PACKET_HEADER;
 
 class websocket_frame
@@ -44,6 +39,10 @@ public:
         return (uint8_t*)buffer_.data() + payload_start_;
     }
 
+    size_t get_buffer_len() {
+        return buffer_.data_len();
+    }
+    
     bool payload_is_ready() {
         return payload_len_ <= buffer_.data_len() - payload_start_;
     }
@@ -53,7 +52,11 @@ public:
     }
 
     uint8_t get_oper_code() {
-        return header_->opcode;
+        return opcode_;
+    }
+
+    bool get_fin() {
+        return fin_;
     }
 
     bool is_header_ready() {
@@ -61,10 +64,8 @@ public:
     }
 
     void reset() {
-        buffer_.reset();
         payload_start_ = 0;
         payload_len_   = 0;
-        header_        = nullptr;
         header_ready_  = false;
     }
     
@@ -72,8 +73,10 @@ private:
     data_buffer buffer_;
     int payload_start_   = 0;
     int64_t payload_len_ = 0;
-    WS_PACKET_HEADER* header_ = nullptr;
-    bool header_ready_ = false;
+    uint8_t opcode_      = 0;
+    bool mask_enable_    = false;
+    bool fin_            = false;
+    bool header_ready_   = false;
     uint8_t masking_key_[4];
 };
 #endif

@@ -8,6 +8,7 @@
 #include <stddef.h>
 #include <string>
 #include <memory>
+#include <vector>
 #include <unordered_map>
 
 #define WS_RET_READ_MORE 100
@@ -48,10 +49,8 @@ public:
     int get_die_count() { return die_count_; }
 
 public:
-    av_format_callback* get_output() { return output_; }
-    void set_output(av_format_callback* output) { output_ = output; }
-    flv_demuxer* get_media_demuxer() { return demuxer_; }
-    void set_media_demuxer(flv_demuxer* muxer) { demuxer_ = muxer; }
+    void* get_user_data() { return user_data_; }
+    void set_user_data(void* output) { user_data_ = output; }
 
 protected:
     virtual void on_write(int ret_code, size_t sent_size);
@@ -76,6 +75,7 @@ private:
 
 private:
     bool http_request_ready_ = false;
+    data_buffer http_recv_buffer_;
     std::unordered_map<std::string, std::string> headers_;
 	std::string method_;
     std::string path_;
@@ -92,13 +92,12 @@ private:
     websocket_server* server_ = nullptr;
     websocket_server_callbackI* cb_ = nullptr;
     std::unique_ptr<tcp_session> session_ptr_;
-    data_buffer recv_buffer_;
+    std::vector<std::shared_ptr<data_buffer>> recv_buffer_vec_;
 
     websocket_frame frame_;
 
 private:
-    av_format_callback* output_ = nullptr;
-    flv_demuxer* demuxer_ = nullptr;
+    void* user_data_ = nullptr;
 };
 
 #endif //WEBSOCKET_SESSION_HPP
