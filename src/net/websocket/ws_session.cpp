@@ -96,6 +96,7 @@ void websocket_session::on_read(int ret_code, const char* data, size_t data_size
 void websocket_session::on_handle_frame(uint8_t* data, size_t len) {
     int ret = 0;
     int i = 0;
+    
     do {
         if (i == 0) {
             ret = frame_.parse(data, len);
