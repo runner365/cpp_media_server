@@ -59,7 +59,7 @@ int websocket_frame::parse(uint8_t *data, size_t len)
         }
         mask_enable_ = header->mask;
         if (mask_enable_) {
-            if (buffer_.data_len() < (payload_start_ + 4)) {
+            if ((int)buffer_.data_len() < (payload_start_ + 4)) {
                 return 1;
             }
             uint8_t *p = (uint8_t*)buffer_.data() + payload_start_;
@@ -72,7 +72,7 @@ int websocket_frame::parse(uint8_t *data, size_t len)
         header_ready_ = true;
     }
 
-    if (buffer_.data_len() < (payload_start_ + payload_len_)) {
+    if ((int)buffer_.data_len() < (payload_start_ + payload_len_)) {
         return 1;
     }
 

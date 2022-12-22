@@ -44,7 +44,7 @@ public:
     }
     
     bool payload_is_ready() {
-        return payload_len_ <= buffer_.data_len() - payload_start_;
+        return (int)payload_len_ <= (int)buffer_.data_len() - payload_start_;
     }
 
     uint8_t* consume(size_t len) {
