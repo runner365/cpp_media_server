@@ -132,8 +132,17 @@ void flv_websocket::on_close(websocket_session* session) {
     }
     flv_user_data* user_data = (flv_user_data*)(session->get_user_data());
 
-    delete user_data->demuxer;
-    delete user_data->output;
-    delete user_data;
+    if (user_data) {
+        if (user_data->demuxer) {
+            delete user_data->demuxer;
+            user_data->demuxer = nullptr;
+        }
+        if (user_data->output) {
+            delete user_data->output;
+            user_data->output = nullptr;
+        }
+        delete user_data;
+    }
+    
     session->set_user_data(nullptr);
 }
