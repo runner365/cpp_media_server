@@ -45,21 +45,21 @@ include_directories(src
 link_directories(${CMAKE_BINARY_DIR}/output/lib /usr/local/lib64 /usr/local/lib)
 add_subdirectory(3rdparty)
 
-add_executable(ws_server_demo
-            src/net/websocket/ws_server_demo.cpp
-            src/net/websocket/ws_server.cpp
-            src/net/websocket/ws_session.cpp
-            src/net/websocket/ws_format.cpp
-            src/utils/logger.cpp
-            src/utils/base64.cpp
-            src/utils/byte_crypto.cpp
-            src/utils/data_buffer.cpp)
-
-IF (APPLE)
-target_link_libraries(ws_server_demo dl z m ssl crypto pthread uv)
-ELSEIF (UNIX)
-target_link_libraries(ws_server_demo rt dl z m ssl crypto pthread uv)
-ENDIF ()
+#add_executable(ws_server_demo
+#            src/net/websocket/ws_server_demo.cpp
+#            src/net/websocket/ws_server.cpp
+#            src/net/websocket/ws_session.cpp
+#            src/net/websocket/ws_format.cpp
+#            src/utils/logger.cpp
+#            src/utils/base64.cpp
+#            src/utils/byte_crypto.cpp
+#            src/utils/data_buffer.cpp)
+#
+#IF (APPLE)
+#target_link_libraries(ws_server_demo dl z m ssl crypto pthread uv)
+#ELSEIF (UNIX)
+#target_link_libraries(ws_server_demo rt dl z m ssl crypto pthread uv)
+#ENDIF ()
 
 #add_executable(echo_demo
 #            src/net/tcp/echo_demo.cpp
