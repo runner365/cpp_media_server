@@ -787,7 +787,7 @@ void webrtc_session::on_handle_stun_packet(stun_packet* pkt, const udp_tuple& ad
     }
 
     if (pkt->stun_class == STUN_CLASS_ENUM::STUN_REQUEST) {
-        if (!pkt->message_integrity || !pkt->priority || pkt->user_name.empty()) {
+        if (!pkt->message_integrity/* || !pkt->priority*/ || pkt->user_name.empty()) {
             log_errorf("receive stun packet missing attribute, message_integrity:%d, priority:%d, username:%s",
                     pkt->message_integrity, pkt->priority, pkt->user_name.c_str());
             write_error_stun_packet(pkt, 400, address);
@@ -821,7 +821,7 @@ void webrtc_session::on_handle_stun_packet(stun_packet* pkt, const udp_tuple& ad
         resp_pkt->xor_address = &src_address;
         resp_pkt->password    = this->user_pwd_;
         resp_pkt->serialize();
-        
+
         remote_address_ = address;
         write_udp_data(resp_pkt->data, resp_pkt->data_len, address);
         delete resp_pkt;

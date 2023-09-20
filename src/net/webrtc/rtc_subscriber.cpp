@@ -109,6 +109,11 @@ void rtc_subscriber::send_rtp_packet(const std::string& roomId, const std::strin
         pkt->update_mid(this->get_mid());
     }
 
+    if (pkt->get_seq() % 100 == 0) {
+        int64_t now_ms = now_millisec();
+        update_alive(now_ms);
+    }
+
     uint32_t origin_ssrc   = pkt->get_ssrc();
     uint8_t origin_payload_type = pkt->get_payload_type();
 
@@ -136,6 +141,9 @@ void rtc_subscriber::handle_fb_rtp_nack(rtcp_fb_nack* nack_pkt) {
 }
 
 void rtc_subscriber::handle_rtcp_rr(rtcp_rr_packet* rr_pkt) {
+    int64_t now_ms = now_millisec();
+
+    update_alive(now_ms);
     stream_ptr_->handle_rtcp_rr(rr_pkt);
 }
 
