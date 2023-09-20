@@ -4,7 +4,11 @@
 #include <stdint.h>
 #include <stddef.h>
 #include <string>
+#ifndef _WIN32
 #include <arpa/inet.h>
+#else
+#include <WinSock2.h>
+#endif
 #include <map>
 
 #define RTP_SEQ_MOD (1<<16)

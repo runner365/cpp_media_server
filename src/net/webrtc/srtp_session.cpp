@@ -2,7 +2,11 @@
 #include "logger.hpp"
 #include <vector>
 #include <cstring>
+#ifndef _WIN32
 #include <netinet/in.h>
+#else
+#include <WinSock2.h>
+#endif
 
 std::vector<const char*> srtp_session::errors =
 {

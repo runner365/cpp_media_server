@@ -24,7 +24,7 @@ int Config::load(const std::string& conf_file) {
         std::cout << "open file:" << conf_file << " error\r\n";
         return -1;
     }
-
+    
     size_t n = fread(buffer_, 1, CONFIG_DATA_BUFFER, fh_p);
     fclose(fh_p);
 

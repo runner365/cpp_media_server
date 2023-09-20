@@ -3,7 +3,11 @@
 #include "logger.hpp"
 #include "timeex.hpp"
 #include "byte_stream.hpp"
+#ifndef _WIN32
 #include <arpa/inet.h>
+#else
+#include <WinSock2.h>
+#endif
 #include <sstream>
 #include <cstring>
 #include <assert.h>

@@ -4,7 +4,11 @@
 #include <stddef.h>
 #include <string>
 #include <string.h>
+#ifndef _WIN32
 #include <arpa/inet.h>
+#else
+#include <WinSock2.h>
+#endif
 #include <vector>
 #include "rtprtcp_pub.hpp"
 

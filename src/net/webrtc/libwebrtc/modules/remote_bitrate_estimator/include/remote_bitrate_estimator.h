@@ -15,7 +15,6 @@
 
 #include <map>
 #include <vector>
-#include <stdint.h>
 
 namespace webrtc {
 namespace rtcp {

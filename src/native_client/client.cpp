@@ -2,9 +2,12 @@
 #include "httpflv_player.hpp"
 #include "utils/url_analyze.hpp"
 #include "base_player.hpp"
+#include "getopt.h"
 #include <thread>
 #include <uv.h>
+#ifndef _WIN32
 #include <unistd.h>
+#endif
 #include <string>
 
 uv_loop_t* s_loop = uv_default_loop();

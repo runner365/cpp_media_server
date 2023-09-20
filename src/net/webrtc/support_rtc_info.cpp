@@ -6,6 +6,7 @@
 #include <vector>
 #include <sstream>
 
+#ifndef _WIN32
 static RTCP_FB support_rtcp_fb_list[] = {
     {
         .payload = 0,
@@ -113,6 +114,118 @@ static FMTP support_fmtp_list[] = {
         .payload = 0
     }
 };
+#else
+static RTCP_FB support_rtcp_fb_list[] = {
+	{
+		0, //payload
+		"goog-remb", //type
+		"" //subtype
+	},
+	{
+		0,
+		"nack",
+		""
+	},
+	{
+		0,
+		"rrtr",
+		""
+	},
+	{
+		0,
+		"nack",
+		"pli"
+	},
+};
+static HEADER_EXT support_header_ext_list[] = {
+	{
+		"urn:ietf:params:rtp-hdrext:sdes:mid",  //uri
+		 0		//value
+	},
+	{
+		"http://www.webrtc.org/experiments/rtp-hdrext/abs-send-time",
+		 0
+	}
+};
+
+static RTP_ENCODING support_rtp_encoding_list[] = {
+	{
+		"VP8",				//codec
+		0,				//payload	
+		90000,		//clock_rate
+		"",				//encoding
+		MEDIA_VIDEO_TYPE //media_type
+	},
+	{
+		"H264",
+		0,
+		90000,
+		"",
+		MEDIA_VIDEO_TYPE
+	},
+	{
+		"rtx",
+		0,
+		90000,
+		"",
+		MEDIA_UNKOWN_TYPE
+	},
+	{
+		"opus",
+		0,
+		48000,
+		"",
+		MEDIA_AUDIO_TYPE
+	}
+};
+
+static SSRC_INFO support_ssrc_info_list[] = {
+	{
+		"cname", //attribute
+		"", //""
+		0 //ssrc
+	}
+};
+
+static FMTP support_fmtp_list[] = {
+	{
+		"useinbandfec=1", //config
+		0	//payload
+	},
+	{
+		"apt=",
+		0
+	},
+	{
+		"x-google-start-bitrate",
+		0
+	},
+	{
+		"profile-level-id=42e01f;level-asymmetry-allowed=1;packetization-mode=1",
+		0
+	},
+	{
+		"profile-level-id=42e01f;packetization-mode=1;level-asymmetry-allowed=1",
+		0
+	},
+	{
+		"level-asymmetry-allowed=1;packetization-mode=1;profile-level-id=42e01f",
+		0
+	},
+	{
+		"level-asymmetry-allowed=1;profile-level-id=42e01f;packetization-mode=1",
+		0
+	},
+	{
+		"packetization-mode=1;level-asymmetry-allowed=1;profile-level-id=42e01f",
+		0
+	},
+	{
+		"packetization-mode=1;profile-level-id=42e01f;level-asymmetry-allowed=1",
+		 0
+	}
+};
+#endif
 
 static int get_apt_payload(const std::string& apt) {
     const std::string APT = "apt=";

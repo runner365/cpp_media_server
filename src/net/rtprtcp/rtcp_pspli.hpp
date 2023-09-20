@@ -9,7 +9,11 @@
 #include <stddef.h>
 #include <string>
 #include <cstring>
+#ifndef _WIN32
 #include <arpa/inet.h>
+#else
+#include <WinSock2.h>
+#endif
 #include <sstream>
 
 class rtcp_pspli

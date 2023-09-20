@@ -59,6 +59,13 @@ static uint8_t GENUINE_FLASH_MEDIA_SERVER[] = {
 }; // 68
 #endif
 
+static int random()
+{
+	srand(time(NULL));
+	int r = rand();
+    return r;
+}
+
 inline void rtmp_random_generate(uint8_t* bytes, int size) {   
     for (int i = 0; i < size; i++) {
         // the common value in [0x0f, 0xf0]

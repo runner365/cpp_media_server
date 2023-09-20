@@ -14,10 +14,14 @@
 #include "utils/av/media_stream_manager.hpp"
 #include "logger.hpp"
 #include "media_server.hpp"
+#include "getopt.h"
 #include <stdint.h>
 #include <stddef.h>
 #include <iostream>
+
+#ifndef _WIN32
 #include <unistd.h>
+#endif
 
 uv_loop_t* MediaServer::loop_ = uv_default_loop();
 uv_loop_t* MediaServer::hls_loop_ = uv_loop_new();

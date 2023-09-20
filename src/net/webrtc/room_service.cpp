@@ -770,6 +770,7 @@ void room_service::handle_publish(const std::string& id, const std::string& meth
     finger_print_info fingerprint = session_ptr->get_local_finger_print(info.finger_print.type);
     support_info.finger_print.hash = fingerprint.value;
 
+#ifndef _WIN32
     CANDIDATE_INFO candidate_data = {
         .foundation = "0",
         .component  = 1,
@@ -779,6 +780,16 @@ void room_service::handle_publish(const std::string& id, const std::string& meth
         .port       = session_ptr->get_candidates_port(),
         .type       = "host"
     };
+#else
+	CANDIDATE_INFO candidate_data;
+	candidate_data.foundation = "0";
+	candidate_data.component = 1;
+	candidate_data.transport = "udp";
+	candidate_data.priority = 2113667327;
+	candidate_data.ip = session_ptr->get_candidates_ip();
+	candidate_data.port = session_ptr->get_candidates_port();
+	candidate_data.type = "host";
+#endif
 
     support_info.candidates.push_back(candidate_data);
 
@@ -1135,6 +1146,7 @@ void room_service::handle_live_subscribe(const std::string& id,
     finger_print_info fingerprint = session_ptr->get_local_finger_print(info.finger_print.type);
     support_info.finger_print.hash = fingerprint.value;
 
+#ifndef _WIN32
     CANDIDATE_INFO candidate_data = {
         .foundation = "0",
         .component  = 1,
@@ -1144,6 +1156,18 @@ void room_service::handle_live_subscribe(const std::string& id,
         .port       = session_ptr->get_candidates_port(),
         .type       = "host"
     };
+#else
+	CANDIDATE_INFO candidate_data;
+
+	candidate_data.foundation = "0";
+	candidate_data.component = 1;
+	candidate_data.transport = "udp";
+	candidate_data.priority = 2113667327;
+	candidate_data.ip = session_ptr->get_candidates_ip();
+	candidate_data.port = session_ptr->get_candidates_port();
+	candidate_data.type = "host";
+
+#endif
 
     support_info.candidates.push_back(candidate_data);
     //log_infof("get live subscribe support media info:\r\n%s", support_info.dump().c_str());
@@ -1290,6 +1314,7 @@ void room_service::handle_webrtc_subscribe(const std::string& id,
     finger_print_info fingerprint = session_ptr->get_local_finger_print(info.finger_print.type);
     support_info.finger_print.hash = fingerprint.value;
 
+#ifndef _WIN32
     CANDIDATE_INFO candidate_data = {
         .foundation = "0",
         .component  = 1,
@@ -1299,6 +1324,17 @@ void room_service::handle_webrtc_subscribe(const std::string& id,
         .port       = session_ptr->get_candidates_port(),
         .type       = "host"
     };
+#else
+	CANDIDATE_INFO candidate_data;
+	candidate_data.foundation = "0";
+	candidate_data.component = 1;
+	candidate_data.transport = "udp";
+	candidate_data.priority = 2113667327;
+	candidate_data.ip = session_ptr->get_candidates_ip();
+	candidate_data.port = session_ptr->get_candidates_port();
+	candidate_data.type = "host";
+
+#endif
 
     support_info.candidates.push_back(candidate_data);
     //log_infof("get subscribe support media info:\r\n%s", support_info.dump().c_str());
@@ -1373,6 +1409,7 @@ int room_service::handle_http_publish(const std::string& uid, const std::string&
     finger_print_info fingerprint = session_ptr->get_local_finger_print(info.finger_print.type);
     support_info.finger_print.hash = fingerprint.value;
 
+#ifndef _WIN32
     CANDIDATE_INFO candidate_data = {
         .foundation = "0",
         .component  = 1,
@@ -1382,6 +1419,17 @@ int room_service::handle_http_publish(const std::string& uid, const std::string&
         .port       = session_ptr->get_candidates_port(),
         .type       = "host"
     };
+#else
+	CANDIDATE_INFO candidate_data;
+	candidate_data.foundation = "0";
+	candidate_data.component = 1;
+	candidate_data.transport = "udp";
+	candidate_data.priority = 2113667327;
+	candidate_data.ip = session_ptr->get_candidates_ip();
+	candidate_data.port = session_ptr->get_candidates_port();
+	candidate_data.type = "host";
+
+#endif
 
     support_info.candidates.push_back(candidate_data);
 
@@ -1558,6 +1606,7 @@ int room_service::handle_http_webrtc_subscribe(std::shared_ptr<user_info> user_p
     finger_print_info fingerprint = session_ptr->get_local_finger_print(info.finger_print.type);
     support_info.finger_print.hash = fingerprint.value;
 
+#ifndef _WIN32
     CANDIDATE_INFO candidate_data = {
         .foundation = "0",
         .component  = 1,
@@ -1567,6 +1616,17 @@ int room_service::handle_http_webrtc_subscribe(std::shared_ptr<user_info> user_p
         .port       = session_ptr->get_candidates_port(),
         .type       = "host"
     };
+#else
+	CANDIDATE_INFO candidate_data;
+	candidate_data.foundation = "0";
+	candidate_data.component = 1;
+	candidate_data.transport = "udp";
+	candidate_data.priority = 2113667327;
+	candidate_data.ip = session_ptr->get_candidates_ip();
+	candidate_data.port = session_ptr->get_candidates_port();
+	candidate_data.type = "host";
+
+#endif
 
     support_info.candidates.push_back(candidate_data);
     //log_infof("http subscribe support media info:\r\n%s", support_info.dump().c_str());
@@ -1722,6 +1782,7 @@ int room_service::handle_http_live_subscribe(std::shared_ptr<user_info> user_ptr
     finger_print_info fingerprint = session_ptr->get_local_finger_print(info.finger_print.type);
     support_info.finger_print.hash = fingerprint.value;
 
+#ifndef _WIN32
     CANDIDATE_INFO candidate_data = {
         .foundation = "0",
         .component  = 1,
@@ -1731,6 +1792,17 @@ int room_service::handle_http_live_subscribe(std::shared_ptr<user_info> user_ptr
         .port       = session_ptr->get_candidates_port(),
         .type       = "host"
     };
+#else
+	CANDIDATE_INFO candidate_data;
+	candidate_data.foundation = "0";
+	candidate_data.component = 1;
+	candidate_data.transport = "udp";
+	candidate_data.priority = 2113667327;
+	candidate_data.ip = session_ptr->get_candidates_ip();
+	candidate_data.port = session_ptr->get_candidates_port();
+	candidate_data.type = "host";
+
+#endif
 
     support_info.candidates.push_back(candidate_data);
     //log_infof("get live subscribe support media info:\r\n%s", support_info.dump().c_str());

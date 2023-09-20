@@ -7,7 +7,11 @@
 #include <cstring>
 #include <sstream>
 #include <stdio.h>
+#ifndef _WIN32
 #include <arpa/inet.h>  // htonl(), htons(), ntohl(), ntohs()
+#else
+#include <WinSock2.h>
+#endif
 #include <vector>
 
 /*

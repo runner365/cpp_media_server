@@ -5,7 +5,11 @@
 #include <stddef.h>
 #include <string>
 #include <sstream>
+#ifdef _WIN32
+#include <WinSock2.h>
+#else
 #include <arpa/inet.h>  // htonl(), htons(), ntohl(), ntohs()
+#endif
 
 #define RTP_PACKET_MAX_SIZE 1500
 #define RTP_PAYLOAD_MAX_SIZE 1200
