@@ -59,12 +59,14 @@ static uint8_t GENUINE_FLASH_MEDIA_SERVER[] = {
 }; // 68
 #endif
 
+#ifdef _WIN32
 static int random()
 {
-	srand(time(NULL));
-	int r = rand();
+    srand(time(NULL));
+    int r = rand();
     return r;
 }
+#endif
 
 inline void rtmp_random_generate(uint8_t* bytes, int size) {   
     for (int i = 0; i < size; i++) {

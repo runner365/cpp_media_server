@@ -2,7 +2,13 @@
 #include "httpflv_player.hpp"
 #include "utils/url_analyze.hpp"
 #include "base_player.hpp"
+#ifdef _WIN32
+#include "windows/getopt.h"
+#else
 #include "getopt.h"
+#else
+#endif
+
 #include <thread>
 #include <uv.h>
 #ifndef _WIN32

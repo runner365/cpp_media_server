@@ -14,7 +14,13 @@
 #include "utils/av/media_stream_manager.hpp"
 #include "logger.hpp"
 #include "media_server.hpp"
+
+#ifdef _WIN32
+#include "windows/getopt.h"
+#else
 #include "getopt.h"
+#endif
+
 #include <stdint.h>
 #include <stddef.h>
 #include <iostream>
