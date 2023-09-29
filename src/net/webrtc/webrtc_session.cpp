@@ -32,6 +32,8 @@
 #include <openssl/evp.h>
 #include <openssl/rsa.h>
 #include <openssl/ssl.h>
+#include <thread>
+#include <chrono>
 
 std::shared_ptr<udp_server> single_udp_server_ptr;
 single_udp_session_callback single_udp_cb;
@@ -826,7 +828,7 @@ void webrtc_session::on_handle_stun_packet(stun_packet* pkt, const udp_tuple& ad
         write_udp_data(resp_pkt->data, resp_pkt->data_len, address);
         delete resp_pkt;
 
-        dtls_trans_->start(ROLE_SERVER);
+        dtls_trans_->start(ROLE_CLIENT);
     } else {
         log_warnf("the server doesn't handle stun class:%d", (int)pkt->stun_class);
     }
