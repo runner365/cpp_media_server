@@ -65,6 +65,21 @@ X509* rtc_dtls::s_certificate    = nullptr;
 EVP_PKEY* rtc_dtls::s_privatekey = nullptr;
 SSL_CTX* rtc_dtls::s_ssl_ctx     = nullptr;
 
+std::string get_dtls_mode_desc(DTLS_ROLE mode) {
+    switch (mode)
+    {
+    case ROLE_AUTO:
+        return "role_auto";
+    case ROLE_CLIENT:
+        return "role_client";
+    case ROLE_SERVER:
+        return "role_server";
+    default:
+        break;
+    }
+    return "role_none";
+}
+
 void ssl_info_callback(const SSL* ssl, int type, int value) {
     log_infof("ssl info callback type:0x%08x, value:0x%08x", type, value);
     if (static_cast<rtc_dtls*>(SSL_get_ex_data(ssl, 0)) != nullptr) {
@@ -285,7 +300,7 @@ void rtc_dtls::on_ssl_info(int type, int value) {
 
 }
 
-rtc_dtls::rtc_dtls(webrtc_session* session, uv_loop_t* loop): timer_interface(loop, 5*1000)
+rtc_dtls::rtc_dtls(webrtc_session* session, uv_loop_t* loop): timer_interface(loop, 3*1000)
     , session_(session) {
     state = DTLS_NEW;
     role  = ROLE_SERVER;//role must be "server" in ice-lite mode.
@@ -346,13 +361,17 @@ void rtc_dtls::start(DTLS_ROLE role_mode) {
     this->role  = role_mode;
     this->state = DTLS_CONNECTING;
 
-    log_infof("rtc dtls start, role mode:%d", (int)role_mode);
+    log_infof("rtc dtls start, role mode:%s", get_dtls_mode_desc(role_mode).c_str());
 
-    SSL_set_accept_state(ssl_);
-    SSL_do_handshake(ssl_);
-
-    //only for dtls client role mode
-    //send_pending_dtls_data();
+    if (role_mode == ROLE_SERVER) {
+        SSL_set_accept_state(ssl_);
+        SSL_do_handshake(ssl_);
+    } else {//ROLE_CLIENT
+		SSL_set_connect_state(ssl_);
+		SSL_do_handshake(ssl_);
+        send_pending_dtls_data();
+		start_timer();
+    }
 
     return;
 }
@@ -364,9 +383,14 @@ void rtc_dtls::on_timer() {
     }
 
     log_infof("------------ rtc dtls on timer --------------");
-    DTLSv1_handle_timeout(ssl_);
+    int ret = DTLSv1_handle_timeout(ssl_);
 
-    send_pending_dtls_data();
+    if (ret == 1) {
+        send_pending_dtls_data();
+    } else if (ret == -1) {
+        log_errorf("DTLSv1_handle_timeout failed.");
+        this->state = DTLS_FAILED;
+    }
 
     //start_timer();
 }
@@ -392,7 +416,8 @@ void rtc_dtls::handle_dtls_data(const uint8_t* data, size_t data_len) {
     //start_timer();
 }
 
-void rtc_dtls::send_pending_dtls_data() {
+void rtc_dtls::
+send_pending_dtls_data() {
     if (BIO_eof(this->ssl_bio_write_)) {
         return;
     }
@@ -409,7 +434,11 @@ void rtc_dtls::send_pending_dtls_data() {
     log_infof("dtls data is ready to be sent to the client, length:%ld", read);
 
     //send to client
-    session_->send_plaintext_data((uint8_t*)data, (size_t)read);
+    try {
+        session_->send_plaintext_data((uint8_t*)data, (size_t)read);
+    } catch(const std::exception& e) {
+        log_errorf("session send plaintext data exception:%s", e.what());
+    }
 
     (void)BIO_reset(ssl_bio_write_);
 }

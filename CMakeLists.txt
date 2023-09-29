@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.7.1)
 project(cpp_media_server)
 
-set(CMAKE_CXX_FLAGS  "${CMAKE_CXX_FLAGS} -std=c++17 -g -Wno-deprecated -Wno-deprecated-declarations -Wno-reorder -Wall -fexceptions -frtti -D__STDC_FORMAT_MACROS -fPIC")
+set(CMAKE_CXX_FLAGS  "${CMAKE_CXX_FLAGS} -std=c++17 -g -Wno-declaration-after-statement -Wno-deprecated -Wno-deprecated-declarations -Wno-reorder -Wall -fexceptions -frtti -D__STDC_FORMAT_MACROS -fPIC")
 
 
 set(CMAKE_OUTPUT_BASE ${CMAKE_BINARY_DIR}/output)

@@ -72,6 +72,8 @@ extern std::vector<srtp_crypto_suite_map> srtp_crypto_suite_vec;
 extern std::unordered_map<std::string, finger_print_algorithm_enum> string2finger_print_algorithm;
 extern std::map<finger_print_algorithm_enum, std::string> finger_print_algorithm2String;
 
+std::string get_dtls_mode_desc(DTLS_ROLE mode);
+
 class webrtc_session;
 
 class rtc_dtls : public timer_interface

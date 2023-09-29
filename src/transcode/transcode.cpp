@@ -53,7 +53,7 @@ void transcode::clear() {
         while(!send_queue_.empty()) {
             rtp_packet_info info = send_queue_.front();
             send_queue_.pop();
-            delete info.pkt;
+            av_packet_free(&info.pkt);
         }
     } while(0);
     

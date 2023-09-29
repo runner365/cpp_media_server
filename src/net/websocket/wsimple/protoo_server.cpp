@@ -253,9 +253,15 @@ void protoo_server::on_accept(websocket_session* session) {
 
 void protoo_server::on_read(websocket_session* session, const char* data, size_t len) {
     std::string body(data, len);
+    json protooBodyJson;
     log_infof("protoo server read body:%s, len:%lu", body.c_str(), len);
 
-    json protooBodyJson = json::parse(body);
+    try {
+        protooBodyJson = json::parse(body);
+    } catch(const std::exception& e) {
+        log_errorf("protoo server json parse exception:%s", e.what());
+        return;
+    }
 
     auto requestObj = protooBodyJson.find("request");
     if (requestObj != protooBodyJson.end()) {
@@ -270,10 +276,9 @@ void protoo_server::on_read(websocket_session* session, const char* data, size_t
 
         try {
             on_request(session, protooBodyJson);
-        }
-        catch(const std::exception& e) {
-            log_infof("handle request exception:%s", e.what());
-            MS_THROW_ERROR("handle request exception:%s", e.what());
+        } catch(const std::exception& e) {
+            log_infof("protoo server handle request exception:%s", e.what());
+            //MS_THROW_ERROR("handle request exception:%s", e.what());
             return;
         }
         return;
@@ -285,7 +290,7 @@ void protoo_server::on_read(websocket_session* session, const char* data, size_t
             MS_THROW_ERROR("response is not bool type.");
             return;
         }
-        
+
         if (!responseObj->get<bool>()) {
             MS_THROW_ERROR("response is not bool type.");
             return;
@@ -307,7 +312,7 @@ void protoo_server::on_read(websocket_session* session, const char* data, size_t
             MS_THROW_ERROR("notification is not bool type.");
             return;
         }
-        
+
         if (!notificationObj->get<bool>()) {
             MS_THROW_ERROR("notification is not bool type.");
             return;
