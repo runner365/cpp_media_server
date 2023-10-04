@@ -3,6 +3,7 @@
 #include <stdint.h>
 #include <stddef.h>
 #include <vector>
+#include <string>
 #include <srtp.h>
 
 typedef enum
@@ -27,6 +28,8 @@ typedef enum
 } SRTP_SESSION_TYPE;
 
 #define SRTP_ENCRYPT_BUFFER_SIZE (10*1024)
+
+std::string get_crypto_suite_desc(CRYPTO_SUITE_ENUM suite);
 
 class srtp_session
 {

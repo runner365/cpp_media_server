@@ -66,6 +66,7 @@ void nack_generator::update_nacklist(rtp_packet* pkt) {
     uint16_t seq_start = last_seq_;
     uint16_t seq_end   = seq;
     
+    log_debugf("nack receive seq:%d, last seq:%d", seq, last_seq_);
     last_seq_ = seq;
 
     //add seqs in nack list
@@ -104,7 +105,15 @@ void nack_generator::on_timer() {
     }
 
     if (!lost_seq_list.empty()) {
+        std::stringstream ss;
         std::sort(lost_seq_list.begin(), lost_seq_list.end());
+        ss << "[";
+        for (auto seq : lost_seq_list) {
+            ss << seq;
+            ss << " ";
+        }
+        ss << "]";
+        log_infof("generate nacklist:%s", ss.str().c_str());
         cb_->generate_nacklist(lost_seq_list);
     }
 

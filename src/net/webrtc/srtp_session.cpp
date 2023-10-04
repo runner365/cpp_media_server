@@ -38,6 +38,23 @@ std::vector<const char*> srtp_session::errors =
     "error while using pfkey (srtp_err_status_pfkey_err)"
 };
 
+std::string get_crypto_suite_desc(CRYPTO_SUITE_ENUM suite) {
+    switch(suite)
+    {
+        case CRYPTO_SUITE_AES_CM_128_HMAC_SHA1_80:
+            return "aes_128_sha1_80";
+        case CRYPTO_SUITE_AES_CM_128_HMAC_SHA1_32:
+            return "aes_128_sha1_32";
+        case CRYPTO_SUITE_AEAD_AES_256_GCM:
+            return "aead_aes_256";
+        case CRYPTO_SUITE_AEAD_AES_128_GCM:
+            return "aead_aes_128";
+        default:
+            break;
+    }
+    return "crypto_none";
+}
+
 void srtp_session::init() {
     log_infof("libsrtp version: <%s>", srtp_get_version_string());
 

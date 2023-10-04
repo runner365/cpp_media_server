@@ -409,10 +409,10 @@ void webrtc_session::on_handle_rtp_data(const uint8_t* data, size_t data_len, co
 
     bool ret = read_srtp_->decrypt_srtp(const_cast<uint8_t*>(data), &data_len);
     if (!ret) {
-        //rtp_common_header* header = (rtp_common_header*)data;
-        //log_errorf("rtp decrypt error, data len:%lu, version:%d, padding:%d, ext:%d, csrc count:%d, marker:%d, payload type:%d, seq:%d, timestamp:%u, ssrc:%u",
-        //    data_len, header->version, header->padding, header->extension, header->csrc_count, header->marker, header->payload_type,
-        //    ntohs(header->sequence), ntohl(header->timestamp), ntohl(header->ssrc));
+        rtp_common_header* header = (rtp_common_header*)data;
+        log_errorf("rtp decrypt error, data len:%lu, version:%d, padding:%d, ext:%d, csrc count:%d, marker:%d, payload type:%d, seq:%d, timestamp:%u, ssrc:%u",
+            data_len, header->version, header->padding, header->extension, header->csrc_count, header->marker, header->payload_type,
+            ntohs(header->sequence), ntohl(header->timestamp), ntohl(header->ssrc));
         return;
     }
 
@@ -510,6 +510,8 @@ void webrtc_session::on_handle_rtcp_data(const uint8_t* data, size_t data_len, c
         uint16_t payload_length = get_rtcp_length(header);
         size_t item_total = sizeof(rtcp_common_header) + payload_length;
 
+        log_debugf("rtcp payload length:%d, item len:%lu, left len:%d, packet type:%d", 
+                payload_length, item_total, left_len, header->packet_type);
         switch (header->packet_type)
         {
             case RTCP_SR:
@@ -573,13 +575,13 @@ void webrtc_session::handle_rtcp_xr(uint8_t* data, size_t data_len) {
         {
             case XR_DLRR:
             {
-                xr_dlrr_data* dlrr_block = (xr_dlrr_data*)xr_hdr;
+                xr_dlrr_data* dlrr_block = (xr_dlrr_data*)(xr_hdr + 1);
                 handle_xr_dlrr(dlrr_block);
                 break;
             }
             case XR_RRT:
             {
-                xr_rrt_data* rrt_block = (xr_rrt_data*)xr_hdr;
+                xr_rrt_data* rrt_block = (xr_rrt_data*)(xr_hdr + 1);
                 last_xr_ntp_.ntp_sec  = ntohl(rrt_block->ntp_sec);
                 last_xr_ntp_.ntp_frac = ntohl(rrt_block->ntp_frac);
                 last_xr_ms_ = now_millisec();

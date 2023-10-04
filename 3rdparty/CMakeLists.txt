@@ -7,6 +7,16 @@ set(EXTRA_LIBS "-lm -pthread -ldl")
 add_subdirectory(libsdptransform)
 add_subdirectory(libuv)
 
+ExternalProject_Add(yasm
+    URL ${CMAKE_CURRENT_SOURCE_DIR}/yasm-1.3.0.tar.gz
+    SOURCE_DIR  ${CMAKE_CURRENT_BINARY_DIR}/yasm-1.3.0
+    BUILD_IN_SOURCE 1
+    CONFIGURE_COMMAND
+        ./configure --prefix=${PREFIX_DIR} --libdir=${INSTALL_RPATH}
+    BUILD_COMMAND make
+    INSTALL_COMMAND make install
+    )
+
 IF (APPLE)
 ExternalProject_Add(openssl
     URL ${CMAKE_CURRENT_SOURCE_DIR}/openssl-1.1.1.tar.gz
@@ -24,9 +34,9 @@ ExternalProject_Add(openssl
     SOURCE_DIR  ${CMAKE_CURRENT_BINARY_DIR}/openssl
     BUILD_IN_SOURCE 1
     CONFIGURE_COMMAND
-        ./Configure --prefix=${PREFIX_DIR} no-shared linux-x86_64
+        ./Configure --prefix=${PREFIX_DIR} no-shared no-asm linux-x86_64
         --libdir=${PREFIX_DIR}/lib
-    BUILD_COMMAND make -j 4
+    BUILD_COMMAND make
     INSTALL_COMMAND make install_sw
     )
 ENDIF ()
@@ -38,17 +48,7 @@ ExternalProject_Add(libsrtp
     BUILD_IN_SOURCE 1
     CONFIGURE_COMMAND
         ./configure --prefix=${PREFIX_DIR} --libdir=${INSTALL_RPATH} --enable-openssl --with-openssl-dir=${INSTALL_RPATH}/..
-    BUILD_COMMAND make -j 4
-    INSTALL_COMMAND make install
-    )
-
-ExternalProject_Add(yasm
-    URL ${CMAKE_CURRENT_SOURCE_DIR}/yasm-1.3.0.tar.gz
-    SOURCE_DIR  ${CMAKE_CURRENT_BINARY_DIR}/yasm-1.3.0
-    BUILD_IN_SOURCE 1
-    CONFIGURE_COMMAND
-        ./configure --prefix=${PREFIX_DIR} --libdir=${INSTALL_RPATH}
-    BUILD_COMMAND make -j 4
+    BUILD_COMMAND make
     INSTALL_COMMAND make install
     )
 
@@ -60,7 +60,7 @@ ExternalProject_Add(libopus
     BUILD_IN_SOURCE 1
     CONFIGURE_COMMAND
         ./configure --prefix=${PREFIX_DIR} --libdir=${INSTALL_RPATH} --disable-asm --enable-static --enable-shared -with-pic
-    BUILD_COMMAND make -j 4
+    BUILD_COMMAND make
     INSTALL_COMMAND make install
     )
 
@@ -71,7 +71,7 @@ ExternalProject_Add(libx264
     BUILD_IN_SOURCE 1
     CONFIGURE_COMMAND
         ./configure --prefix=${PREFIX_DIR} --libdir=${INSTALL_RPATH} --disable-asm --enable-static
-    BUILD_COMMAND make -j 4
+    BUILD_COMMAND make
     INSTALL_COMMAND make install
     )
 
@@ -81,7 +81,7 @@ ExternalProject_Add(libfdk_aac
     BUILD_IN_SOURCE 1
     CONFIGURE_COMMAND
         ./configure --prefix=${PREFIX_DIR} --libdir=${INSTALL_RPATH} --disable-asm --enable-static --disable-shared -with-pic
-    BUILD_COMMAND make -j 4
+    BUILD_COMMAND make
     INSTALL_COMMAND make install
     )
 
@@ -127,7 +127,7 @@ ExternalProject_Add(ffmpeg
         --disable-ffplay
         --disable-ffprobe
         --enable-pic
-    BUILD_COMMAND make -j 4
+    BUILD_COMMAND make
     INSTALL_COMMAND make install
     )
 ENDIF ()

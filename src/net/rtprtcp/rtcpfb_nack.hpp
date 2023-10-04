@@ -47,7 +47,7 @@ public:
         fb_common_header_->padding     = 0;
         fb_common_header_->fmt         = (int)FB_RTP_NACK;
         fb_common_header_->packet_type = RTCP_RTPFB;
-        fb_common_header_->length      = (uint16_t)htons((uint16_t)this->data_len/4) - 1;
+        fb_common_header_->length      = (uint16_t)htons((uint16_t)this->data_len/4 -1 );
 
         nack_header_->sender_ssrc = (uint32_t)htonl(sender_ssrc);
         nack_header_->media_ssrc  = (uint32_t)htonl(media_ssrc);
@@ -94,7 +94,7 @@ public:
 
         for (size_t r = 1; r < report_seqs.size(); r++) {
             uint16_t temp_seq = report_seqs[r];
-            bitmap |= 1 << (16 - (temp_seq - packet_id));
+            bitmap |= 1 << ((temp_seq - packet_id) - 1);
         }
         rtcp_nack_block* block = (rtcp_nack_block*)(this->data + this->data_len);
         block->packet_id   = htons(packet_id);
@@ -196,8 +196,6 @@ private:
     rtcp_fb_common_header* fb_common_header_ = nullptr;
     rtcp_fb_header* nack_header_        = nullptr;
     std::vector<rtcp_nack_block*>  nack_blocks_;
-    
-
 };
 
 #endif

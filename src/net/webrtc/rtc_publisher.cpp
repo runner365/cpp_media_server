@@ -202,8 +202,8 @@ void rtc_publisher::on_handle_rtppacket(rtp_packet* pkt) {
                 media_type_str_.c_str(), rtx_ssrc_, rtx_payloadtype_);
         }
     } else {
-        log_errorf("unkown packet payload:%d, packet ssrc:%u, media type:%s, has rtx:%d, rtp ssrc:%u, rtx ssrc:%u",
-            pkt->get_payload(), pkt->get_ssrc(), media_type_str_.c_str(), has_rtx_, rtp_ssrc_, rtx_ssrc_);
+        log_errorf("unkown packet payload type:%d, packet ssrc:%u, media type:%s, has rtx:%d, rtp ssrc:%u, rtx ssrc:%u, payload type:%d",
+            pkt->get_payload_type(), pkt->get_ssrc(), media_type_str_.c_str(), has_rtx_, rtp_ssrc_, rtx_ssrc_, payloadtype_);
         return;
     }
     
@@ -280,6 +280,7 @@ void rtc_publisher::handle_xr_dlrr(xr_dlrr_data* dlrr_block) {
 
     rtt_ += (rtt_float - rtt_)/5;
 
+    log_debugf("handle xr dllr rtt:%.02f, avg rtt:%.02f", rtt_float, rtt_);
     if (rtp_handler_) {
         int64_t new_rtt = (rtt_ > 100.0) ? 100 : (int64_t)rtt_;
         new_rtt = (rtt_ < 5) ? 5 : rtt_;

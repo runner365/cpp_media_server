@@ -44,18 +44,15 @@
 */
 
 typedef struct xr_dlrr_data_s {
-    uint8_t  bt;
-    uint8_t  reserver;
-    uint16_t block_length;
     uint32_t ssrc;
     uint32_t lrr;
     uint32_t dlrr;
 } xr_dlrr_data;
 
-inline void init_dlrr_block(xr_dlrr_data* dlrr_block) {
-    dlrr_block->bt = XR_DLRR;
-    dlrr_block->reserver = 0;
-    dlrr_block->block_length = htons(3);
+inline void init_dlrr_header(rtcp_xr_header* dlrr_header) {
+    dlrr_header->bt = XR_DLRR;
+    dlrr_header->reserver = 0;
+    dlrr_header->block_length = htons(3);
 }
 
 class xr_dlrr
@@ -89,11 +86,13 @@ public:
     void addr_dlrr_block(uint32_t ssrc, uint32_t lrr, uint32_t dlrr) {
         if (dlrr_block == nullptr) {
             ssrc_p = (uint32_t*)(header + 1);
-            dlrr_block = (xr_dlrr_data*)(ssrc_p + 1);
+            dlrr_header = (rtcp_xr_header*)(ssrc_p + 1);
+            dlrr_block = (xr_dlrr_data*)(dlrr_header + 1);
+            init_dlrr_header(dlrr_header);
         } else {
             dlrr_block = dlrr_block + 1;
+            dlrr_header->block_length += htons(3);
         }
-        init_dlrr_block(dlrr_block);
 
         dlrr_block->ssrc = htonl(ssrc);
         dlrr_block->lrr  = htonl(lrr);
@@ -101,27 +100,25 @@ public:
 
         block_count++;
         
-        header->length = htons((uint16_t)(4 + sizeof(xr_dlrr_data)*block_count)/4);
-        data_len = sizeof(rtcp_common_header) + 4 + sizeof(xr_dlrr_data)*block_count;
+        header->length = htons((uint16_t)(4 + sizeof(rtcp_xr_header) + sizeof(xr_dlrr_data) * block_count) / 4);
+        data_len = sizeof(rtcp_common_header) + 4 + sizeof(rtcp_xr_header) + sizeof(xr_dlrr_data) * block_count;
         return;
     }
 
     std::vector<xr_dlrr_data> get_dlrr_blocks() {
         std::vector<xr_dlrr_data> blocks;
-        xr_dlrr_data* dlrr_block_item = (xr_dlrr_data*)(ssrc_p + 1);
+        dlrr_header = (rtcp_xr_header*)(ssrc_p + 1);
+        xr_dlrr_data* dlrr_block_item = (xr_dlrr_data*)(dlrr_header + 1);
         size_t count = 0;
 
-        if (data_len < (sizeof(rtcp_common_header) + 4 + sizeof(xr_dlrr_data))) {
+        if (data_len < (sizeof(rtcp_common_header) + 4 + sizeof(rtcp_xr_header) + sizeof(xr_dlrr_data))) {
             return blocks;
         }
 
-        count = (data_len - sizeof(rtcp_common_header) - 4) / sizeof(xr_dlrr_data);
+        count = (data_len - sizeof(rtcp_common_header) - 4 - sizeof(rtcp_xr_header)) / sizeof(xr_dlrr_data);
         for (size_t index = 0; index < count; index++) {
             xr_dlrr_data item;
 
-            item.bt           = dlrr_block_item->bt;
-            item.reserver     = dlrr_block_item->reserver;
-            item.block_length = ntohs(dlrr_block_item->block_length);
             item.ssrc         = ntohl(dlrr_block_item->ssrc);
             item.lrr          = ntohl(dlrr_block_item->lrr);
             item.dlrr         = ntohl(dlrr_block_item->dlrr);
@@ -145,6 +142,7 @@ private:
     size_t data_len = 0;
     rtcp_common_header* header = nullptr;
     uint32_t* ssrc_p           = nullptr;
+    rtcp_xr_header* dlrr_header     = nullptr;
     xr_dlrr_data* dlrr_block   = nullptr;
     size_t block_count         = 0;
 };

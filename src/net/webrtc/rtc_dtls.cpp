@@ -353,7 +353,7 @@ rtc_dtls::~rtc_dtls() {
 }
 
 void rtc_dtls::start(DTLS_ROLE role_mode) {
-    assert(role_mode == ROLE_SERVER);
+    //assert(role_mode == ROLE_SERVER);
 
     if (this->state != DTLS_NEW) {
         return;
@@ -367,10 +367,10 @@ void rtc_dtls::start(DTLS_ROLE role_mode) {
         SSL_set_accept_state(ssl_);
         SSL_do_handshake(ssl_);
     } else {//ROLE_CLIENT
-		SSL_set_connect_state(ssl_);
-		SSL_do_handshake(ssl_);
+        SSL_set_connect_state(ssl_);
+        SSL_do_handshake(ssl_);
         send_pending_dtls_data();
-		start_timer();
+        start_timer();
     }
 
     return;
@@ -378,7 +378,7 @@ void rtc_dtls::start(DTLS_ROLE role_mode) {
 
 void rtc_dtls::on_timer() {
     if (handshake_done_) {
-        log_infof("the rtc dtls handshake is done, so cancel the timer.");
+        log_debugf("the rtc dtls handshake is done, so cancel the timer.");
         return;
     }
 
@@ -416,9 +416,9 @@ void rtc_dtls::handle_dtls_data(const uint8_t* data, size_t data_len) {
     //start_timer();
 }
 
-void rtc_dtls::
-send_pending_dtls_data() {
+void rtc_dtls::send_pending_dtls_data() {
     if (BIO_eof(this->ssl_bio_write_)) {
+        log_infof("ssl bio write is eof...");
         return;
     }
 
@@ -512,7 +512,7 @@ bool rtc_dtls::process_handshake() {
         return false;
     }
 
-    log_infof("get srtp crypto suite:%d", (int)srtp_suite);
+    log_infof("get srtp crypto suite:%", get_crypto_suite_desc(srtp_suite).c_str());
 
     extract_srtp_keys(srtp_suite);
 
@@ -577,13 +577,22 @@ void rtc_dtls::extract_srtp_keys(CRYPTO_SUITE_ENUM srtp_suite) {
         return;
     }
 
+    if (role == ROLE_SERVER) {
+        srtp_remote_key  = srtp_material;
+        srtp_local_key   = srtp_remote_key + srtp_keylength;
+        srtp_remote_salt = srtp_local_key + srtp_keylength;
+        srtp_local_salt  = srtp_remote_salt + srtp_saltlength;
+    } else if (role == ROLE_CLIENT) {
+        srtp_local_key   = srtp_material;
+        srtp_remote_key  = srtp_local_key + srtp_keylength;
+        srtp_local_salt  = srtp_remote_key + srtp_keylength;
+        srtp_remote_salt = srtp_local_salt + srtp_saltlength;
+    } else {
+        log_errorf("unkown dtls role:%s", get_dtls_mode_desc(role).c_str());
+        return;
+    }
 
-    srtp_remote_key  = srtp_material;
-    srtp_local_key   = srtp_remote_key + srtp_keylength;
-    srtp_remote_salt = srtp_local_key + srtp_keylength;
-    srtp_local_salt  = srtp_remote_salt + srtp_saltlength;
 
-        
     memcpy(srtp_local_masterkey, srtp_local_key, srtp_keylength);
     memcpy(srtp_local_masterkey + srtp_keylength, srtp_local_salt, srtp_saltlength);
 

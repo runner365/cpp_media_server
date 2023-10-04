@@ -136,7 +136,7 @@ void rtp_recv_stream::on_handle_rtcp_sr(rtcp_sr_packet* sr_pkt) {
     bytes_count_   = sr_pkt->get_bytes_count();
 
     last_sr_ms_ = now_ms;
-    lsr_ = ((ntp_.ntp_sec & 0xffff) << 16) | (ntp_.ntp_frac & 0xffff);
+    lsr_ = ((ntp_.ntp_sec & 0xffff) << 16) | (ntp_.ntp_frac & 0xffff0000);
 }
 
 void rtp_recv_stream::send_rtcp_rr() {

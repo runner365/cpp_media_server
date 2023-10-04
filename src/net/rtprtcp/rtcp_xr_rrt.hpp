@@ -38,17 +38,14 @@
 */
 
 typedef struct xr_rrt_data_s {
-    uint8_t  bt;
-    uint8_t  reserver;
-    uint16_t block_length;
     uint32_t ntp_sec;
     uint32_t ntp_frac;
 } xr_rrt_data;
 
-inline void init_rrt_block(xr_rrt_data* dlrr_block) {
-    dlrr_block->bt = XR_RRT;
-    dlrr_block->reserver = 0;
-    dlrr_block->block_length = htons(2);
+inline void init_rrt_header(rtcp_xr_header* rrt_header) {
+    rrt_header->bt = XR_RRT;
+    rrt_header->reserver = 0;
+    rrt_header->block_length = htons(2);
 }
 
 class xr_rrt
@@ -57,18 +54,19 @@ public:
     xr_rrt()
     {
         memset(data, 0, sizeof(data));
-        data_len = sizeof(rtcp_common_header) + 4 + sizeof(xr_rrt_data);
+        data_len = sizeof(rtcp_common_header) + 4 + sizeof(rtcp_xr_header) + sizeof(xr_rrt_data);
 
         header = (rtcp_common_header*)data;
         header->version = 2;
         header->padding = 0;
         header->count   = 0;
         header->packet_type = RTCP_XR;
-        header->length      = htons((sizeof(rtcp_common_header) + 4 + sizeof(xr_rrt_data))/4 - 1);
+        header->length      = htons(4 + sizeof(rtcp_xr_header) + sizeof(xr_rrt_data)) / 4;
 
         ssrc_p = (uint32_t*)(header + 1);
-        rrt_block = (xr_rrt_data*)(ssrc_p + 1);
-        init_rrt_block(rrt_block);
+        rrt_header = (rtcp_xr_header*)(ssrc_p + 1);
+        rrt_block = (xr_rrt_data*)(rrt_header + 1);
+        init_rrt_header(rrt_header);
     }
     ~xr_rrt()
     {
@@ -111,6 +109,7 @@ private:
     size_t data_len = 0;
     rtcp_common_header* header = nullptr;
     uint32_t* ssrc_p           = nullptr;
+    rtcp_xr_header*   rrt_header    = nullptr;
     xr_rrt_data* rrt_block     = nullptr;
 };
 
