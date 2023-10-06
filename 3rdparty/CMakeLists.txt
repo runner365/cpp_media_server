@@ -36,7 +36,7 @@ ExternalProject_Add(openssl
     CONFIGURE_COMMAND
         ./Configure --prefix=${PREFIX_DIR} no-shared no-asm linux-x86_64
         --libdir=${PREFIX_DIR}/lib
-    BUILD_COMMAND make
+    BUILD_COMMAND make clean && make
     INSTALL_COMMAND make install_sw
     )
 ENDIF ()
