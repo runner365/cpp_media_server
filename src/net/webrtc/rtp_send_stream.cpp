@@ -15,9 +15,9 @@ static const size_t STORAGE_MAX_SIZE     = 2000;
 
 rtp_send_stream::rtp_send_stream(const std::string& media_type, bool nack_enable,
                         rtc_stream_callback* cb):media_type_(media_type)
-                                                , rtp_packet_array(65536, nullptr)
                                                 , nack_enable_(nack_enable)
                                                 , cb_(cb)
+                                                , rtp_packet_array(65536, nullptr)
 {
     storages_.resize(STORAGE_MAX_SIZE);
 }
