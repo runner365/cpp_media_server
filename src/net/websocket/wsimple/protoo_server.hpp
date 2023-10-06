@@ -9,6 +9,21 @@
 
 using json = nlohmann::json;
 
+class protoo_info
+{
+public:
+    protoo_info(const std::string& roomId, const std::string& uid):roomId_(roomId),
+    uid_(uid)
+    {
+    }
+    ~protoo_info()
+    {
+    }
+public:
+    std::string roomId_;
+    std::string uid_;
+};
+
 class websocket_session;
 class room_service;
 class protoo_server : public websocket_server_callbackI, public protoo_request_interface
@@ -36,8 +51,6 @@ private:
     void on_notification(websocket_session* session, json& protooBodyJson);
 
 private:
-    std::string roomId_;
-    std::string uid_;
     std::shared_ptr<room_service> ev_cb_ptr_;
     websocket_server server_;
 };

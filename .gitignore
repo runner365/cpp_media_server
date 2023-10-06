@@ -23,6 +23,7 @@ hlsfiles/*
 *.dll
 *.bak
 *.swp
+*.swo
 .project
 media_server
 cpp_media_server

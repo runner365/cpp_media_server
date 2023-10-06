@@ -345,8 +345,9 @@ void webrtc_session::on_recv_packet(const uint8_t* udp_data, size_t udp_data_len
     } else if (is_rtp(udp_data, udp_data_len)) {
         on_handle_rtp_data(udp_data, udp_data_len, address);
     } else if (rtc_dtls::is_dtls(udp_data, udp_data_len)) {
-        log_infof("receive dtls packet len:%lu, remote:%s",
-                udp_data_len, address.to_string().c_str());
+        log_infof("receive dtls packet len:%lu, remote:%s, roomId:%s, uid:%s",
+                udp_data_len, address.to_string().c_str(),
+                roomId_.c_str(), uid_.c_str());
         on_handle_dtls_data(udp_data, udp_data_len, address);
     } else {
         log_errorf("receive unkown packet len:%lu, remote:%s",

@@ -81,7 +81,7 @@ std::string get_dtls_mode_desc(DTLS_ROLE mode) {
 }
 
 void ssl_info_callback(const SSL* ssl, int type, int value) {
-    log_infof("ssl info callback type:0x%08x, value:0x%08x", type, value);
+    log_debugf("ssl info callback type:0x%08x, value:0x%08x", type, value);
     if (static_cast<rtc_dtls*>(SSL_get_ex_data(ssl, 0)) != nullptr) {
         static_cast<rtc_dtls*>(SSL_get_ex_data(ssl, 0))->on_ssl_info(type, value);
     }
@@ -350,6 +350,7 @@ rtc_dtls::~rtc_dtls() {
         delete[] ssl_read_buffer_;
         ssl_read_buffer_ = nullptr;
     }
+    log_infof("rtc_dtls destruct ok...");
 }
 
 void rtc_dtls::start(DTLS_ROLE role_mode) {
@@ -512,7 +513,7 @@ bool rtc_dtls::process_handshake() {
         return false;
     }
 
-    log_infof("get srtp crypto suite:%", get_crypto_suite_desc(srtp_suite).c_str());
+    log_infof("process handshake suite:%s", get_crypto_suite_desc(srtp_suite).c_str());
 
     extract_srtp_keys(srtp_suite);
 
@@ -633,7 +634,8 @@ CRYPTO_SUITE_ENUM rtc_dtls::get_srtp_crypto_suite() {
         }
     }
 
-    log_infof("get srtp crypto suite:%d", (int)srtp_suite);
+    log_infof("get srtp crypto suite:%s", get_crypto_suite_desc(srtp_suite).c_str());
+
     return srtp_suite;
 }
 

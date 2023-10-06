@@ -7,12 +7,10 @@
 
 rtc_media_info::rtc_media_info()
 {
-    log_infof("rtc_media_info construct...");
 }
 
 rtc_media_info::~rtc_media_info()
 {
-    log_infof("rtc_media_info destruct...");
     reset();
 }
 /*
@@ -34,7 +32,6 @@ public://for media party
     std::vector<MEDIA_RTC_INFO> medias;
 */
 void rtc_media_info::reset() {
-    log_infof("rtc_media_info reset...");
     this->version = 0;
     this->extmap_allow_mixed.clear();
     this->name.clear();

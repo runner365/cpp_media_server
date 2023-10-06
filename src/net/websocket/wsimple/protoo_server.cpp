@@ -115,6 +115,7 @@ void protoo_server::on_request(websocket_session* session, json& protooBodyJson)
         return;
     }
     std::string body = dataObj->dump();
+    std::string roomId;
 
     if (method == "join") {
         auto roomIdObj = dataObj->find("roomId");
@@ -126,7 +127,7 @@ void protoo_server::on_request(websocket_session* session, json& protooBodyJson)
             MS_THROW_ERROR("the json 'roomId' is not string");
             return;
         }
-        roomId_ = roomIdObj->get<std::string>();
+        roomId = roomIdObj->get<std::string>();
 
         auto uidObj = dataObj->find("uid");
         if (uidObj == dataObj->end()) {
@@ -137,12 +138,13 @@ void protoo_server::on_request(websocket_session* session, json& protooBodyJson)
             MS_THROW_ERROR("the json 'uid' is not string");
             return;
         }
-        uid_ = uidObj->get<std::string>();
-
-        ev_cb_ptr_ = GetorCreate_room_service(roomId_);
+        std::string uid = uidObj->get<std::string>();
+        protoo_info* info = new protoo_info(roomId, uid);
+        session->set_user_data((void*)info);
+        ev_cb_ptr_ = GetorCreate_room_service(roomId);
     }
     if (!ev_cb_ptr_) {
-        MS_THROW_ERROR("the room has not been created, roomId:%s", roomId_.c_str());
+        MS_THROW_ERROR("the room has not been created, roomId:%s", roomId.c_str());
         return;
     }
     ev_cb_ptr_->on_request(std::to_string(id), method, body, this, session);
@@ -210,7 +212,7 @@ void protoo_server::on_reponse(websocket_session* session, json& protooBodyJson)
         err_message = errorReasonObj->get<std::string>();
     }
     if (!ev_cb_ptr_) {
-        MS_THROW_ERROR("the room has not been created, roomId:%s", roomId_.c_str());
+        MS_THROW_ERROR("the room has not been created");
         return;
     }
     ev_cb_ptr_->on_response(err_code, err_message, std::to_string(id), body);
@@ -241,7 +243,7 @@ void protoo_server::on_notification(websocket_session* session, json& protooBody
     std::string body = dataObj->dump();
 
     if (!ev_cb_ptr_) {
-        MS_THROW_ERROR("the room has not been created, roomId:%s", roomId_.c_str());
+        MS_THROW_ERROR("the room has not been created");
         return;
     }
     ev_cb_ptr_->on_notification(method, body);
@@ -332,21 +334,26 @@ void protoo_server::on_read(websocket_session* session, const char* data, size_t
 }
 
 void protoo_server::on_close(websocket_session* session) {
-    log_infof("protoo server on close, roomId:%s, uid:%s",
-        roomId_.c_str(), uid_.c_str());
-
-    if (uid_.empty() || roomId_.empty()) {
+    protoo_info* info = (protoo_info*)session->get_user_data();
+    if (!info) {
+        log_errorf("protoo on close get user data is null");
+        return;
+    }
+    if (info->uid_.empty() || info->roomId_.empty()) {
         log_infof("user has not joined.");
         return;
     }
     auto body_json = json::object();
-    body_json["uid"] = uid_;
-    body_json["roomId"] = roomId_;
-
+    body_json["uid"] = info->uid_;
+    body_json["roomId"] = info->roomId_;
+    log_infof("protoo server on close, roomId:%s, uid:%s",
+        info->roomId_.c_str(), info->uid_.c_str());
     try {
         ev_cb_ptr_->on_notification("close", body_json.dump());
     }
     catch(const std::exception& e) {
         log_errorf("close exception:%s", e.what());
     }
+    delete info;
+    session->set_user_data(nullptr);
 }

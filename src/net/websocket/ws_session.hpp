@@ -77,7 +77,7 @@ private:
     bool http_request_ready_ = false;
     data_buffer http_recv_buffer_;
     std::unordered_map<std::string, std::string> headers_;
-	std::string method_;
+    std::string method_;
     std::string path_;
     std::string uri_;
     int sec_ws_ver_ = -1;

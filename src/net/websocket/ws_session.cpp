@@ -82,9 +82,9 @@ void websocket_session::on_read(int ret_code, const char* data, size_t data_size
         } catch(const MediaServerError& e) {
             send_error_response();
             log_errorf("exception:%s", e.what());
-            if (server_ != nullptr) {
-                server_->session_close(this);
-            }
+            //if (server_ != nullptr) {
+            //    server_->session_close(this);
+            //}
         }
         return;
     }
