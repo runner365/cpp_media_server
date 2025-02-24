@@ -207,11 +207,17 @@ void rtc_publisher::on_handle_rtppacket(rtp_packet* pkt) {
         return;
     }
     
-    if ( Config::rtmp_is_enable() && Config::rtc2rtmp_is_enable()
-        && ( ((media_type_ == MEDIA_VIDEO_TYPE) 
-        && (codec_type_ == MEDIA_CODEC_H264))
-        || (media_type_ == MEDIA_AUDIO_TYPE)) ) {
-        jb_handler_.input_rtp_packet(roomId_, uid_, media_type_str_, stream_type_, clock_rate_, pkt);
+    if (Config::rtmp_is_enable() && Config::rtc2rtmp_is_enable()) {
+        if (((media_type_ == MEDIA_VIDEO_TYPE) && (codec_type_ == MEDIA_CODEC_H264)) || (media_type_ == MEDIA_AUDIO_TYPE)) {
+            // call rtp_packet_output and then call media_packet_output
+            jb_handler_.input_rtp_packet(roomId_, uid_, media_type_str_, stream_type_, clock_rate_, pkt);
+        }
+    }
+    if (Config::deepseek_is_enable()) {
+        if (media_type_ == MEDIA_AUDIO_TYPE) {
+            // call rtp_packet_output and then call media_packet_output
+            jb_handler_.input_rtp_packet(roomId_, uid_, media_type_str_, stream_type_, clock_rate_, pkt);
+        }
     }
     
     room_->on_update_alive(roomId_, uid_, pkt->get_local_ms());
@@ -348,6 +354,19 @@ void rtc_publisher::media_packet_output(std::shared_ptr<MEDIA_PACKET> pkt_ptr) {
             pkt_ptr->dts_, pkt_ptr->buffer_ptr_->data_len(),
             pkt_ptr->av_type_, pkt_ptr->codec_type_, pkt_ptr->fmt_type_);
     
+    on_rtc2rtmp(pkt_ptr);
+    on_deepseek(pkt_ptr);
+
+    return;
+}
+
+void rtc_publisher::on_rtc2rtmp(std::shared_ptr<MEDIA_PACKET> pkt_ptr) {
+    if (!Config::rtc2rtmp_is_enable() || !Config::rtmp_is_enable()) {
+        return;
+    }
+    if (!pkt_ptr) {
+        return;
+    }
     if (pkt_ptr->av_type_ == MEDIA_VIDEO_TYPE) {
         if (pkt_ptr->codec_type_ == MEDIA_CODEC_H264) {
             uint8_t nalu_len_data[4];
@@ -431,10 +450,53 @@ void rtc_publisher::media_packet_output(std::shared_ptr<MEDIA_PACKET> pkt_ptr) {
 
     set_rtmp_info(pkt_ptr);
     room_->on_rtmp_callback(roomId_, uid_, stream_type_, pkt_ptr);
-    
-    return;
 }
 
+void rtc_publisher::on_deepseek(std::shared_ptr<MEDIA_PACKET> pkt_ptr) {
+    if (!Config::deepseek_is_enable()) {
+        return;
+    }
+    if (pkt_ptr->av_type_ != MEDIA_AUDIO_TYPE) {
+        return;
+    }
+    uint8_t audio_flv_header[2];
+
+    if (first_deepseek_audio_) {
+        uint8_t opus_seq_data[128];
+        size_t header_len    = 0;
+        uint16_t seq_data    = 0;
+        int samplerate_index = 0;
+
+        first_deepseek_audio_ = false;
+
+        header_len = make_opus_header(opus_seq_data, clock_rate_, channel_);
+
+        for (samplerate_index = 0; samplerate_index < 16; samplerate_index++) {
+            if (clock_rate_ == mpeg4audio_sample_rates[samplerate_index])
+                break;
+        }
+        seq_data |= 2 << 11;//profile aac lc
+        seq_data |= samplerate_index << 7;
+        seq_data |= channel_ << 3;
+        write_2bytes(audio_flv_header, seq_data);
+
+        std::shared_ptr<MEDIA_PACKET> seq_pkt_ptr = std::make_shared<MEDIA_PACKET>();
+        //seq_pkt_ptr->buffer_ptr_->append_data((char*)audio_flv_header, sizeof(audio_flv_header));
+        seq_pkt_ptr->buffer_ptr_->append_data((char*)opus_seq_data, header_len);
+        seq_pkt_ptr->copy_properties(pkt_ptr);
+        seq_pkt_ptr->is_key_frame_ = false;
+        seq_pkt_ptr->is_seq_hdr_   = true;
+        set_rtmp_info(seq_pkt_ptr);
+        seq_pkt_ptr->fmt_type_ = MEDIA_FORMAT_FLV;
+
+        // room_->on_rtmp_callback(roomId_, uid_, stream_type_, seq_pkt_ptr);
+    }
+    set_rtmp_info(pkt_ptr);
+    pkt_ptr->fmt_type_ = MEDIA_FORMAT_FLV;
+
+    // room_->on_rtmp_callback(roomId_, uid_, stream_type_, pkt_ptr);
+    return;
+}
 
 void rtc_publisher::set_rtmp_info(std::shared_ptr<MEDIA_PACKET> pkt_ptr) {
     pkt_ptr->app_ = roomId_;

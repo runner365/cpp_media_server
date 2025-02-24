@@ -61,6 +61,8 @@ public:
     virtual void on_unsubscribe(const std::string& pid, const std::string& sid) override;
     virtual void on_rtmp_callback(const std::string& roomId, const std::string& uid,
                                 const std::string& stream_type, MEDIA_PACKET_PTR pkt_ptr) override;
+    virtual void on_deepseek_callback(const std::string& roomId, const std::string& uid,
+                                const std::string& stream_type, MEDIA_PACKET_PTR pkt_ptr) override;
     virtual void on_update_alive(const std::string& roomId, const std::string& uid, int64_t now_ms) override;
 public:
     bool has_rtc_user(const std::string& uid);

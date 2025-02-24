@@ -47,6 +47,25 @@ public:
     std::string tls_cert;
 };
 
+class DeepSeekConfig
+{
+public:
+    DeepSeekConfig() {};
+    ~DeepSeekConfig() {};
+
+public:
+    std::string dump() {
+        std::stringstream ss;
+        ss << "deepseek config:\r\n";
+        ss << "     enable: " << deepseek_enable << "\r\n";
+
+        return ss.str();
+    }
+
+public:
+    bool deepseek_enable = false;
+};
+
 class WebrtcConfig
 {
 public:
@@ -69,6 +88,7 @@ public:
         ss << "  min kbps:" << min_kbps << "\r\n";
         ss << "  max kbps:" << max_kbps << "\r\n";
         ss << "  start kbps:" << start_kbps << "\r\n";
+        ss << "  " << ds_config_.dump() << "\r\n";
 
         return ss.str();
     }
@@ -86,6 +106,7 @@ public:
     int min_kbps = 200;
     int max_kbps = 1500;
     int start_kbps = 800;
+    DeepSeekConfig ds_config_;
 };
 
 class RtmpRelayConfig
@@ -279,6 +300,9 @@ public:
     static std::string websocket_key_file();
     static std::string websocket_cert_file();
     static uint16_t websocket_port();
+
+public:
+    static bool deepseek_is_enable();
 
 public:
     static std::string log_filename() { return log_path_; }

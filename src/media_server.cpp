@@ -88,11 +88,12 @@ void MediaServer::create_webrtc() {
         MediaServer::ws_webrtc_server = new protoo_server(loop_, Config::webrtc_https_port());
     }
     
-    log_infof("webrtc is starting, websocket port:%d, wss enable:%s rtmp2rtc:%s, rtc2rtmp:%s",
+    log_infof("webrtc is starting, websocket port:%d, wss enable:%s rtmp2rtc:%s, rtc2rtmp:%s, deep seek:%s",
             Config::webrtc_https_port(),
             Config::wss_is_enable() ? "true" : "false",
             Config::rtmp2rtc_is_enable() ? "true" : "false",
-            Config::rtc2rtmp_is_enable() ? "true" : "false");
+            Config::rtc2rtmp_is_enable() ? "true" : "false",
+            Config::deepseek_is_enable() ? "true" : "false");
     return;
 }
 

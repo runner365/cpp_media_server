@@ -81,6 +81,8 @@ public://implement
 
 private:
     void set_rtmp_info(std::shared_ptr<MEDIA_PACKET> pkt_ptr);
+    void on_rtc2rtmp(std::shared_ptr<MEDIA_PACKET> pkt_ptr);
+    void on_deepseek(std::shared_ptr<MEDIA_PACKET> pkt_ptr);
     
 private:
     std::string roomId_;
@@ -114,6 +116,9 @@ private:
     std::queue<std::shared_ptr<MEDIA_PACKET>> flv_queue_;
     bool first_flv_audio_ = true;
 
+private:
+    bool first_deepseek_audio_ = true;
+    
 private:
     int64_t last_rrt_ = 0;
     float   rtt_      = 0;

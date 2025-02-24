@@ -303,7 +303,7 @@ void rtc_dtls::on_ssl_info(int type, int value) {
 rtc_dtls::rtc_dtls(webrtc_session* session, uv_loop_t* loop): timer_interface(loop, 3*1000)
     , session_(session) {
     state = DTLS_NEW;
-    role  = ROLE_SERVER;//role must be "server" in ice-lite mode.
+    role  = ROLE_CLIENT;//role must be "client" in ice-lite mode.
 
     ssl_ = SSL_new(s_ssl_ctx);
     if (!ssl_) {
@@ -370,7 +370,7 @@ void rtc_dtls::start(DTLS_ROLE role_mode) {
     } else {//ROLE_CLIENT
         SSL_set_connect_state(ssl_);
         SSL_do_handshake(ssl_);
-        send_pending_dtls_data();
+        // send_pending_dtls_data();
         start_timer();
     }
 

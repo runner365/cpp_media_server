@@ -588,6 +588,11 @@ void room_service::on_rtmp_callback(const std::string& roomId, const std::string
     user_ptr->on_rtmp_callback(stream_type, pkt_ptr);
 }
 
+void room_service::on_deepseek_callback(const std::string& roomId, const std::string& uid,
+                        const std::string& stream_type, MEDIA_PACKET_PTR pkt_ptr) {
+
+}
+
 void room_service::on_rtppacket_publisher2room(rtc_publisher* publisher, rtp_packet* pkt) {
     std::string publish_id = publisher->get_publisher_id();
     std::string mediatype = publisher->get_media_type();

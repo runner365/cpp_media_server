@@ -864,6 +864,7 @@ finger_print_info webrtc_session::get_local_finger_print(const std::string& algo
     info.algorithm = algorithm;
     info.value = value;
     
+    log_infof("get local fingerprint algorithm:%d, value:%s", (int)info.algorithm, info.value.c_str());
     return info;
 }
 

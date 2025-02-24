@@ -17,6 +17,15 @@ ExternalProject_Add(yasm
     INSTALL_COMMAND make install
     )
 
+ExternalProject_Add(fftw
+    URL ${CMAKE_CURRENT_SOURCE_DIR}/fftw-3.3.10.tar.gz
+    SOURCE_DIR  ${CMAKE_CURRENT_BINARY_DIR}/fftw-3.3.10
+    BUILD_IN_SOURCE 1
+    CONFIGURE_COMMAND
+        ./configure --prefix=${PREFIX_DIR} --libdir=${INSTALL_RPATH}
+    BUILD_COMMAND make
+    INSTALL_COMMAND make install
+    )
 IF (APPLE)
 ExternalProject_Add(openssl
     URL ${CMAKE_CURRENT_SOURCE_DIR}/openssl-1.1.1.tar.gz

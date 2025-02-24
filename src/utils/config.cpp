@@ -302,6 +302,26 @@ int Config::init_webrtc(json& json_object) {
     } else {
         webrtc_config_.start_kbps = 800;
     }
+
+    try {
+        auto deepseek_iter = json_object.find("deepseek");
+        if (deepseek_iter == json_object.end()) {
+            webrtc_config_.ds_config_.deepseek_enable = false;
+        } else {
+            auto deep_seek_json = *deepseek_iter;
+            auto enable_iter = deep_seek_json.find("enable");
+            if (enable_iter != deep_seek_json.end() && enable_iter->is_boolean()) {
+                webrtc_config_.ds_config_.deepseek_enable = enable_iter->get<bool>();
+            } else {
+                webrtc_config_.ds_config_.deepseek_enable = false;
+            }
+        }
+    } catch(const std::exception& e) {
+        std::cerr << "read deep seek config exception:" << e.what() << '\n';
+    }
+    
+
+
     return 0;
 }
 
@@ -379,6 +399,10 @@ bool Config::websocket_is_enable() {
 
 uint16_t Config::websocket_port() {
     return websocket_config_.websocket_port;
+}
+
+bool Config::deepseek_is_enable() {
+    return webrtc_config_.ds_config_.deepseek_enable;
 }
 
 bool Config::websocket_wss_enable() {

@@ -2,6 +2,7 @@
 #include "support_rtc_info.hpp"
 #include "utils/logger.hpp"
 #include "utils/timeex.hpp"
+#include "utils/av/media_packet.hpp"
 #include "net/webrtc/rtp_h264_pack.hpp"
 #include "transcode/transcode.hpp"
 #include "format/h264_header.hpp"
@@ -102,6 +103,10 @@ void user_info::on_rtmp_callback(const std::string& stream_type, MEDIA_PACKET_PT
         log_errorf("rtmp callback stream type(%s) is unkown, roomId(%s), uid(%s)",
                 stream_type.c_str(), roomId_.c_str(), uid_.c_str());
     }
+}
+
+void user_info::on_deepseek_callback(const std::string& stream_type, MEDIA_PACKET_PTR pkt_ptr) {
+    log_infof("deepseek media packet:%s", pkt_ptr->dump().c_str());
 }
 
 void user_info::update_camera_video_dts(MEDIA_PACKET_PTR pkt_ptr) {

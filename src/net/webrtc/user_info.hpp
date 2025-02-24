@@ -42,6 +42,7 @@ public:
     void get_support_media_info(rtc_media_info& input_info, rtc_media_info& support_info);
     std::string rtc_media_info_2_sdp(const rtc_media_info& input);
     void on_rtmp_callback(const std::string& stream_type, MEDIA_PACKET_PTR pkt_ptr);
+    void on_deepseek_callback(const std::string& stream_type, MEDIA_PACKET_PTR pkt_ptr);
 
 private:
     void on_rtmp_camera_callback(MEDIA_PACKET_PTR pkt_ptr);

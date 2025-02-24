@@ -73,6 +73,7 @@ int rtc_media_info::parse(json& sdp_json) {
         try
         {
             this->finger_print = get_finger_print(media_item_json);
+            log_infof("finger print is in media secton:%s, type:%s", this->finger_print.hash.c_str(), this->finger_print.type.c_str());
         }
         catch(const std::exception& e)
         {

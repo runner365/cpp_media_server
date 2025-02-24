@@ -44,8 +44,13 @@ include_directories(src
                     /usr/local/include)
 
 # set lib path
-#link_directories(${CMAKE_BINARY_DIR}/output/lib /usr/local/lib64 /usr/local/lib)
+IF (APPLE)
+link_directories(${CMAKE_BINARY_DIR}/output/lib /usr/local/lib)
+set(CMAKE_INSTALL_RPATH ${CMAKE_BINARY_DIR}/output/lib)
+ELSEIF (UNIX)
 link_directories(${CMAKE_BINARY_DIR}/output/lib /usr/local/lib64 /usr/local/lib)
+ENDIF ()
+
 add_subdirectory(3rdparty)
 
 #add_executable(ws_server_demo
@@ -284,6 +289,10 @@ add_executable(cpp_media_server
             src/net/websocket/wsimple/protoo_server.hpp
             src/net/stun/stun_packet.cpp
             src/net/stun/stun_packet.hpp
+            src/net/webrtc/vad/vad.cpp
+            src/net/webrtc/vad/vad.hpp
+            src/net/webrtc/vad/fftw_vad.cpp
+            src/net/webrtc/vad/fftw_vad.hpp
             src/net/webrtc/rtc_session_pub.hpp
             src/net/webrtc/rtc_stream_pub.hpp
             src/net/webrtc/webrtc_pub.hpp
@@ -372,13 +381,13 @@ add_executable(cpp_media_server
             src/utils/av/gop_cache.cpp
             src/utils/av/gop_cache.hpp)
 
-add_dependencies(cpp_media_server ffmpeg openssl sdptransform libsrtp libx264 libopus)
+add_dependencies(cpp_media_server ffmpeg openssl sdptransform libsrtp libx264 libopus fftw)
 
 IF (APPLE)
 target_link_libraries(cpp_media_server pthread dl z m
     srtp2 ssl crypto pthread sdptransform
     avfilter avformat avcodec avutil postproc swscale swresample
-    uv)
+    uv fftw3)
 ELSEIF (UNIX)
 target_link_libraries(cpp_media_server
     avfilter avformat avcodec avutil postproc swscale swresample
@@ -386,7 +395,7 @@ target_link_libraries(cpp_media_server
     ssl crypto
     srtp2 pthread sdptransform
     pthread rt dl z m bz2
-    uv)
+    uv fftw3)
 ENDIF ()
 
 #IF (NATIVE_CLIENT STREQUAL on)
