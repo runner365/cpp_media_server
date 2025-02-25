@@ -590,7 +590,7 @@ void room_service::on_rtmp_callback(const std::string& roomId, const std::string
 
 void room_service::on_deepseek_callback(const std::string& roomId, const std::string& uid,
                         const std::string& stream_type, MEDIA_PACKET_PTR pkt_ptr) {
-
+    
 }
 
 void room_service::on_rtppacket_publisher2room(rtc_publisher* publisher, rtp_packet* pkt) {
@@ -751,7 +751,7 @@ void room_service::handle_publish(const std::string& id, const std::string& meth
     rtc_media_info support_info;
 
     user_ptr->get_support_media_info(info, support_info);
-    //log_debugf("support info sdp dump:\r\n%s", support_info.dump().c_str());
+    log_infof("support info sdp dump:\r\n%s", support_info.dump().c_str());
 
     std::shared_ptr<webrtc_session> session_ptr = std::make_shared<webrtc_session>(roomId_, uid,
                                                     this, RTC_DIRECTION_RECV, support_info);

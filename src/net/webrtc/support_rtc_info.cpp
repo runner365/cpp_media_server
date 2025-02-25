@@ -601,7 +601,14 @@ void get_support_rtc_media(const rtc_media_info& input, rtc_media_info& support_
         }
         support_rtc_info.rtcp_mux = rtc_info.rtcp_mux;
         support_rtc_info.rtcp_rsize = rtc_info.rtcp_rsize;
-        support_rtc_info.setup = "active";//rtc_info.setup;
+        
+        if (rtc_info.setup == "active") {
+            support_rtc_info.setup = "passive";
+        } else if (rtc_info.setup == "passive") {
+            support_rtc_info.setup = "active";
+        } else {
+            support_rtc_info.setup = "passive";
+        }
         support_rtc_info.rtcp = rtc_info.rtcp;
         support_rtc_info.protocol = rtc_info.protocol;
         support_rtc_info.payloads = rtc_info.payloads;
@@ -776,7 +783,8 @@ void rtc_media_info_to_json(const rtc_media_info& input, json& sdp_json) {
             media_json["rtcpRsize"] = media_info.rtcp_rsize;
         }
         //ice-lite: the server must be active
-        media_json["setup"] = "active";
+        // media_json["setup"] = "active";
+        media_json["setup"] = media_info.setup;
 
         if (!media_info.ssrc_groups.empty()) {
             media_json["ssrcGroups"] = json::array();

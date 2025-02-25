@@ -831,7 +831,17 @@ void webrtc_session::on_handle_stun_packet(stun_packet* pkt, const udp_tuple& ad
         write_udp_data(resp_pkt->data, resp_pkt->data_len, address);
         delete resp_pkt;
 
-        dtls_trans_->start(ROLE_CLIENT);
+        DTLS_ROLE role_mode = ROLE_NONE;
+        if (media_info_.medias[0].setup == "active") {
+            role_mode = ROLE_CLIENT;
+        } else if (media_info_.medias[0].setup == "passive") {
+            role_mode = ROLE_SERVER;
+        } else {
+            role_mode = ROLE_CLIENT;
+        }
+        log_infof("dtls start setup:%s, role:%s", media_info_.medias[0].setup.c_str(), get_dtls_mode_desc(role_mode).c_str());
+        dtls_trans_->start(role_mode);
+        
     } else {
         log_warnf("the server doesn't handle stun class:%d", (int)pkt->stun_class);
     }
