@@ -112,6 +112,7 @@ public:
     static SSL_CTX* s_ssl_ctx;
 
 public:
+    bool start_ = false;
     DTLS_STATE state;
     DTLS_ROLE role;
     finger_print_info remote_finger_print;

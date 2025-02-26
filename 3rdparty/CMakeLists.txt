@@ -1,6 +1,6 @@
 include(ExternalProject)
 
-set(EXTRA_CFLAGS "-I${PREFIX_DIR}/include")
+set(EXTRA_CFLAGS "-I${PREFIX_DIR}/include -I${PREFIX_DIR}/include/fdk-aac")
 set(EXTRA_LDFLAGS "-L${PREFIX_DIR}/lib")
 set(EXTRA_LIBS "-lm -pthread -ldl")
 
@@ -132,7 +132,7 @@ ExternalProject_Add(ffmpeg
         --enable-libopus
         --enable-nonfree
         --enable-gpl
-        --extra-libs="-lm -lpthread -ldl -lz -lbz2"
+        --extra-libs="-lm"
         --disable-ffplay
         --disable-ffprobe
         --enable-pic

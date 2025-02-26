@@ -1,5 +1,7 @@
 #include "fftw_vad.hpp"
 #include "utils/logger.hpp"
+#include <math.h>
+#include <cstring>
 
 #define FFTW_DEF_THRESHOLD 30000.0
 
@@ -95,7 +97,7 @@ int FftwVad::Process(const int16_t* audio_frame, int num_samples) {
         log_errorf("FftwVad not init...");
         return -1;
     }
-    if (pcm_buffer_.size() < num_samples) {
+    if ((int)pcm_buffer_.size() < num_samples) {
         pcm_buffer_.resize(num_samples + 8 * 1024);
     }
     int16_t *pcm_data = &pcm_buffer_[0];

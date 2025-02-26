@@ -163,10 +163,10 @@ private:
             }
             udp_req_info_t* wr = (udp_req_info_t*)req;
             if (wr) {
-                free(wr);
                 if (wr->buf.base) {
                     free(wr->buf.base);
                 }
+                free(wr);
             }
             return;
         }

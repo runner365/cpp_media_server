@@ -18,6 +18,7 @@
 #ifndef _WIN32
 #include <stdint.h>
 #endif
+#include <stddef.h>
 
 namespace webrtc {
 namespace rtcp {

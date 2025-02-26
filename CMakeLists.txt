@@ -18,6 +18,9 @@ SET(LIBRARY_OUTPUT_PATH ${CMAKE_BINARY_DIR}/output/lib)
 # set pkgconfig path
 set(CMAKE_PREFIX_PATH "${CMAKE_BINARY_DIR}/output/lib/pkgconfig")
 
+message(WARNING "ffmpeg PKG_CONFIG_PATH:${INSTALL_RPATH}/pkgconfig")
+message(WARNING "ffmpeg prefix:${PREFIX_DIR}")
+
 # set include path
 include_directories(src
                     src/net
@@ -394,7 +397,7 @@ target_link_libraries(cpp_media_server
     x264 fdk-aac opus
     ssl crypto
     srtp2 pthread sdptransform
-    pthread rt dl z m bz2
+    pthread rt dl z m
     uv fftw3)
 ENDIF ()
 

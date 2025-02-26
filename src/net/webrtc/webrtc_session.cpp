@@ -839,7 +839,7 @@ void webrtc_session::on_handle_stun_packet(stun_packet* pkt, const udp_tuple& ad
         } else {
             role_mode = ROLE_CLIENT;
         }
-        log_infof("dtls start setup:%s, role:%s", media_info_.medias[0].setup.c_str(), get_dtls_mode_desc(role_mode).c_str());
+        
         dtls_trans_->start(role_mode);
         
     } else {

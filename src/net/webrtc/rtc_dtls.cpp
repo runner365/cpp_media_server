@@ -355,10 +355,15 @@ rtc_dtls::~rtc_dtls() {
 
 void rtc_dtls::start(DTLS_ROLE role_mode) {
     //assert(role_mode == ROLE_SERVER);
-
+    if (start_) {
+        return;
+    }
+    start_ = true;
+    
     if (this->state != DTLS_NEW) {
         return;
     }
+    log_infof("dtls start role:%s", get_dtls_mode_desc(role_mode).c_str());
     this->role  = role_mode;
     this->state = DTLS_CONNECTING;
 

@@ -607,7 +607,7 @@ void get_support_rtc_media(const rtc_media_info& input, rtc_media_info& support_
         } else if (rtc_info.setup == "passive") {
             support_rtc_info.setup = "active";
         } else {
-            support_rtc_info.setup = "passive";
+            support_rtc_info.setup = "active";
         }
         support_rtc_info.rtcp = rtc_info.rtcp;
         support_rtc_info.protocol = rtc_info.protocol;
