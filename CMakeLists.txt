@@ -386,7 +386,7 @@ target_link_libraries(cpp_media_server
     ssl crypto
     srtp2 pthread sdptransform
     pthread rt dl z m bz2
-    uv)
+    uv X11 vdpau)
 ENDIF ()
 
 #IF (NATIVE_CLIENT STREQUAL on)
