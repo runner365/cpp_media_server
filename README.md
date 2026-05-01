@@ -12,6 +12,13 @@ RTCPilot支持更多功能：
 
 本开源不再更新，WebRTC SFU开源请关注：**[RTCPilot](https://github.com/runner365/RTCPilot)**
 
+当前webrtc sfu升级到新开源：[RTCPilot](https://github.com/runner365/RTCPilot)
+
+RTCPilot支持更多功能：
+* 支持跨平台：Linux/MacOS/Win11
+* 支持集群部署：是WebRTC SFU唯一全马支持集群的开源
+* 支持接入VoiceAgent AI：[VoiceAgent](https://github.com/runner365/voiceagent)
+
 ## 1. 支持特性
 ### 1.1 webrtc相关特性
 * 房间管理服务
